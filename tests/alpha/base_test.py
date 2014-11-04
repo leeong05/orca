@@ -13,10 +13,12 @@ from orca.alpha import (
         BacktestingAlpha,
         ProductionAlpha)
 
+
 class AlphaBaseDummy(AlphaBase):
 
     def generate(self, date):
         raise NotImplementedError
+
 
 class AlphaBaseTestCase(unittest.TestCase):
 
