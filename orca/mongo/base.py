@@ -111,3 +111,6 @@ class FetcherBase(object):
 
 class KDayFetcher(FetcherBase):
     pass
+
+class KMinFetcher(FetcherBase):
+    pass
