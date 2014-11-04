@@ -9,6 +9,7 @@ import pandas as pd
 
 from orca.utils import date
 
+
 class DateTestCase(unittest.TestCase):
 
     dates_int = range(20140101, 20140110)
