@@ -4,3 +4,5 @@ from base import (
         KMinFetcher)
 
 import util
+
+from quote import QuoteFetcher
