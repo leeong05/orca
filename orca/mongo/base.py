@@ -10,7 +10,6 @@ import pandas as pd
 from orca import logger
 from orca.mongo import util
 from orca import (
-        DB,
         DATES,
         SIDS)
 
@@ -21,7 +20,7 @@ class FetcherBase(object):
     :param boolean datetime_index: Whether to use DatetimeIndex or list of date strings. Default: False
     :param boolean reindex: Whether to use full sids as columns in DataFrame. Default: False
     :param boolean date_check: Whethter to check if passed date-related parameters are valid. Default: False
-    :param int delay: Delay fetched data in py:meth:`~orca.mongo.base.FetcherBase.fetch_history`. Default: 1
+    :param int delay: Delay fetched data in :py:meth:`~orca.mongo.base.FetcherBase.fetch_history`. Default: 1
 
     .. note::
 
@@ -79,8 +78,9 @@ class FetcherBase(object):
         :param int backdays: This will shift (left/right: >/< 0) the left endpoint. Default: 0
         :rtype: DataFrame
 
-        .. seealso:: py:func:`orca.mongo.util.cut_window`
+        .. seealso:: :py:func:`orca.mongo.util.cut_window`
         """
+
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -91,6 +91,7 @@ class FetcherBase(object):
         :param list window: A consecutive list of trading dates
         :rtype: DataFrame
         """
+
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -103,6 +104,7 @@ class FetcherBase(object):
         :param int backdays: Number of days to look back w.r.t. the base point
         :rtype: DataFrame
         """
+
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -115,6 +117,7 @@ class FetcherBase(object):
         :param int offset: The offset w.r.t. the ``date``. The actual fetched date is calculated from ``date`` and ``offset``. Default: 0
         :rtype: Series
         """
+
         raise NotImplementedError
 
 
