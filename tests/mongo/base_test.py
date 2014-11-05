@@ -167,14 +167,18 @@ class KMinFetcherDummyTestCase(unittest.TestCase):
         df = KMinFetcherDummy.fetch_window('close', self.times[0], self.dates_str)
         self.assertIsInstance(df, pd.DataFrame)
 
+    def test_fetch_window_times_list(self):
+        pl = KMinFetcherDummy.fetch_window('close', [self.times[0]], self.dates_str)
+        self.assertIsInstance(pl, pd.Panel)
+
     def test_fetch_backdays(self):
-        df = KDayFetcherDummy.fetch('close', self.dates_str[5], self.dates_str[-1], backdays=5)
-        self.assertListEqual(self.dates_str, list(df.index))
+        pl = KMinFetcherDummy.fetch('close', self.times, self.dates_str[5], self.dates_str[-1], backdays=5)
+        self.assertListEqual(self.dates_str, list(pl.major_axis))
 
     def test_fetch_history_delay(self):
-        df = KDayFetcherDummy.fetch_history('close', self.dates_str[-1], 45, delay=5)
-        self.assertListEqual(self.dates_str[:-5], list(df.index))
+        pl = KMinFetcherDummy.fetch_history('close', self.times, self.dates_str[-1], 45, delay=5)
+        self.assertListEqual(self.dates_str[:-5], list(pl.major_axis))
 
     def test_fetch_daily_offset(self):
-        ser = KDayFetcherDummy.fetch_daily('close', self.dates_str[-1], offset=49)
+        ser = KMinFetcherDummy.fetch_daily('close', self.times[0], self.dates_str[-1], offset=49)
         self.assertEqual(ser.name, self.dates_str[0])
