@@ -112,19 +112,7 @@ def generate_timestamps(starttime, endtime, step, end_excluded=True):
     :param int step: Number of **seconds** as step
     :param boolean end_excluded: Whether the ``endtime`` itself should be excluded from the
     result. Default: True
-
     :return: Python generator
-
-    Examples
-    --------
-    >>> from orca.data import util
-    >>> a = util.generate_timestamps('093000', '113000', 30*60)
-    >>> type(a)
-    generator
-    >>> a.next()
-    090000
-    >>> list(a)
-    ['093000', '100000', '103000', '110000']
     """
 
     starttime = time(int(starttime[:2]), int(starttime[2:4]), int(starttime[4:6]))
