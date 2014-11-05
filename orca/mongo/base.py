@@ -130,6 +130,7 @@ class KDayFetcher(FetcherBase):
             date_check = kwargs.get('date_check', False)
         else:
             date_check = kwargs.get('date_check', self.date_check)
+
         window = util.cut_window(
                 DATES,
                 util.compliment_datestring(str(startdate), -1, date_check),
@@ -185,8 +186,24 @@ class KMinFetcher(FetcherBase):
         FetcherBase.__init__(self, **kwargs)
 
     @classmethod
-    def fetch(self, dname, startdate, enddate=None, backdays=0, **kwargs):
-        pass
+    def fetch(self, dname, times, startdate, enddate=None, backdays=0, **kwargs):
+        """
+        :param times: Time stamps to indicate which minute-bars should be fetched
+        :type times: str or list. This will affect the returned data type
+        :rtype: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
+        """
+
+        if isinstance(self, abc.ABCMeta):
+            date_check = kwargs.get('date_check', False)
+        else:
+            date_check = kwargs.get('date_check', self.date_check)
+
+        window = util.cut_window(
+                DATES,
+                util.compliment_datestring(str(startdate), -1, date_check),
+                util.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None,
+                backdays=backdays)
+        return self.fetch_window(dname, times, window, **kwargs)
 
     @classmethod
     def fetch_window(self, dname, times, window, **kwargs):
@@ -222,9 +239,35 @@ class KMinFetcher(FetcherBase):
         return panel[times] if isinstance(times, str) else panel
 
     @classmethod
-    def fetch_history(self, dname, date, backdays, **kwargs):
-        pass
+    def fetch_history(self, dname, times, date, backdays, **kwargs):
+        """
+        :param times: Time stamps to indicate which minute-bars should be fetched
+        :type times: str or list. This will affect the returned data type
+        :rtype: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
+        """
+
+        if isinstance(self, abc.ABCMeta):
+            date_check = kwargs.get('date_check', False)
+            delay = kwargs.get('delay', 1)
+        else:
+            date_check = kwargs.get('date_check', self.date_check)
+            delay = kwargs.get('delay', self.delay)
+
+        date = util.compliment_datestring(date, -1, date_check)
+        di, date = util.parse_date(DATES, date, -1)
+        di -= delay
+        window = DATES[di-backdays+1: di+1]
+        return self.fetch_window(dname, times, window, **kwargs)
 
     @classmethod
-    def fetch_daily(self, dname, date, offset=0, **kwargs):
-        pass
+    def fetch_daily(self, dname, times, date, offset=0, **kwargs):
+        """
+        :param times: Time stamps to indicate which minute-bars should be fetched
+        :type times: str or list. This will affect the returned data type
+        :rtype: Series(if ``type(times)`` is str) or DataFrame(with ``times`` as the columns)
+        """
+
+        res = self.fetch_history(dname, times, date, 1, delay=offset, **kwargs)
+        if isinstance(times, str):
+            return res.iloc[0]
+        return res.major_xs(res.major_axis[0])
