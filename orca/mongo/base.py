@@ -72,12 +72,11 @@ class FetcherBase(object):
         """Override (**mandatory**) to fetch data within two endpoints.
 
         :param str dname: Name of the data
-        :param startdate: The *left*(may not be the actual) endpoint
+        :param startdate: The *left* (may not be the actual) endpoint
         :type startdate: str, int
         :param enddate: The right endpoint. Default: None, defaults to the last date
         :type enddate: str, int, None
         :param int backdays: This will shift (left/right: >/< 0) the left endpoint. Default: 0
-        :type enddate: str, int or None. Default: None, it will be set the last date
         :rtype: DataFrame
 
         .. seealso:: py:func:`orca.mongo.util.cut_window`
