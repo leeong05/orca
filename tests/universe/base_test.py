@@ -11,11 +11,8 @@ import pandas as pd
 from orca import DATES
 from orca.universe import (
         FilterBase,
-        DataFilter,
         SimpleDataFilter)
-from orca.universe.rules import (
-        mean_gt,
-        mean_lt)
+from orca.universe.rules import mean_gt
 from orca.mongo import QuoteFetcher
 from orca.utils.testing import frames_equal
 
