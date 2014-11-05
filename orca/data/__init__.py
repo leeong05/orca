@@ -1,4 +1,5 @@
 from base import (
+        IOBase,
         SaverBase,
         LoaderBase)
 

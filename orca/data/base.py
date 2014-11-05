@@ -106,6 +106,6 @@ class LoaderBase(IOBase):
         if not os.path.exists(self.cachedir):
             raise IOError('No cache exists with path {0!r}'.format(self.cachedir))
 
-    def load(self, name, **kwargs):
-        """This method should never be called by a data saver."""
+    def save(self, name, data, **kwargs):
+        """This method should never be called by a data loader."""
         raise NotImplementedError
