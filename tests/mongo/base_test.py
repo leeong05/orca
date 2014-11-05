@@ -6,9 +6,6 @@ import logging
 import unittest
 
 import pandas as pd
-from pandas.util.testing import (
-        assert_frame_equal,
-        assert_panel_equal)
 
 from orca.mongo import (
         FetcherBase,
@@ -19,6 +16,9 @@ from orca import (
         DATES,
         SIDS)
 from orca.mongo import util
+from orca.utils.testing import (
+        frames_equal,
+        panels_equal)
 
 class FetcherBaseDummy(FetcherBase):
 
@@ -78,14 +78,6 @@ class KDayFetcherDummy(KDayFetcher):
 KDayFetcherDummy.collection = DB.quote
 
 
-def frames_equal(df1, df2):
-    try:
-        assert_frame_equal(df1, df2)
-        return True
-    except AssertionError:
-        return False
-
-
 class KDayFetcherDummyTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -128,14 +120,6 @@ class KMinFetcherDummy(KMinFetcher):
     pass
 
 KMinFetcherDummy.collection = DB.ts_5min
-
-
-def panels_equal(pl1, pl2):
-    try:
-        assert_panel_equal(pl1, pl2)
-        return True
-    except AssertionError:
-        return False
 
 
 class KMinFetcherDummyTestCase(unittest.TestCase):
