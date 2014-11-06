@@ -56,7 +56,7 @@ class IOBase(object):
         self.logger.critical(msg)
 
     @abc.abstractmethod
-    def save(self, name, data, **kwargs):
+    def _save(self, name, data, **kwargs):
         """Override (**mandatory**) to save data.
 
         :param str name: File name of the saved data on disk
@@ -66,7 +66,16 @@ class IOBase(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def load(self, name, **kwargs):
+    def _delete(self, fname):
+        """Override (**mandatory**) to save data.
+
+        :param str fname: File name on disk
+        """
+
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _load(self, name, **kwargs):
         """Override (**mandatory**) to load data.
 
         :param str name: File name of the saved data on disk
@@ -85,12 +94,54 @@ class SaverBase(IOBase):
 
     def __init__(self, cachedir, **kwargs):
         IOBase.__init__(self, cachedir, **kwargs)
-        if not os.path.exists(self.cachedir):
+        self.plain = kwargs.get('plain', True)
+        if self.plain and not os.path.exists(self.cachedir):
             os.makedirs(self.cachedir)
+        self.params = {}
+        self.datafiles = {}
 
-    def load(self, name, **kwargs):
+    def configure(self, **kwargs):
+        self.params.update(kwargs)
+
+    def _load(self, name, **kwargs):
         """This method should never be called by a data saver."""
+
         raise NotImplementedError
+
+    def _delete(self, fname):
+        """Simple-minded file deletion.
+        Override (**mandatory**) for any non plain file formats.
+        """
+
+        if not self.plain:
+            raise NotImplementedError
+
+        try:
+            os.remove(fname)
+            self.debug('Removed file: {0!r}'.format(fname))
+        except IOError:
+            self.warning('Failed to remove file: {0!r}'.format(fname))
+
+    def __setitem__(self, key, val):
+        """Covenient helper special method.
+
+        :param val: When it is None, this is equivalent to deleting the data file with name ``key``
+        """
+
+        if val is None:
+            del self[key]
+            return
+
+        self._save(key, val)
+
+    def __delitem__(self, key):
+        """Convenient helper special method."""
+
+        if key not in self.datafiles:
+            self.warning('No such data with name {0!r} exists'.format(key))
+            return
+
+        self._delete(self.datafiles[key])
 
 
 class LoaderBase(IOBase):
@@ -105,7 +156,27 @@ class LoaderBase(IOBase):
         IOBase.__init__(self, cachedir, **kwargs)
         if not os.path.exists(self.cachedir):
             raise IOError('No cache exists with path {0!r}'.format(self.cachedir))
+        self.datas = {}
 
-    def save(self, name, data, **kwargs):
+    def configure(self, **kwargs):
+        self.params.update(kwargs)
+
+    def _save(self, name, data, **kwargs):
         """This method should never be called by a data loader."""
+
         raise NotImplementedError
+
+    def _delete(self, fname):
+        """This method should never be called by a data loader."""
+
+        raise NotImplementedError
+
+    def __getitem__(self, key):
+        """Convenient helper function. This avoids loading the data from disk over and over again."""
+
+        if key in self.datas:
+            return self.datas[key]
+
+        data = self._load(key)
+        self.datas[key] = data
+        return data
