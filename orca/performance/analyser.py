@@ -46,8 +46,6 @@ class Analyser(object):
        A ``Series`` of daily returns without any cost considerations.
     """
 
-    LOGGER_NAME = 'performance'
-
     def __init__(self, alpha, **kwargs):
         if isinstance(alpha, BacktestingAlpha):
             alpha = alpha.get_alphas()
