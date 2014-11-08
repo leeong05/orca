@@ -2,7 +2,6 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-from functools import partial
 import abc
 import logging
 
@@ -35,9 +34,9 @@ class FilterBase(object):
     def __init__(self, **kwargs):
         self.logger = logger.get_logger(FilterBase.LOGGER_NAME)
         self.set_debug_mode(kwargs.get('debug_on', True))
-        self.datetime_index = kwargs.get('datetime_index', False)
-        self.reindex = kwargs.get('reindex', False)
-        self.date_check = kwargs.get('date_check', False)
+        self.datetime_index = True
+        self.reindex = True
+        self.date_check = False
         self.__dict__.update(kwargs)
 
     def set_debug_mode(self, debug_on):
@@ -66,17 +65,33 @@ class FilterBase(object):
         """Logs a message with level CRITICAL on the alpha logger."""
         self.logger.critical(msg)
 
-    def format(self, df):
+    @staticmethod
+    def format(df, datetime_index, reindex):
         """Format a dataframe by ``datetime_index`` and ``reindex``."""
-        if self.reindex:
+        if reindex:
             df = df.reindex(columns=SIDS).fillna(False)
-        if self.datetime_index:
+        if datetime_index:
             df.index = date_util.to_datetime(df.index)
             return df.astype(bool)
         return df
 
+    @staticmethod
+    def comply(df, parent=None, value=None):
+        if parent is None:
+            return
+
+        if type(df.index) != type(parent.index):
+            parent = parent.copy()
+            if isinstance(df.index, DatetimeIndex):
+                parent.index = date_util.to_datetime(parent.index)
+            else:
+                parent.index = date_util.to_datestr(parent.index)
+        parent = parent.ix[df.index].fillna(method='bfill').fillna(False)
+        df[~parent] = value
+        return parent
+
     @abc.abstractmethod
-    def filter(self, startdate, enddate=None, parent=None):
+    def filter(self, startdate, enddate=None, parent=None, return_parent=False, **kwargs):
         """Override (**mandatory**) to filter out a universe within two endpoints.
 
         :param startdate: The *left* (may not be the actual) endpoint
@@ -84,12 +99,13 @@ class FilterBase(object):
         :param enddate: The right endpoint. Default: None, defaults to the last date
         :type enddate: str, int, None
         :param DataFrame parent: The super- or parent-universe to be filtered. Default: None
-        :rtype: DataFrame
+        :param boolean return_parent: Whether to return parent along with the universe
+        :rtype: DataFrame(if ``return_parent`` is False), tuple
         """
 
         raise NotImplementedError
 
-    def filter_daily(self, date, offset=True, parent=None):
+    def filter_daily(self, date, offset=0, parent=None, **kwargs):
         """Filter out a universe on a certain day. A helper method.
 
         :param date: The base point
@@ -102,7 +118,8 @@ class FilterBase(object):
         date = mongo_util.compliment_datestring(str(date), -1, self.date_check)
         di, date = mongo_util.parse_date(DATES, date, -1)
         date = DATES[di-offset]
-        return self.filter(date, date).iloc[0]
+
+        return self.filter(date, date, **kwargs).iloc[0]
 
 
 class DataFilter(FilterBase):
@@ -121,7 +138,7 @@ class DataFilter(FilterBase):
     on ``DATES[di]`` is filtered out using datas up to ``DATES[di-1]``
     """
 
-    def __init__(self, datas, synth, window, rule, delay=1, **kwargs):
+    def __init__(self, datas, synth, window, rule=None, delay=1, **kwargs):
         FilterBase.__init__(self, **kwargs)
         self.delay = delay
         self.rule = rule
@@ -136,37 +153,36 @@ class DataFilter(FilterBase):
                    'date_check': self.date_check}
             if len(data) == 3:
                 dct.update(data[2])
-            self.datas.append(partial(fetcherclass(**dct).fetch_window, dname))
+            self.datas.append((fetcherclass, dname, dct))
 
-    def filter(self, startdate, enddate=None, parent=None):
+    def filter(self, startdate, enddate=None, parent=None, return_parent=False, **kwargs):
+        datetime_index = kwargs.get('datetime_index', self.datetime_index)
+        reindex = kwargs.get('reindex', self.reindex)
+        date_check = kwargs.get('date_check', self.date_check)
+
         univ_window = mongo_util.cut_window(
                 DATES,
-                mongo_util.compliment_datestring(str(startdate), -1, self.date_check),
-                mongo_util.compliment_datestring(str(enddate), 1, self.date_check) if enddate is not None else None)
+                mongo_util.compliment_datestring(str(startdate), -1, date_check),
+                mongo_util.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
         si, ei = map(DATES.index, [univ_window[0], univ_window[-1]])
         data_window = DATES[si-self.delay-(self.window-1): ei-self.delay+1]
 
         dfs = []
-        for data in self.datas:
-            df = data(data_window)
+        for cls, dname, kwargs in self.datas:
+            df = cls.fetch_window(dname, data_window, **kwargs)
             df.index = DATES[si-(self.window-1): ei+1]
             dfs.append(df)
         df = self.synth(*dfs)
 
-        if parent is not None:
-            if isinstance(parent.index, DatetimeIndex):
-                parent = parent.ix[date_util.to_datetime(df.index)]
-            else:
-                parent = parent.ix[date_util.to_datestr(df.index)]
-            parent = parent.fillna(method='bfill').fillna(False)
-            df[~parent] = None
+        parent = self.comply(df, parent)
 
         df = self.rule(self.window)(df)
-        if parent is not None:
-            df[~parent] = False
+        self.comply(df, parent, False)
         df = df.iloc[self.window-1:]
         df.index = univ_window
-        return self.format(df)
+        if return_parent is True:
+            return (self.format(parent), self.format(df))
+        return self.format(df, datetime_index=datetime_index, reindex=reindex)
 
 
 class SimpleDataFilter(DataFilter):
@@ -175,5 +191,6 @@ class SimpleDataFilter(DataFilter):
     :param tuple data: Like ``(dname, fetcherclass[, kwargs])``
     """
 
-    def __init__(self, data, window, rule, delay=1, **kwargs):
+    def __init__(self, data, window, rule=None, delay=1, **kwargs):
         DataFilter.__init__(self, [data], lambda x: x, window, rule, delay=delay, **kwargs)
+

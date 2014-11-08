@@ -3,4 +3,7 @@ from database import db as DB
 from database import dates as DATES
 from database import sids as SIDS
 
-DAYS_IN_YEAR = 242
+from constants import (
+        DAYS_IN_YEAR,
+        DAYS_IN_QUARTER,
+        DAYS_IN_MONTH)

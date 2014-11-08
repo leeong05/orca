@@ -5,14 +5,14 @@
 import numpy as np
 import pandas as pd
 
-from orca.mongo import KDayFetcher
-
 from orca import (
         DB,
         DATES)
+from base import KDayFetcher
 
 
 class QuoteFetcher(KDayFetcher):
+    """Class to fetch daily market quote data."""
 
     def __init__(self, **kwargs):
         self.collection = DB.quote
@@ -52,7 +52,6 @@ class QuoteFetcher(KDayFetcher):
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch_window(dname, *args, **kwargs)
 
-        print args
         N, window = args
         ext_window = DATES[DATES.index(window[0])-N+1: DATES.index(window[-1])+1]
         ret = super(QuoteFetcher, self).fetch_window('returns', ext_window, **kwargs)
@@ -96,6 +95,5 @@ class QuoteFetcher(KDayFetcher):
         retN = (1+ret.fillna(0)).cumprod().iloc[-1] - 1.
         retN[ret.iloc[-1].isnull()] = np.nan
         return retN
-
 
 QuoteFetcher.collection = DB.quote

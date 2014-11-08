@@ -44,9 +44,9 @@ db.barra_S_exposure.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: tr
 db.barra_S_exposure.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_D_returns.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})
-db.barra_D_returns.ensureIndex({dname: 1, factor: 1}, {unique: true, dropDups: true, background: true})
+db.barra_D_returns.ensureIndex({factor: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.barra_S_returns.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})
-db.barra_S_returns.ensureIndex({dname: 1, factor: 1}, {unique: true, dropDups: true, background: true})
+db.barra_S_returns.ensureIndex({factor: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_D_covariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})
 db.barra_S_covariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})

@@ -8,10 +8,10 @@ import logging
 import pandas as pd
 
 from orca import logger
-from orca.mongo import util
 from orca import (
         DATES,
         SIDS)
+import util
 
 class FetcherBase(object):
     """Base class for mongo fetchers.
