@@ -8,7 +8,8 @@ import pandas as pd
 
 from orca.data import (
         SaverBase,
-        LoaderBase)
+        LoaderBase,
+        )
 
 
 class CSVSaver(SaverBase):

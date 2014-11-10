@@ -11,8 +11,7 @@ from orca import logger
 class IOBase(object):
     """Base class for data savers/loaders.
 
-    :param: str cachedir: Cache diretory path
-    :param boolean debug_on: Enable/Disable debug level messages. Default: True
+    :param str cachedir: Cache diretory path
 
     .. note::
 
