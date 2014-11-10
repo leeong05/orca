@@ -5,12 +5,14 @@
 import abc
 import logging
 
+import pandas as pd
 from pandas.tseries.index import DatetimeIndex
 
 from orca import logger
 from orca import (
         DATES,
-        SIDS)
+        SIDS,
+        )
 from orca.mongo import util as mongo_util
 from orca.utils import date as date_util
 
@@ -22,7 +24,7 @@ class FilterBase(object):
     :param boolean reindex: Whether to use full sids as columns in DataFrame. Default: False
     :param boolean date_check: Whethter to check if passed date-related parameters are valid. Default: False
 
-    .. notes::
+    .. note::
 
        This is a base class and should not be used directly.
     """
@@ -100,9 +102,9 @@ class FilterBase(object):
         :type enddate: str, int, None
         :param DataFrame parent: The super- or parent-universe to be filtered. Default: None
         :param boolean return_parent: Whether to return parent along with the universe
-        :rtype: DataFrame(if ``return_parent`` is False), tuple
-        """
+        :returns: DataFrame(if ``return_parent`` is False), or a tuple with the 2nd element the formatted ``parent`` DataFrame
 
+        """
         raise NotImplementedError
 
     def filter_daily(self, date, offset=0, parent=None, **kwargs):
@@ -112,34 +114,31 @@ class FilterBase(object):
         :type date: str, int
         :param int offset: The offset w.r.t. the ``date``. The actual date is calculated from ``date`` and ``offset``. Default: 0
         :param DataFrame parent: The super- or parent-universe to be filtered. Default: None
-        :rtype: Series
-        """
+        :returns: Series
 
+        """
         date = mongo_util.compliment_datestring(str(date), -1, self.date_check)
         di, date = mongo_util.parse_date(DATES, date, -1)
         date = DATES[di-offset]
 
+        if isinstance(parent, pd.Series):
+            parent = pd.DataFrame({date: parent}).T
         return self.filter(date, date, **kwargs).iloc[0]
 
 
 class DataFilter(FilterBase):
     """Base class for filters based on data(s).
 
-    :param list datas: Its element is 2/3-tuple as (dname, fetcherclass[, kwargs]). The purpose is to
-    instantiate a fetcher object by calling ``fetcherclass(**kwargs)`` and then use the fetching methods
-    to fetch data ``dname``
+    :param list datas: Its element is 2/3-tuple as (dname, fetcherclass[, kwargs]). The purpose is to instantiate a fetcher object by calling ``fetcherclass(**kwargs)`` and then use the fetching methods to fetch data ``dname``
     :param function synth: Function to synthesis these fetched datas
-    :param int window: Used as in ``pd.rolling_apply(arg, window, ...)``. It is also used in determining
-    data fetching window, thus is worthy to be seperated from ``rule``
-    :param function rule: When called in ``rule(window)``, it returns a function that can be applied on
-    DataFrame objects. Thus ``rule(window)(df)`` should be equivalent to
-    ``pd.rolling_apply(df, window, func, ...)``
-    :param int delay: Delay of the underlying data. Default: 1, which means, loosely speaking, universe
-    on ``DATES[di]`` is filtered out using datas up to ``DATES[di-1]``
+    :param int window: Used as in ``pd.rolling_apply(arg, window, ...)``. It is also used in determining data fetching window, thus is worthy to be seperated from ``rule``
+    :param function rule: When called in ``rule(window)``, it returns a function that can be applied on DataFrame objects. Thus ``rule(window)(df)`` should be equivalent to ``pd.rolling_apply(df, window, func, ...)``
+    :param int delay: Delay of the underlying data. Default: 1, which means, loosely speaking, universe on ``DATES[di]`` is filtered out using datas up to ``DATES[di-1]``
+
     """
 
     def __init__(self, datas, synth, window, rule=None, delay=1, **kwargs):
-        FilterBase.__init__(self, **kwargs)
+        super(DataFilter, self).__init__(**kwargs)
         self.delay = delay
         self.rule = rule
         self.window = window
@@ -153,7 +152,7 @@ class DataFilter(FilterBase):
                    'date_check': self.date_check}
             if len(data) == 3:
                 dct.update(data[2])
-            self.datas.append((fetcherclass, dname, dct))
+            self.datas.append((fetcherclass(**dct), dname))
 
     def filter(self, startdate, enddate=None, parent=None, return_parent=False, **kwargs):
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
@@ -168,8 +167,8 @@ class DataFilter(FilterBase):
         data_window = DATES[si-self.delay-(self.window-1): ei-self.delay+1]
 
         dfs = []
-        for cls, dname, kwargs in self.datas:
-            df = cls.fetch_window(dname, data_window, **kwargs)
+        for fetcher, dname in self.datas:
+            df = fetcher.fetch_window(dname, data_window)
             df.index = DATES[si-(self.window-1): ei+1]
             dfs.append(df)
         df = self.synth(*dfs)
@@ -189,8 +188,8 @@ class SimpleDataFilter(DataFilter):
     """Base class for filters based on a **single** data.
 
     :param tuple data: Like ``(dname, fetcherclass[, kwargs])``
+
     """
 
     def __init__(self, data, window, rule=None, delay=1, **kwargs):
-        DataFilter.__init__(self, [data], lambda x: x, window, rule, delay=delay, **kwargs)
-
+        super(SimpleDataFilter, self).__init__([data], lambda x: x, window, rule, delay=delay, **kwargs)

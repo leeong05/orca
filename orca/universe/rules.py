@@ -14,6 +14,11 @@ def is_finite():
         return lambda df: ~df.isnull()
     return func
 
+def isin(x):
+    def func(*args):
+        return lambda df: df.isin(x)
+    return func
+
 def min_gt(x):
     def func(window):
         return lambda df: pd.rolling_min(df, window) > x
