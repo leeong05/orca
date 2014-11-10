@@ -1,5 +1,5 @@
 """
-.. moduleauthor:: Li, Wang <wangziqi@foreseefunc.om>
+.. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
 import numpy as np
@@ -8,30 +8,36 @@ import pandas as pd
 from orca import DAYS_IN_YEAR
 
 def drawdown(ser):
-    """Calculate drawdown on a given returns series.
-
-    :returns: start, end, drawdown
-    :rtype: tuple
     ser = ser.cumsum()
-    """
-
-    ser = ser.cumsum()
-    end = (pd.expanding_max(ser) - ser).argmax()
+    end = (pd.expanding_max(ser)-ser).argmax()
     start = ser.ix[:end].argmax()
-    dd = ser[start] - ser[end]
-    return (start, end, dd)
+
+    return start, end, ser[start]-ser[end]
 
 def annualized_returns(ser):
-    """Calculate annualized returns."""
-
-    return ser.mean() / len(ser) * DAYS_IN_YEAR * 100
+    return ser.mean() * DAYS_IN_YEAR / ser.count()
 
 def perwin(ser):
-    """Calculate winning percentage."""
-
-    return (ser > 0).sum() * 100. / len(ser)
+    return (ser > 0).sum() * 100. / ser.count()
 
 def IR(ser):
-    """Calculate IR."""
+    return ser.mean() / ser.std()
 
+def Sharpe(ser):
     return ser.mean() / ser.std() * np.sqrt(DAYS_IN_YEAR)
+
+def resample(ser, how='mean', by=None):
+    """Helper function.
+
+    :param str how: One of the following: ('mean', 'ir', 'sr', 'count'). Default: 'mean'
+
+    """
+
+    if how == 'ir':
+        return IR(ser) if by is None else ser.resample(by, how=IR)
+    elif how == 'sr':
+        return Sharpe(ser) if by is None else ser.resample(by, how=Sharpe)
+    elif how == 'count':
+        return ser.count() if by is None else ser.resample(by, how=lambda x: x.count())
+    else:
+        return ser.mean() if by is None else ser.resample(by, how='mean')
