@@ -8,6 +8,8 @@ import logging
 import pandas as pd
 
 from orca import logger
+from orca.operation.api import format
+
 
 class AlphaBase(object):
     """Base class for alphas.
@@ -33,40 +35,34 @@ class AlphaBase(object):
         **This is the sole interface of an alpha class**.
 
         :param str date: a 8-length date string like ``yyyymmdd``.
-        """
 
+        """
         raise NotImplementedError
 
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level messages in the alpha.
         This is enabled by default."""
-
         level = logging.DEBUG if debug_on else logging.INFO
         self.logger.setLevel(level)
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the alpha logger."""
-
         self.logger.debug(msg)
 
     def info(self, msg):
         """Logs a message with level INFO on the alpha logger."""
-
         self.logger.info(msg)
 
     def warning(self, msg):
         """Logs a message with level WARNING on the alpha logger."""
-
         self.logger.warning(msg)
 
     def error(self, msg):
         """Logs a message with level ERROR on the alpha logger."""
-
         self.logger.error(msg)
 
     def critical(self, msg):
         """Logs a message with level CRITICAL on the alpha logger."""
-
         self.logger.critical(msg)
 
 
@@ -79,18 +75,16 @@ class BacktestingAlpha(AlphaBase):
     """
 
     def __init__(self, *args, **kwargs):
-        AlphaBase.__init__(self, **kwargs)
+        super(BacktestingAlpha, self).__init__(**kwargs)
         self.alphas = {}
         self._alphas = None
 
     def get_alphas(self):
         """Return the generated alphas in a DataFrame."""
-
         if self._alphas is not None:
             return self._alphas
 
-        df = pd.DataFrame(self.alphas).T
-        df.index = pd.to_datetime(df.index)
+        df = format(pd.DataFrame(self.alphas).T)
         self._alphas = df
         return df
 
@@ -104,4 +98,4 @@ class ProductionAlpha(AlphaBase):
     """
 
     def __init__(self, *args, **kwargs):
-        AlphaBase.__init__(self, **kwargs)
+        super(ProductionAlpha, self).__init__(**kwargs)
