@@ -8,14 +8,12 @@ from calendar import monthrange
 
 def is_sorted(l, ascending=True):
     """Check if a list is sorted."""
-
     if ascending:
         return all(l[i] <= l[i+1] for i in xrange(len(l)-1))
     return all(l[i] >= l[i+1] for i in xrange(len(l)-1))
 
 def find_ge(l, x):
     """Find the leftmost item in the sorted(**ascending**) list >= ``x``."""
-
     i = bisect.bisect_left(l, x)
     if i != len(l):
         return i, l[i]
@@ -23,7 +21,6 @@ def find_ge(l, x):
 
 def find_le(l, x):
     """Find the rightmost item in the sorted(**ascending**) list <= ``x``"""
-
     i = bisect.bisect_right(l, x)
     if i:
         return i-1, l[i-1]
@@ -33,16 +30,12 @@ def parse_date(dates, date, direction=1):
     """Find the item in ``dates`` that is closest(specified by ``direction``) to ``date``
 
     :param list dates: The pre-defined list, must be sorted in ascending order
-    :param date: ``date`` may be already in ``dates``; otherwise, it will be parsed into
-    another item in the list
-    :param int direction: Default: 1
-        * 1: the desired item >= ``date``
-        * -1: the desired item <= ``date``
+    :param date: ``date`` may be already in ``dates``; otherwise, it will be parsed into another item in the list
+    :param int direction: 1(default): the desired item >= ``date``;-1: the desired item <= ``date``
 
-    :return: (i, dates[i]), ``i`` is the index of the desired item in ``dates``
-    :rtype: tuple
+    :returns: (i, dates[i]), ``i`` is the index of the desired item in ``dates``
+
     """
-
     if date in dates:
         return dates.index(date), date
 
@@ -59,8 +52,8 @@ def compliment_datestring(datestr, direction=-1, date_check=False):
         * -1(default): compliment as the minimal possible
         * 1: compliment as the maximal possible
     :param boolean date_check: Whether to check if ``datestr`` is a valid date string. Default: False
-    """
 
+    """
     if len(datestr) == 8:
         if not date_check:
             return datestr
@@ -88,13 +81,13 @@ def cut_window(dates, startdate, enddate=None, backdays=0):
     """Cut out the portion of a list specified by left and right endpoints.
 
     :param list dates: The pre-defined list, must be sorted in ascending order
-    :param startdate: The *left*(may not be the actual) cut-out point
+    :param startdate: The *left* (may not be the actual) cut-out point
     :param enddate: The right cut-out point. Default: None, defaults to the last item in the list
     :param int backdays: This will shift (left/right: >/< 0) the left cut-out point. Default: 0
-    :return: The cut-out portion
+    :returns: The cut-out portion
     :rtype: list
-    """
 
+    """
     startindex, startdate = parse_date(dates, startdate, 1)
     if startindex < backdays:
         raise ValueError('Cannot left-shift {0!r} with step {1} in the list'.format(startdate, backdays))
@@ -110,9 +103,9 @@ def generate_timestamps(starttime, endtime, step, end_excluded=True):
 
     :param str starttime, endtime: Must be 6-length time string in the format 'hhmmss'
     :param int step: Number of **seconds** as step
-    :param boolean end_excluded: Whether the ``endtime`` itself should be excluded from the
-    result. Default: True
-    :return: Python generator
+    :param boolean end_excluded: Whether the ``endtime`` itself should be excluded from the result. Default: True
+    :returns: Python generator
+
     """
 
     starttime = time(int(starttime[:2]), int(starttime[2:4]), int(starttime[4:6]))
