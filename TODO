@@ -1,0 +1,26 @@
+Please see file 'orca/alpha/base' and find the '#TODO' label.
+
+The idea is to run a **single** alpha in parallel by splitting simulation along date axis.
+
+For example, paste the following code into a .py file:
+
+.. code-block:: python
+
+   from orca.mongo.quote import QuoteFetcher
+
+   startdate, enddate = '20140101', '20141017'
+   close = QuoteFetcher(datetime_index=True, reindex=True).fetch('close', startdate=startdate, enddate=enddate)
+
+   from orca.alpha.base import BacktestingAlpha
+
+   class MyAlpha(BacktestingAlpha):
+
+       def generate(self, date):
+           self.alphas[date] = close.ix[date]
+
+   if __name__ == '__main__':
+       alpha = MyAlpha()
+       alpha.run(startdate, enddate, parallel=True)
+
+       from orca.utils.testing import frames_equal
+       assert frames_equal(alpha.get_alphas(), close)
