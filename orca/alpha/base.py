@@ -7,7 +7,9 @@ import logging
 
 import pandas as pd
 
+from orca import DATES
 from orca import logger
+from orca.mongo import util
 from orca.operation.api import format
 
 
@@ -76,6 +78,7 @@ class BacktestingAlpha(AlphaBase):
 
     def __init__(self, *args, **kwargs):
         super(BacktestingAlpha, self).__init__(**kwargs)
+        self.dates = None
         self.alphas = {}
         self._alphas = None
 
@@ -87,6 +90,20 @@ class BacktestingAlpha(AlphaBase):
         df = format(pd.DataFrame(self.alphas).T)
         self._alphas = df
         return df
+
+    def run(self, startdate=None, enddate=None, parallel=False):
+        if enddate[:5].to_lower() == 'today':
+            enddate = DATES[-1-int(enddate[6:])]
+
+        self.dates = util.cut_window(
+                DATES,
+                util.compliment_datestring(str(startdate), -1, True),
+                util.compliment_datestring(str(enddate), 1, True))
+        if not parallel:
+            for date in self.dates:
+                self.generate(date)
+            return
+        #TODO
 
 
 class ProductionAlpha(AlphaBase):
