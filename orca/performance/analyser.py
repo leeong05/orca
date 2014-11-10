@@ -5,21 +5,19 @@
 import numpy as np
 import pandas as pd
 
-from orca import (
-        SIDS,
-        DAYS_IN_YEAR)
-from orca.alpha import BacktestingAlpha
-from orca.mongo import QuoteFetcher
-from orca.utils import date
+from orca.utils import date as date_util
+from orca.operation import api
+
 import util
+
 
 class Analyser(object):
     """Class for alpha performance analysis.
 
-    :param alpha: Alpha to be analysed
-    :type alpha: DataFrame or :py:class:`orca.alpha.BacktestingAlpha`. For the latter,
-    its method :py:meth:`orca.alpha.BacktestingAlpha.get_alphas` is called to return a
-    DataFrame
+    :param DataFrame alpha: Alpha to be analysed. Be sure to properly format the dataframe as in :py:func:`orca.operation.api.format`
+    :param str index: Benchmark index, currently only supports: 'HS300', 'CS500', 'CS800'. Default: 'HS300'
+    :param DataFrame data: Daily returns data properly formatted. Default: None
+    :param Series index_data: Index returns series that has the same index as ``alpha``. Default: None
 
     .. py:attribute:: IC
 
@@ -31,11 +29,11 @@ class Analyser(object):
 
     .. py:attribute:: AC
 
-       A ``dict`` with key being the number of days, value being the Auto-Correlation time series.
+       A ``dict`` with key being the number of days, value being the Auto-corrwithelation time series.
 
     .. py:attribute:: rAC
 
-       A ``dict`` with key being the number of days, value being the rank Auto-Correlation time series.
+       A ``dict`` with key being the number of days, value being the rank Auto-corrwithelation time series.
 
     .. py:attribute:: turnover
 
@@ -46,23 +44,18 @@ class Analyser(object):
        A ``Series`` of daily returns without any cost considerations.
     """
 
-    def __init__(self, alpha, **kwargs):
-        if isinstance(alpha, BacktestingAlpha):
-            alpha = alpha.get_alphas()
-        else:
-            alpha.index = date.to_datetime(alpha.index)
-        self.alpha = alpha.reindex(columns=SIDS, copy=True)
-        # scale alpha so that on each day, the absolute value sum is 1.0
-        self.alpha = self.alpha.div(np.abs(self.alpha).sum(axis=1), axis=0)
-        self.dates = date.to_datestr(self.alpha.index)
-        self.quote = QuoteFetcher(datetime_index=True, reindex=True)
+    def __init__(self, alpha, data, index_data=None, **kwargs):
+        self.alpha = api.scale(alpha)
+        self.dates = date_util.to_datestr(self.alpha.index)
 
         self.IC, self.rIC = {}, {}
         self.AC, self.rAC = {}, {}
         self.turnover = None
         self.returns = None
 
-        self.__dict__.update(kwargs)
+        self.data = data.ix[self.alpha.index]
+        if index_data is not None:
+            self.index_data = index_data.ix[self.alpha.index]
 
     def get_turnover(self):
         if self.turnover is not None:
@@ -78,13 +71,13 @@ class Analyser(object):
         if not rank and n in self.IC:
             return self.IC[n]
 
-        returns = self.quote.fetch_window('returnsN', n, self.dates)
         shifted = self.alpha.shift(n)
+        returns = pd.rolling_apply(self.data, n, lambda x: (1+x).cumprod()[-1] - 1.)
         if not rank:
-            ic = returns.corr(shifted, axis=1).iloc[n:]
+            ic = returns.corrwith(shifted, axis=1).iloc[n:]
             self.IC[n] = ic
             return ic
-        ic = returns.rank(axis=1).corr(shifted.rank(axis=1), axis=1).iloc[n:]
+        ic = returns.rank(axis=1).corrwith(shifted.rank(axis=1), axis=1).iloc[n:]
         self.rIC[n] = ic
         return ic
 
@@ -95,30 +88,41 @@ class Analyser(object):
             return self.AC[n]
 
         shifted = self.alpha.shift(n)
+        alpha = self.alpha.copy()
+        shifted[shifted.isnull() & ~alpha.isnull()] = 0
+        alpha[~shifted.isnull() & alpha.isnull()] = 0
         if not rank:
-            ac = self.alpha.corr(shifted, axis=1).iloc[n:]
+            ac = alpha.corrwith(shifted, axis=1).iloc[n:]
             self.AC[n] = ac
             return ac
-        ac = self.alpha.rank(axis=1).corr(shifted.rank(axis=1), axis=1).iloc[n:]
+        ac = alpha.rank(axis=1).corrwith(shifted.rank(axis=1), axis=1).iloc[n:]
         self.rAC[n] = ac
         return ac
 
-    def get_returns(self, cost=0.001):
+    def get_returns(self, cost=0.001, index=False):
         """
-        :param float cost: Trading cost. Default: 0.001, i.e. with each 1-dollar buy or sell,
-        there will be a 0.001 charge
+        :param float cost: Trading cost. Default: 0.001, i.e. with each 1-dollar buy or sell, there will be a 0.001 charge
+        :param boolean index: Whether we measure returns against ``self.index``. Default: False
+
         """
 
         if self.returns is None:
-            returns = self.quote.fetch_window('returns', self.dates)
+            if self.data is not None:
+                returns = self.data
+            else:
+                returns = self.quote.fetch_window('returns', self.dates)
+                self.data = returns
             self.returns = (returns * self.alpha.shift(1)).sum(axis=1).iloc[1:]
 
+        if index:
+            index_returns = self.index_data
+
         if cost == 0:
-            return self.returns
+            return self.returns-index_returns if index else self.returns
 
-        return self.returns - cost * self.get_turnover()
+        return (self.returns-index_returns if index else self.returns) - cost * self.get_turnover()
 
-    def get_returns_metric(self, how, cost=0.001, by=None):
+    def get_returns_metric(self, how, cost=0.001, by=None, index=False):
         """Calculated metrics based on the daily returns time-series.
 
         :param function how: Used in resampling method
@@ -127,79 +131,112 @@ class Analyser(object):
            * 'A': Yearly
            * 'Q': Quarterly
            * 'M': Monthly
+        :param boolean index: Whether we measure returns against ``self.index``. Default: False
         """
-        returns = self.get_returns(cost=cost)
+        returns = self.get_returns(cost=cost, index=index)
 
         if by is None:
             return how(returns)
 
         return returns.resample(by, how=how)
 
-    def get_drawdown(self, cost=0.001, by=None):
-        return self.get_returns_metric(util.drawdown, cost=cost, by=by)
+    def get_drawdown(self, cost=0.001, by=None, index=False):
+        return self.get_returns_metric(util.drawdown, cost=cost, by=by, index=index)
 
-    def get_annualized_returns(self, cost=0.001, by=None):
-        return self.get_returns_metric(util.annualized_returns, cost=cost, by=by)
+    def get_annualized_returns(self, cost=0.001, by=None, index=False):
+        return self.get_returns_metric(util.annualized_returns, cost=cost, by=by, index=index)
 
-    def get_perwin(self, cost=0.001, by=None):
-        return self.get_returns_metric(util.perwin, cost=cost, by=by)
+    def get_perwin(self, cost=0.001, by=None, index=False):
+        return self.get_returns_metric(util.perwin, cost=cost, by=by, index=index)
 
-    def get_returns_ir(self, cost=0.001, by=None):
-        return self.get_returns_metric(util.IR, cost=cost, by=by)
+    def get_returns_sharpe(self, cost=0.001, by=None, index=False):
+        return self.get_returns_metric(util.Sharpe, cost=cost, by=by, index=index)
 
-    def summary_ir(self, by=None):
+    def summary_ir(self, by=None, freq='daily'):
         """Returns a IR-related metrics summary series(``by`` is None, default)/dataframe.
 
+        :param str freq: Which frequency of statistics is of interest?
+           * 'daily'(Default): only returns IR1, rIR1
+           * 'weekly': returns also IR5, rIR5
+           * 'monthly': returns also IR20, rIR20
+
         These metrics are:
-        * IR1: mean(IC(1)) / std(IC(1))
-        * IR5: mean(IC(5)) / std(IC(5))
-        * IR20: mean(IC(20)) / std(IC(20))
-        * rIR1: mean(rank IC(1)) / std(rank IC(1))
-        * rIR5: mean(rank IC(5)) / std(rank IC(5))
-        * rIR20: mean(rank IC(20)) / std(rank IC(20))
+           * IR1: mean(IC(1)) / std(IC(1))
+           * IR5: mean(IC(5)) / std(IC(5))
+           * IR20: mean(IC(20)) / std(IC(20))
+           * rIR1: mean(rank IC(1)) / std(rank IC(1))
+           * rIR5: mean(rank IC(5)) / std(rank IC(5))
+           * rIR20: mean(rank IC(20)) / std(rank IC(20))
         """
 
-        index = ['IR1', 'IR5', 'IR20', 'rIR1', 'rIR5', 'rIR20']
-        res = {
-                'IR1': self.resample(self.get_ic(1), how='ir', by=by),
-                'IR5': self.resample(self.get_ic(5), how='ir', by=by),
-                'IR20': self.resample(self.get_ic(20), how='ir', by=by),
-                'rIR1': self.resample(self.get_ic(1, rank=True), how='ir', by=by),
-                'rIR5': self.resample(self.get_ic(5, rank=True), how='ir', by=by),
-                'rIR20': self.resample(self.get_ic(20, rank=True), how='ir', by=by),
+        index = ['days', 'IR1', 'rIR1']
+        tmp = {
+                'days': util.resample(self.get_ic(1), how='count', by=by),
+                'IR1': util.resample(self.get_ic(1), how='ir', by=by),
+                'rIR1': util.resample(self.get_ic(1, rank=True), how='ir', by=by),
                 }
-        res = pd.Series(res) if by is None else pd.DataFrame(res).T
-        res.index = index
+
+        if freq == 'weekly':
+            index.extend(['IR5', 'rIR5'])
+            tmp.update({
+                'IR5': util.resample(self.get_ic(5), how='ir', by=by),
+                'rIR5': util.resample(self.get_ic(5, rank=True), how='ir', by=by),
+                })
+        elif freq == 'monthly':
+            index.extend(['IR5', 'rIR5', 'IR20', 'rIR20'])
+            tmp.update({
+                'IR5': util.resample(self.get_ic(5), how='ir', by=by),
+                'rIR5': util.resample(self.get_ic(5, rank=True), how='ir', by=by),
+                'IR20': util.resample(self.get_ic(20), how='ir', by=by),
+                'rIR20': util.resample(self.get_ic(20, rank=True), how='ir', by=by),
+                })
+        res = pd.Series(tmp) if by is None else pd.DataFrame(tmp).T
+        res = res.reindex(index)
         return res
 
-    def summary_turnover(self, by=None):
+    def summary_turnover(self, by=None, freq='daily'):
         """Returns a turnover-related metrics summary series(``by`` is None, default)/dataframe.
 
+        :param str freq: Which frequency of statistics is of interest?
+           * 'daily'(Default): only returns turnover, AC1, rAC1
+           * 'weekly': returns also AC5, rAC5
+           * 'monthly': returns also AC20, rAC20
+
         These metrics are:
-        * turnover: average daily turnover
-        * AC1: average daily 1-day auto-correlation
-        * AC5: average daily 5-day auto-correlation
-        * AC20: average daily 20-day auto-correlation
-        * rAC1: average daily 1-day rank auto-correlation
-        * rAC5: average daily 5-day rank auto-correlation
-        * rAC20: average daily 20-day rank auto-correlation
+           * turnover: average daily turnover
+           * AC1: average daily 1-day auto-corrwithelation
+           * AC5: average daily 5-day auto-corrwithelation
+           * AC20: average daily 20-day auto-corrwithelation
+           * rAC1: average daily 1-day rank auto-corrwithelation
+           * rAC5: average daily 5-day rank auto-corrwithelation
+           * rAC20: average daily 20-day rank auto-corrwithelation
         """
 
-        index = ['turnover', 'AC1', 'AC5', 'AC20', 'rAC1', 'rAC5', 'rAC20']
-        res = {
-                'turnover': self.resample(self.get_turnover(), how='mean', by=by),
-                'AC1': self.resample(self.get_ac(1), how='mean', by=by),
-                'AC5': self.resample(self.get_ac(5), how='mean', by=by),
-                'AC20': self.resample(self.get_ac(20), how='mean', by=by),
-                'rAC1': self.resample(self.get_ac(1), how='mean', by=by),
-                'rAC5': self.resample(self.get_ac(1), how='mean', by=by),
-                'rAC20': self.resample(self.get_ac(1), how='mean', by=by),
+        index = ['turnover', 'AC1', 'rAC1']
+        tmp = {
+                'turnover': util.resample(self.get_turnover(), how='mean', by=by),
+                'AC1': util.resample(self.get_ac(1), how='mean', by=by),
+                'rAC1': util.resample(self.get_ac(1, rank=True), how='mean', by=by),
                 }
-        res = pd.Series(res) if by is None else pd.DataFrame(res).T
-        res.index = index
+        if freq == 'weekly':
+            index.extend(['AC5', 'rAC5'])
+            tmp.update({
+                'AC5': util.resample(self.get_ac(5), how='mean', by=by),
+                'rAC5': util.resample(self.get_ac(5, rank=True), how='mean', by=by),
+                })
+        elif freq == 'monthly':
+            index.extend(['AC5', 'rAC5', 'AC20', 'rAC20'])
+            tmp.update({
+                'AC5': util.resample(self.get_ac(5), how='mean', by=by),
+                'rAC5': util.resample(self.get_ac(5, rank=True), how='mean', by=by),
+                'AC20': util.resample(self.get_ac(20), how='mean', by=by),
+                'rAC20': util.resample(self.get_ac(20, rank=True), how='mean', by=by),
+                })
+        res = pd.Series(tmp) if by is None else pd.DataFrame(tmp).T
+        res = res.reindex(index)
         return res
 
-    def summary_returns(self, cost=0.001, by=None):
+    def summary_returns(self, cost=0.001, by=None, index=False):
         """Returns a turnover-related metrics summary series(``by`` is None, default)/dataframe.
 
         These metrics are:
@@ -213,31 +250,33 @@ class Analyser(object):
         * perwin: winning percentage
         """
 
-        index = ['annualized_returns_0', 'annualized_returns', 'SR_0', 'SR',
-                'drawdown', 'ddstart', 'ddend', 'perwin']
         if by is None:
-            ddstart, ddend, drawdown = self.get_drawdown(cost=cost)
+            ddstart, ddend, drawdown = self.get_drawdown(cost=cost, index=index)
             ddstart, ddend = ddstart.strftime('%Y%m%d'), ddend.strftime('%Y%m%d')
         else:
-            temp = self.get_drawdown(cost=cost, by=by)
+            temp = self.get_drawdown(cost=cost, by=by, index=index)
             ddstart = temp.apply(lambda x: x[0].strftime('%Y%m%d'))
             ddend = temp.apply(lambda x: x[1].strftime('%Y%m%d'))
             drawdown = temp.apply(lambda x: x[2])
 
         res = {
-                'annualized_returns_0': self.get_annualized_returns(cost=0, by=by),
-                'annualized_returns': self.get_annualized_returns(cost=cost, by=by),
-                'SR_0': self.resample(self.get_returns(cost=0), how='sr', by=by),
-                'SR': self.resample(self.get_returns(cost=cost), how='sr', by=by),
+                'annualized_returns_0': self.get_annualized_returns(cost=0, by=by, index=index),
+                'annualized_returns': self.get_annualized_returns(cost=cost, by=by, index=index),
+                'SR_0': self.get_returns_sharpe(cost=0, by=by, index=index),
+                'SR': self.get_returns_sharpe(cost=cost, by=by, index=index),
+                'perwin': self.get_perwin(cost=cost, by=by, index=index),
                 'drawdown': drawdown,
                 'ddstart': ddstart,
                 'ddend': ddend,
                 }
+        print res['perwin']
         res = pd.Series(res) if by is None else pd.DataFrame(res).T
-        res.index = index
+        index = ['annualized_returns_0', 'annualized_returns', 'SR_0', 'SR',
+                'drawdown', 'ddstart', 'ddend', 'perwin']
+        res = res.reindex(index)
         return res
 
-    def summary(self, cost=0.001, by=None, group='ir'):
+    def summary(self, cost=0.001, by=None, group='ir', freq='daily'):
         """Returns a summary series(``by`` is None, default)/dataframe.
 
         :param str group: Which aspect to be summarized
@@ -245,37 +284,19 @@ class Analyser(object):
            * 'turnover': Turnover-related metrics
            * 'returns': Returns/PNL-related metrics
            * 'all': All metrics in the above 3 groups
+        :param str freq: Which frequency of statistics is of interest?
+
         """
 
         if group == 'ir':
-            return self.summary_ir(by=by)
+            return self.summary_ir(by=by, freq=freq)
         elif group == 'turnover':
-            return self.summary_turnover(by=by)
+            return self.summary_turnover(by=by, freq=freq)
         elif group == 'returns':
             return self.summary_returns(cost=cost, by=by)
         else:
             return pd.concat([
-                self.summary_ir(by=by),
-                self.summary_turnover(by=by),
+                self.summary_ir(by=by, freq=freq),
+                self.summary_turnover(by=by, freq=freq),
                 self.summary_returns(cost=cost, by=by)
                 ])
-
-    @staticmethod
-    def resample(ser, how='mean', by=None):
-        """Helper function.
-
-        :param string how:
-           *'mean': calculate mean
-           *'ir': calculate mean/std
-           *'sr': calculate mean/std*sqrt(DAYS_IN_YEAR)
-        """
-
-        if how == 'ir':
-            return ser.mean() / ser.std() if by is None \
-                    else ser.resample(by, how=lambda x: x.mean()/x.std())
-        elif how == 'sr':
-            return ser.mean() / ser.std() * np.sqrt(DAYS_IN_YEAR) if by is None \
-                    else ser.resample(by, how=lambda x: x.mean()/x.std()*np.sqrt(DAYS_IN_YEAR))
-        else:
-            return ser.mean() if by is None \
-                    else ser.resample(by, how='mean')
