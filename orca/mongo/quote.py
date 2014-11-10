@@ -7,7 +7,9 @@ import pandas as pd
 
 from orca import (
         DB,
-        DATES)
+        DATES,
+        )
+
 from base import KDayFetcher
 
 
@@ -16,15 +18,14 @@ class QuoteFetcher(KDayFetcher):
 
     def __init__(self, **kwargs):
         self.collection = DB.quote
-        KDayFetcher.__init__(self, **kwargs)
+        super(QuoteFetcher, self).__init__(**kwargs)
 
-    @classmethod
     def fetch(self, dname, *args, **kwargs):
         """When ``dname`` is 'returnsN', ``args`` should be a tuple ``(N, startdate[, enddate[, backdays]])``
 
         :param int N: Number of days to calculate returns
-        """
 
+        """
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch(dname, *args, **kwargs)
 
@@ -42,13 +43,12 @@ class QuoteFetcher(KDayFetcher):
         retN[ret.isnull()] = np.nan
         return retN.iloc[N-1:]
 
-    @classmethod
     def fetch_window(self, dname, *args, **kwargs):
         """When ``dname`` is 'returnsN', ``args`` should be a tuple ``(N, window)``.
 
         :param int N: Number of days to calculate returns
-        """
 
+        """
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch_window(dname, *args, **kwargs)
 
@@ -59,13 +59,12 @@ class QuoteFetcher(KDayFetcher):
         retN[ret.isnull()] = np.nan
         return retN.iloc[N-1:]
 
-    @classmethod
     def fetch_history(self, dname, *args, **kwargs):
         """When ``dname`` is 'returnsN', ``args`` should be a tuple ``(N, date, backdays)``.
 
         :param int N: Number of days to calculate returns
-        """
 
+        """
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch_history(dname, *args, **kwargs)
 
@@ -75,13 +74,12 @@ class QuoteFetcher(KDayFetcher):
         retN[ret.isnull()] = np.nan
         return retN.iloc[N-1:]
 
-    @classmethod
     def fetch_daily(self, dname, *args, **kwargs):
         """When ``dname`` is 'returnsN', ``args`` should be a tuple ``(N, date[, offset])``
 
         :param int N: Number of days to calculate returns
-        """
 
+        """
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch_daily(dname, *args, **kwargs)
 
@@ -95,5 +93,3 @@ class QuoteFetcher(KDayFetcher):
         retN = (1+ret.fillna(0)).cumprod().iloc[-1] - 1.
         retN[ret.iloc[-1].isnull()] = np.nan
         return retN
-
-QuoteFetcher.collection = DB.quote

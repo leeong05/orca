@@ -10,7 +10,8 @@ import pandas as pd
 from orca import logger
 from orca import (
         DATES,
-        SIDS)
+        SIDS,
+        )
 import util
 
 class FetcherBase(object):
@@ -66,6 +67,14 @@ class FetcherBase(object):
         """Logs a message with level CRITICAL on the alpha logger."""
         self.logger.critical(msg)
 
+    @staticmethod
+    def format(df, datetime_index, reindex):
+        if datetime_index:
+            df.index = pd.to_datetime(df.index)
+        if reindex:
+            return df.reindex(columns=SIDS, copy=False)
+        return df
+
     @abc.abstractmethod
     def fetch(self, dname, startdate, enddate=None, backdays=0, **kwargs):
         """Override (**mandatory**) to fetch data within two endpoints.
@@ -76,11 +85,10 @@ class FetcherBase(object):
         :param enddate: The right endpoint. Default: None, defaults to the last date
         :type enddate: str, int, None
         :param int backdays: This will shift (left/right: >/< 0) the left endpoint. Default: 0
-        :rtype: DataFrame
+        :returns: DataFrame
 
         .. seealso:: :py:func:`orca.mongo.util.cut_window`
         """
-
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -89,9 +97,9 @@ class FetcherBase(object):
 
         :param str dname: Name of the data
         :param list window: A consecutive list of trading dates
-        :rtype: DataFrame
-        """
+        :returns: DataFrame
 
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -102,9 +110,9 @@ class FetcherBase(object):
         :param date: The date(with additional tweaks specified in ``kwargs``, i.e. ``delay``) as a base point
         :type date: str, int
         :param int backdays: Number of days to look back w.r.t. the base point
-        :rtype: DataFrame
-        """
+        :returns: DataFrame
 
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -115,23 +123,25 @@ class FetcherBase(object):
         :param date: The base point
         :type date: str, int
         :param int offset: The offset w.r.t. the ``date``. The actual fetched date is calculated from ``date`` and ``offset``. Default: 0
-        :rtype: Series
-        """
+        :returns: Series
 
+        """
         raise NotImplementedError
 
 
 class KDayFetcher(FetcherBase):
+    """Base class to fetch daily data that can be formatted as DataFrame.
+
+    .. note::
+
+       This is a base class and should not be used directly.
+    """
 
     def __init__(self, **kwargs):
-        FetcherBase.__init__(self, **kwargs)
+        super(KDayFetcher, self).__init__(**kwargs)
 
-    @classmethod
     def fetch(self, dname, startdate, enddate=None, backdays=0, **kwargs):
-        if isinstance(self, abc.ABCMeta):
-            date_check = kwargs.get('date_check', False)
-        else:
-            date_check = kwargs.get('date_check', self.date_check)
+        date_check = kwargs.get('date_check', self.date_check)
 
         window = util.cut_window(
                 DATES,
@@ -140,31 +150,18 @@ class KDayFetcher(FetcherBase):
                 backdays=backdays)
         return self.fetch_window(dname, window, **kwargs)
 
-    @classmethod
     def fetch_window(self, dname, window, **kwargs):
-        if isinstance(self, abc.ABCMeta):
-            datetime_index = kwargs.get('datetime_index', False)
-            reindex = kwargs.get('reindex', False)
-        else:
-            datetime_index = kwargs.get('datetime_index', self.datetime_index)
-            reindex = kwargs.get('reindex', self.reindex)
+        datetime_index = kwargs.get('datetime_index', self.datetime_index)
+        reindex = kwargs.get('reindex', self.reindex)
 
         query = {'dname': dname, 'date': {'$gte': window[0], '$lte': window[-1]}}
         proj = {'_id': 0, 'dvalue': 1, 'date': 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
-        if datetime_index:
-            df.index = pd.to_datetime(df.index)
-            if reindex:
-                return df.reindex(index=pd.to_datetime(window), columns=SIDS, copy=False)
-            return df
-        if reindex:
-            return df.reindex(index=window, columns=SIDS, copy=False)
-        return df
+        return self.format(df, datetime_index, reindex)
 
-    @classmethod
     def fetch_history(self, dname, date, backdays, **kwargs):
-        if isinstance(self, abc.ABCMeta):
+        if type(self) is abc.ABCMeta:
             date_check = kwargs.get('date_check', False)
             delay = kwargs.get('delay', 1)
         else:
@@ -177,28 +174,29 @@ class KDayFetcher(FetcherBase):
         window = DATES[di-backdays+1: di+1]
         return self.fetch_window(dname, window, **kwargs)
 
-    @classmethod
     def fetch_daily(self, dname, date, offset=0, **kwargs):
         return self.fetch_history(dname, date, 1, delay=offset, **kwargs).iloc[0]
 
 
 class KMinFetcher(FetcherBase):
+    """Base class to fetch minute-bar interval data.
+
+    .. note::
+
+       This is a base class and should not be used directly.
+    """
 
     def __init__(self, **kwargs):
-        FetcherBase.__init__(self, **kwargs)
+        super(KMinFetcher, self).__init__(**kwargs)
 
-    @classmethod
     def fetch(self, dname, times, startdate, enddate=None, backdays=0, **kwargs):
         """
         :param times: Time stamps to indicate which minute-bars should be fetched
         :type times: str or list. This will affect the returned data type
-        :rtype: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
-        """
+        :returns: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
 
-        if isinstance(self, abc.ABCMeta):
-            date_check = kwargs.get('date_check', False)
-        else:
-            date_check = kwargs.get('date_check', self.date_check)
+        """
+        date_check = kwargs.get('date_check', self.date_check)
 
         window = util.cut_window(
                 DATES,
@@ -207,21 +205,16 @@ class KMinFetcher(FetcherBase):
                 backdays=backdays)
         return self.fetch_window(dname, times, window, **kwargs)
 
-    @classmethod
     def fetch_window(self, dname, times, window, **kwargs):
         """Fetch minute-bar data(specified by time stamps) for a consecutive days.
 
         :param times: Time stamps to indicate which minute-bars should be fetched
         :type times: str or list. This will affect the returned data type
-        :rtype: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
-        """
+        :returns: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
 
-        if isinstance(self, abc.ABCMeta):
-            datetime_index = kwargs.get('datetime_index', False)
-            reindex = kwargs.get('reindex', False)
-        else:
-            datetime_index = kwargs.get('datetime_index', self.datetime_index)
-            reindex = kwargs.get('reindex', self.reindex)
+        """
+        datetime_index = kwargs.get('datetime_index', self.datetime_index)
+        reindex = kwargs.get('reindex', self.reindex)
 
         query = {'dname': dname,
                  'date': {'$gte': window[0], '$lte': window[-1]},
@@ -240,20 +233,15 @@ class KMinFetcher(FetcherBase):
 
         return panel[times] if isinstance(times, str) else panel
 
-    @classmethod
     def fetch_history(self, dname, times, date, backdays, **kwargs):
         """
         :param times: Time stamps to indicate which minute-bars should be fetched
         :type times: str or list. This will affect the returned data type
-        :rtype: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
-        """
+        :returns: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
 
-        if isinstance(self, abc.ABCMeta):
-            date_check = kwargs.get('date_check', False)
-            delay = kwargs.get('delay', 1)
-        else:
-            date_check = kwargs.get('date_check', self.date_check)
-            delay = kwargs.get('delay', self.delay)
+        """
+        date_check = kwargs.get('date_check', self.date_check)
+        delay = kwargs.get('delay', self.delay)
 
         date = util.compliment_datestring(date, -1, date_check)
         di, date = util.parse_date(DATES, date, -1)
@@ -261,14 +249,13 @@ class KMinFetcher(FetcherBase):
         window = DATES[di-backdays+1: di+1]
         return self.fetch_window(dname, times, window, **kwargs)
 
-    @classmethod
     def fetch_daily(self, dname, times, date, offset=0, **kwargs):
         """
         :param times: Time stamps to indicate which minute-bars should be fetched
         :type times: str or list. This will affect the returned data type
-        :rtype: Series(if ``type(times)`` is str) or DataFrame(with ``times`` as the columns)
-        """
+        :returns: Series(if ``type(times)`` is str) or DataFrame(with ``times`` as the columns)
 
+        """
         res = self.fetch_history(dname, times, date, 1, delay=offset, **kwargs)
         if isinstance(times, str):
             return res.iloc[0]
