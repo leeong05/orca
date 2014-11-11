@@ -3,9 +3,9 @@
 """
 
 import logging
-import threading
+from threading import Lock
 
-init_lock = threading.Lock()
+init_lock = Lock()
 root_logger_initialized = False
 
 log_format = '%(asctime)s %(name)s [%(levelname)s] %(message)s'
