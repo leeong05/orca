@@ -91,8 +91,16 @@ class BacktestingAlpha(AlphaBase):
         self._alphas = df
         return df
 
+    def __getitem__(self, key):
+        return self.alphas[key]
+
+    def __setitem__(self, key, value):
+        if key in self.alphas:
+            self.warning('{0!r} already exists as a key'.format(key))
+        self.alphas[key] = value
+
     def run(self, startdate=None, enddate=None, parallel=False):
-        if enddate[:5].to_lower() == 'today':
+        if enddate[:5].lower() == 'today':
             enddate = DATES[-1-int(enddate[6:])]
 
         self.dates = util.cut_window(
