@@ -185,7 +185,7 @@ class BarraFactorFetcher(KDayFetcher):
         if dname == 'covariance':
             date_check = kwargs.get('date_check', self.date_check)
             date = util.compliment_datestring(date, -1, date_check)
-            di, date = util.parse_date(DATES, date)
+            di, date = util.parse_date(DATES, date, -1)
             date = DATES[di-offset]
             return self.fetch_covariance(date)
 

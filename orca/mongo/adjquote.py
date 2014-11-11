@@ -48,8 +48,8 @@ class AdjQuoteFetcher(KDayFetcher):
             basedate = window[0] if self.mode == FORWARD else window[-1]
             adj_window = window
         else:
-            sdi, startdate = util.parse_date(DATES, window[0])
-            edi, enddate = util.parse_date(DATES, window[-1])
+            sdi, startdate = util.parse_date(DATES, window[0], 1)
+            edi, enddate = util.parse_date(DATES, window[-1], -1)
             basedate = util.compliment_datestring(str(basedate), self.mode, date_check)
             bdi, basedate = util.parse_date(DATES, basedate, self.mode)
             if self.mode == FORWARD:
