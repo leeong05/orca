@@ -26,8 +26,7 @@ db.jyis.ensureIndex({year: 1, quarter: 1, date: 1}, {background: true})
 db.quote.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
-db.index_quote.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
-db.index_quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.index_quote.ensureIndex({index: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.sywgindex_quote.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.sywgindex_quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
