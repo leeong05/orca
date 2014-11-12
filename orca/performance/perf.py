@@ -33,7 +33,7 @@ class Performance(object):
     @classmethod
     def get_returns(cls, startdate):
         if startdate < cls.returns.index[0]:
-            with cls.Lock:
+            with cls.mongo_lock:
                 cls.returns = cls.quote.fetch('returns', startdate=startdate.strftime('%Y%m%d'))
                 return cls.returns
         return cls.returns
