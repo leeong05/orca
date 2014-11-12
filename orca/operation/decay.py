@@ -15,7 +15,7 @@ class DecayOperation(OperationBase):
     """
 
     def __init__(self, days, dense=False, **kwargs):
-        OperationBase.__init__(self, **kwargs)
+        super(DecayOperation, self).__init__(**kwargs)
         self.days = days
         self.dense = dense
 
