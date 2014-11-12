@@ -96,17 +96,17 @@ class BarraFactorNeutOperation(BarraOperation):
     def __init__(self, model, **kwargs):
         super(BarraFactorNeutOperation, self).__init__(self, model, **kwargs)
 
-    def operate(self, alpha, factors, date=None):
+    def _operate(self, alpha, factors, date):
         """
+        :param Series alpha: Row extracted from an alpha DataFrame
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str or list
 
         """
-        if date is None:
-            try:
-                date = alpha.name.strftime('%Y%m%d')
-            except:
-                date = alpha.name
+        try:
+            date = date.strftime('%Y%m%d')
+        except:
+            pass
 
         if isinstance(factors, str):
             if factors == 'industry':
@@ -128,6 +128,13 @@ class BarraFactorNeutOperation(BarraOperation):
         nalpha = pd.Series(nalpha.values - exposure.dot(lamb), index=sids)
         return nalpha.reindex(index=alpha.index)
 
+    def operate(self, alpha, factors):
+        res = {}
+        for _, row in alpha.iterrows():
+            date = row.name
+            res[date] = self._operate(row, factors, date)
+        return pd.DataFrame(res).T
+
 
 class BarraFactorCorrNeutOperation(BarraOperation):
     """Class to neutralize alpha along some Barra factors.
@@ -139,17 +146,17 @@ class BarraFactorCorrNeutOperation(BarraOperation):
     def __init__(self, model, **kwargs):
         super(BarraFactorCorrNeutOperation, self).__init__(self, model, **kwargs)
 
-    def operate(self, alpha, factors, date=None):
+    def _operate(self, alpha, factors, date):
         """
+        :param Series alpha: Row extracted from an alpha DataFrame
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str or list
 
         """
-        if date is None:
-            try:
-                date = alpha.name.strftime('%Y%m%d')
-            except:
-                date = alpha.name
+        try:
+            date = date.strftime('%Y%m%d')
+        except:
+            pass
 
         if isinstance(factors, str):
             if factors == 'industry':
@@ -180,3 +187,10 @@ class BarraFactorCorrNeutOperation(BarraOperation):
             return alpha
         nalpha = pd.Series(nalpha.values - exposure.dot(lamb), index=sids)
         return nalpha.reindex(index=alpha.index)
+
+    def operate(self, alpha, factors):
+        res = {}
+        for _, row in alpha.iterrows():
+            date = row.name
+            res[date] = self._operate(row, factors, date)
+        return pd.DataFrame(res).T
