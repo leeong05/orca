@@ -22,8 +22,10 @@ class BarraFetcher(KDayFetcher):
        This is a base class and should not be used directly.
     """
 
+    models = ('daily', 'short')
+
     def __init__(self, model, **kwargs):
-        if model not in ('daily', 'short'):
+        if model not in BarraFetcher.models:
             raise ValueError('No such version {0!r} of Barra model exists'.format(model))
         self._model = model
         self.collection = self.__class__.collections[model]
@@ -35,7 +37,7 @@ class BarraFetcher(KDayFetcher):
 
     @model.setter
     def model(self, model):
-        if model not in ('daily', 'short'):
+        if model not in BarraFetcher.models:
             self.warning('No such version {0!r} of Barra model exists. Nothing has changed'.format(model))
             return
         self._model = model
@@ -45,9 +47,7 @@ class BarraFetcher(KDayFetcher):
 class BarraSpecificsFetcher(BarraFetcher):
     """Class to fetch stock specifics in Barra model."""
 
-    pass
-
-BarraSpecificsFetcher.collections = {
+    collections = {
         'daily': DB.barra_D_specifics,
         'short': DB.barra_S_specifics,
         }
@@ -55,6 +55,11 @@ BarraSpecificsFetcher.collections = {
 
 class BarraExposureFetcher(BarraFetcher):
     """Class to fetch stock to factor exposure."""
+
+    collections = {
+        'daily': DB.barra_D_exposure,
+        'short': DB.barra_S_exposure,
+        }
 
     def fetch_daily(self, *args, **kwargs):
         """This differs from the default :py:meth:`orca.mongo.base.KDayFetcher.fetch_daily` in only
@@ -96,16 +101,16 @@ class BarraExposureFetcher(BarraFetcher):
             return df.reindex(columns=SIDS)
         return df
 
-BarraExposureFetcher.collections = {
-        'daily': DB.barra_D_exposure,
-        'short': DB.barra_S_exposure,
-        }
-
 
 class BarraFactorFetcher(KDayFetcher):
 
+    collections = {
+        'daily': (DB.barra_D_returns, DB.barra_D_covariance),
+        'short': (DB.barra_S_returns, DB.barra_S_covariance),
+        }
+
     def __init__(self, model, **kwargs):
-        if model not in ('daily', 'short'):
+        if model not in BarraFetcher.models:
             raise ValueError('No such version {0!r} of Barra model exists'.format(model))
         self._model = model
         self.ret, self.cov = self.__class__.collections[model]
@@ -122,7 +127,7 @@ class BarraFactorFetcher(KDayFetcher):
 
     @model.setter
     def model(self, model):
-        if model not in ('daily', 'short'):
+        if model not in BarraFetcher.models:
             self.warning('No such version {0!r} of Barra model exists. Nothing has changed'.format(model))
             return
         self._model = model
@@ -192,8 +197,3 @@ class BarraFactorFetcher(KDayFetcher):
         if dname == 'returns':
             dname = None
         return super(BarraFactorFetcher, self).fetch_daily(dname, date, offset=offset, **kwargs)
-
-BarraFactorFetcher.collections = {
-        'daily': (DB.barra_D_returns, DB.barra_D_covariance),
-        'short': (DB.barra_S_returns, DB.barra_S_covariance),
-        }
