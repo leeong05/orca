@@ -1,3 +1,6 @@
+Parallel along date axis
+========================
+
 Please see file 'orca/alpha/base' and find the '#TODO' label.
 
 The idea is to run a **single** alpha in parallel by splitting simulation along date axis.
@@ -24,3 +27,44 @@ For example, paste the following code into a .py file:
 
        from orca.utils.testing import frames_equal
        assert frames_equal(alpha.get_alphas(), close)
+
+
+Parallel in parameter space
+===========================
+
+See `PyAlgoTrade <http://gbeced.github.io/pyalgotrade/docs/v0.15/html/tutorial.html#optimizing>`_ for reference.
+
+The picture I have in mind is pretty much alike:
+
+.. code-block:: python
+
+   from orca.mongo.quote import QuoteFetcher
+
+   startdate, enddate = '20140101', '20141017'
+   close = QuoteFetcher(datetime_index=True, reindex=True).fetch('close', startdate=startdate, enddate=enddate)
+
+   from orca.alpha.base import BacktestingAlpha
+   import time
+
+   class MyAlpha(BacktestingAlpha):
+
+       def __init__(self, n):
+           self.n = n
+
+       def generate(self, date):
+           time.sleep(self.n % 100)
+           self.alphas[date] = close.ix[date] * self.n
+
+   def gen_params():
+       for i in xrange(10000):
+           yield i
+
+   if __name__ == '__main__':
+       from orca.utils.parallel import local
+       import multiprocessing
+       alphas = local.run(MyAlpha, 
+                          gen_params, 
+                          batch=multiprocessing.cpu_count(),
+                          universe = XXX,
+                          lambda x: x.get_original().get_ir() > 0.1)
+                          
