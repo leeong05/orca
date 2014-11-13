@@ -66,14 +66,24 @@ class Performance(object):
         return Analyser(-self.alpha[self.alpha<0], Performance.get_returns(self.startdate),
                 Performance.get_index_returns(self.startdate, index=index))
 
-    def get_top(self, q, index='HS300'):
+    def get_qtop(self, q, index='HS300'):
         """Only analyse the top quantile as long holding."""
         return Analyser(api.qtop(self.alpha, q), Performance.get_returns(self.startdate),
                 Performance.get_index_returns(self.startdate, index=index))
 
-    def get_bottom(self, q, index='HS300'):
+    def get_qbottom(self, q, index='HS300'):
         """Only analyse the bottom quantile as long holding."""
         return Analyser(api.qbottom(self.alpha, q), Performance.get_returns(self.startdate),
+                Performance.get_index_returns(self.startdate, index=index))
+
+    def get_ntop(self, n, index='HS300'):
+        """Only analyse the top n stocks as long holding."""
+        return Analyser(api.top(self.alpha, n), Performance.get_returns(self.startdate),
+                Performance.get_index_returns(self.startdate, index=index))
+
+    def get_nbottom(self, n, index='HS300'):
+        """Only analyse the bottom n stocks as long holding."""
+        return Analyser(api.bottom(self.alpha, n), Performance.get_returns(self.startdate),
                 Performance.get_index_returns(self.startdate, index=index))
 
     def get_tail(self, q):
