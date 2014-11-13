@@ -48,15 +48,15 @@ class CSVDataTestCase(unittest.TestCase):
 
     def test_saver_setitem_none(self):
         self.saver['data'] = self.data
-        self.saver['data'] = None
         fname = self.saver.datafiles['data']
-        self.assertTrue(fname)
+        self.saver['data'] = None
+        self.assertFalse(os.path.exists(fname))
 
     def test_saver_delitem(self):
         self.saver['data'] = self.data
-        del self.saver['data']
         fname = self.saver.datafiles['data']
-        self.assertTrue(fname)
+        del self.saver['data']
+        self.assertFalse(os.path.exists(fname))
 
     def test_loader_getitem(self):
         self.saver['data'] = self.data
