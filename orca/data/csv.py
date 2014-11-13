@@ -28,10 +28,10 @@ class CSVSaver(SaverBase):
 
 
 class CSVLoader(LoaderBase):
-    """Class for saving data in csv format files."""
+    """Class for loading data in csv format files."""
 
     def __init__(self, cachedir, **kwargs):
-        LoaderBase.__init__(self, cachedir, **kwargs)
+        super(CSVLoader, self).__init__(cachedir, **kwargs)
         self.params = {
                 'header': 0,
                 'parse_dates': False,
