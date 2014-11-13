@@ -14,7 +14,8 @@ import unittest
 
 from orca.data.csv import (
         CSVSaver,
-        CSVLoader)
+        CSVLoader,
+        )
 from orca.utils.testing import frames_equal
 
 
@@ -36,7 +37,7 @@ class CSVDataTestCase(unittest.TestCase):
     def test_saver_setitem(self):
         self.saver['data'] = self.data
         fname = self.saver.datafiles['data']
-        self.assertTrue(fname)
+        self.assertTrue(os.path.exists(fname))
 
     """
     def test_saver_setitem_overwritten(self):
