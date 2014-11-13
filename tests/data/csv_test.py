@@ -12,9 +12,10 @@ import pandas as pd
 
 import unittest
 
-from orca.data import (
+from orca.data.csv import (
         CSVSaver,
-        CSVLoader)
+        CSVLoader,
+        )
 from orca.utils.testing import frames_equal
 
 
@@ -24,8 +25,8 @@ class CSVDataTestCase(unittest.TestCase):
         self.dir = os.path.join(tempfile.mkdtemp(), 'cache')
         self.dates = pd.date_range('20140101', '20140111')
         self.data = pd.DataFrame(np.random.randn(len(self.dates), 2), index=self.dates)
-        self.saver = CSVSaver(self.dir, debug_on=False)
-        self.loader = CSVLoader(self.dir, debug_on=False)
+        self.saver = CSVSaver(self.dir, debug_on=True)
+        self.loader = CSVLoader(self.dir, debug_on=True)
 
     def tearDown(self):
         self.dates = None
@@ -36,7 +37,7 @@ class CSVDataTestCase(unittest.TestCase):
     def test_saver_setitem(self):
         self.saver['data'] = self.data
         fname = self.saver.datafiles['data']
-        self.assertTrue(fname)
+        self.assertTrue(os.path.exists(fname))
 
     """
     def test_saver_setitem_overwritten(self):
@@ -47,15 +48,15 @@ class CSVDataTestCase(unittest.TestCase):
 
     def test_saver_setitem_none(self):
         self.saver['data'] = self.data
-        self.saver['data'] = None
         fname = self.saver.datafiles['data']
-        self.assertTrue(fname)
+        self.saver['data'] = None
+        self.assertFalse(os.path.exists(fname))
 
     def test_saver_delitem(self):
         self.saver['data'] = self.data
-        del self.saver['data']
         fname = self.saver.datafiles['data']
-        self.assertTrue(fname)
+        del self.saver['data']
+        self.assertFalse(os.path.exists(fname))
 
     def test_loader_getitem(self):
         self.saver['data'] = self.data
