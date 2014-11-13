@@ -12,7 +12,7 @@ import pandas as pd
 
 import unittest
 
-from orca.data import (
+from orca.data.csv import (
         CSVSaver,
         CSVLoader)
 from orca.utils.testing import frames_equal
