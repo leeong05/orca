@@ -92,7 +92,7 @@ class SaverBase(IOBase):
     """
 
     def __init__(self, cachedir, **kwargs):
-        IOBase.__init__(self, cachedir, **kwargs)
+        super(SaverBase, self).__init__(cachedir, **kwargs)
         self.plain = kwargs.get('plain', True)
         if self.plain and not os.path.exists(self.cachedir):
             os.makedirs(self.cachedir)
@@ -152,7 +152,7 @@ class LoaderBase(IOBase):
     """
 
     def __init__(self, cachedir, **kwargs):
-        IOBase.__init__(self, cachedir, **kwargs)
+        super(LoaderBase, self).__init__(cachedir, **kwargs)
         if not os.path.exists(self.cachedir):
             raise IOError('No cache exists with path {0!r}'.format(self.cachedir))
         self.datas = {}
