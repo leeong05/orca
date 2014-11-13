@@ -25,8 +25,8 @@ class CSVDataTestCase(unittest.TestCase):
         self.dir = os.path.join(tempfile.mkdtemp(), 'cache')
         self.dates = pd.date_range('20140101', '20140111')
         self.data = pd.DataFrame(np.random.randn(len(self.dates), 2), index=self.dates)
-        self.saver = CSVSaver(self.dir, debug_on=False)
-        self.loader = CSVLoader(self.dir, debug_on=False)
+        self.saver = CSVSaver(self.dir, debug_on=True)
+        self.loader = CSVLoader(self.dir, debug_on=True)
 
     def tearDown(self):
         self.dates = None

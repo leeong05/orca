@@ -141,6 +141,7 @@ class SaverBase(IOBase):
             return
 
         self._delete(self.datafiles[key])
+        del self.datafiles[key]
 
 
 class LoaderBase(IOBase):
