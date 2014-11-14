@@ -161,12 +161,8 @@ class KDayFetcher(FetcherBase):
         return self.format(df, datetime_index, reindex)
 
     def fetch_history(self, dname, date, backdays, **kwargs):
-        if type(self) is abc.ABCMeta:
-            date_check = kwargs.get('date_check', False)
-            delay = kwargs.get('delay', 1)
-        else:
-            date_check = kwargs.get('date_check', self.date_check)
-            delay = kwargs.get('delay', self.delay)
+        date_check = kwargs.get('date_check', self.date_check)
+        delay = kwargs.get('delay', self.delay)
 
         date = util.compliment_datestring(date, -1, date_check)
         di, date = util.parse_date(DATES, date, -1)
