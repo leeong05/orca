@@ -8,7 +8,7 @@ TABLES = {}
 
 TABLES['info'] = (
         "CREATE TABLE `info` ("
-        "  `id` mediumint unsigned NOT NULL,"
+        "  `id` mediumint unsigned AUTO_INCREMENT,"
         "  `name` varchar(20) NOT NULL,"
         "  `author` varchar(10) NOT NULL,"
         # this should be a enum/int type, save it for later!!!
@@ -42,7 +42,7 @@ TABLES['uinfo'] = (
 
 TABLES['universe'] = (
         "CREATE TABLE `universe` ("
-        "  `id` smallint unsigned NOT NULL,"
+        "  `id` smallint unsigned AUTO_INCREMENT"
         "  `date` date NOT NULL,"
         "  `sid` varchar(6) NOT NULL,"
         "  `valid` bool NOT NULL,"
@@ -51,7 +51,7 @@ TABLES['universe'] = (
 
 TABLES['performance'] = (
         "CREATE TABLE `performance` ("
-        "  `id` mediumint unsigned NOT NULL,"
+        "  `aid` mediumint unsigned NOT NULL,"
         "  `uid` smallint unsigned NOT NULL,"
         "  `date` date NOT NULL,"
         "  `ic` float,"
@@ -62,9 +62,20 @@ TABLES['performance'] = (
         "  `ac_5` float,"
         "  `ac_20` float,"
         "  `returns` float,"
-        "  PRIMARY KEY (`id`, `uid`, 'date'), UNIQUE KEY ('id', 'uid', 'date')"
+        "  PRIMARY KEY (`id`, `uid`, `date`), UNIQUE KEY (`id`, `uid`, `date`)"
         ") ENGINE=InnoDB")
 
+TABLES['dates'] = (
+        "CREATE TABLE `dates` ("
+        "  `date` varchar(8) NOTNULL,"
+        "  PRIMARY KEY (`date`), UNIQUE KEY (`date`)"
+        ") ENGINE=InnoDB")
+
+TABLES['sids'] = (
+        "CREATE TABLE `sids` ("
+        "  `sid` varchar(6) NOTNULL,"
+        "  PRIMARY KEY (`sid`), UNIQUE KEY (`sid`)"
+        ") ENGINE=InnoDB")
 
 def create_database(cursor):
     try:
