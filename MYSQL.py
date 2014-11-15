@@ -21,7 +21,8 @@ TABLES['info'] = (
         "  `status` enum('FAIL', 'PROD', 'OSTEST', 'HOLD') NOT NULL,"
         "  `proddate` date,"
         "  `enddate` date,"
-        "  PRIMARY KEY (`id`), UNIQUE KEY `id` (`id`)"
+        "  `kickoff` time NOT NULL,"
+        "  `source` clob NOT NULL,"
         ") ENGINE=InnoDB")
 
 TABLES['score'] = (
@@ -30,13 +31,14 @@ TABLES['score'] = (
         "  `date` date NOT NULL,"
         "  `sid` varchar(6) NOT NULL,"
         "  `score` float,"
-        "  PRIMARY KEY (`id`, `date`, `sid`)"
         ") ENGINE=InnoDB")
 
 TABLES['uinfo'] = (
         "CREATE TABLE `uinfo` ("
         "  `id` smallint unsigned NOT NULL,"
         "  `name` varchar(20) NOT NULL,"
+        "  `kickoff` time NOT NULL,"
+        "  `source` clob NOT NULL,"
         "  PRIMARY KEY (`id`), UNIQUE KEY `id` (`id`)"
         ") ENGINE=InnoDB")
 
@@ -46,7 +48,6 @@ TABLES['universe'] = (
         "  `date` date NOT NULL,"
         "  `sid` varchar(6) NOT NULL,"
         "  `valid` bool NOT NULL,"
-        "  PRIMARY KEY (`id`, `date`, `sid`), UNIQUE KEY (`id`, `date`, `sid`)"
         ") ENGINE=InnoDB")
 
 TABLES['performance'] = (
@@ -62,19 +63,16 @@ TABLES['performance'] = (
         "  `ac_5` float,"
         "  `ac_20` float,"
         "  `returns` float,"
-        "  PRIMARY KEY (`id`, `uid`, `date`), UNIQUE KEY (`id`, `uid`, `date`)"
         ") ENGINE=InnoDB")
 
 TABLES['dates'] = (
         "CREATE TABLE `dates` ("
         "  `date` varchar(8) NOTNULL,"
-        "  PRIMARY KEY (`date`), UNIQUE KEY (`date`)"
         ") ENGINE=InnoDB")
 
 TABLES['sids'] = (
         "CREATE TABLE `sids` ("
         "  `sid` varchar(6) NOTNULL,"
-        "  PRIMARY KEY (`sid`), UNIQUE KEY (`sid`)"
         ") ENGINE=InnoDB")
 
 def create_database(cursor):
