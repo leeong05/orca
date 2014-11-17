@@ -6,6 +6,7 @@ from threading import Lock
 
 from orca.mongo.quote import QuoteFetcher
 from orca.mongo.index import IndexQuoteFetcher
+from orca.mongo.components import ComponentsFetcher
 
 from orca.operation import api
 from orca.alpha.base import AlphaBase
@@ -24,26 +25,40 @@ class Performance(object):
 
     quote = QuoteFetcher(datetime_index=True, reindex=True)
     index_quote = IndexQuoteFetcher(datetime_index=True)
+    components = ComponentsFetcher(datetime_index=True, reindex=True)
 
     returns = quote.fetch('returns', startdate='20090101')
     index_returns = {
             'HS300': index_quote.fetch('returns', startdate='20090101', index='HS300'),
             }
+    index_components = {
+            'HS300': components.fetch('HS300', startdate='20090101'),
+            'CS500': components.fetch('CS500', startdate='20090101')
+            }
+    index_components['other'] = ~(index_components['HS300'] | index_components['CS500'])
 
     @classmethod
     def get_returns(cls, startdate):
         if startdate < cls.returns.index[0]:
             with cls.mongo_lock:
                 cls.returns = cls.quote.fetch('returns', startdate=startdate.strftime('%Y%m%d'))
-                return cls.returns
         return cls.returns
 
     @classmethod
     def get_index_returns(cls, startdate, index='HS300'):
-        if index in cls.index_returns and startdate >= cls.index_returns[index].index[0]:
-            return cls.index_returns[index]
-        with cls.lock:
-            cls.index_returns[index] = cls.quote.fetch('returns', startdate=startdate.strftime('%Y%m%d'))
+        if index not in cls.index_returns or startdate < cls.index_returns[index].index[0]:
+            with cls.lock:
+                cls.index_returns[index] = cls.quote.fetch('returns', startdate=startdate.strftime('%Y%m%d'))
+        return cls.index_returns[index]
+
+    @classmethod
+    def get_index_components(cls, startdate, index):
+        if startdate < cls.index_components[index].index[0]:
+            with cls.lock:
+                cls.index_components['HS300'] = cls.components.fetch('HS300', startdate=startdate.strftime('%Y%m%d'))
+                cls.index_components['CS500'] = cls.components.fetch('CS500', startdate=startdate.strftime('%Y%m%d'))
+                cls.index_components['other'] = ~(cls.index_components['HS300'] | cls.index_components['CS500'])
+        return cls.index_components[index]
 
     def __init__(self, alpha):
         if isinstance(alpha, AlphaBase):
@@ -92,6 +107,15 @@ class Performance(object):
                 Performance.get_returns(self.startdate))
 
     def get_quantiles(self, n):
-        """Return analyses for the ``n``-quantiles."""
+        """Return analysers for the ``n``-quantiles."""
         return [Analyser(qt, Performance.get_returns(self.startdate)) \
                 for qt in api.quantiles(self.alpha, n)]
+
+    def get_bms(self):
+        """Return analysers for alphas in HS300, CS500 and other."""
+        big = Performance.get_index_components(self.startdate, 'HS300').ix[self.alpha.index]
+        mid = Performance.get_index_components(self.startdate, 'CS500').ix[self.alpha.index]
+        sml = Performance.get_index_components(self.startdate, 'other').ix[self.alpha.index]
+
+        return [Analyser(self.alpha[univ], Performance.get_returns(self.startdate)) \
+                for univ in [big, mid, sml]]

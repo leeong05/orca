@@ -12,6 +12,11 @@ def format(df, value=np.nan):
     df.index = pd.to_datetime(df.index)
     return df
 
+def intersect(df, univ):
+    df = df.copy()
+    df[~univ.ix[df.index]] = np.nan
+    return df
+
 def neutralize(df):
     return df.subtract(df.mean(axis=1), axis=0)
 
