@@ -52,23 +52,59 @@ class AlphaDBFetcher(object):
         self.logger.critical(msg)
 
 
+class AlphaInfoFetcher(AlphaDBFetcher):
+    """Class to fetch alpha info from the alpha DB."""
+
+    FETCH = (
+            "SELECT"
+            "  info.id AS id, info.name AS name, author, market, uinfo.name AS universe, category, status, proddate, entrydate, enddate "
+            "FROM"
+            "  info JOIN uinfo ON info.uid = uinfo.id "
+            )
+
+    def fetch(self, **kwargs):
+        """Fetch alpha ids by some criteria, for example, status, market, author etc."""
+        sql = AlphaInfoFetcher.FETCH
+        criteria = []
+        status = kwargs.get('status', None)
+        if status:
+            criteria.append("  status = {0!r}".format(status))
+        category = kwargs.get('category', None)
+        if category:
+            criteria.append("  category = {0!r}".format(category))
+        market = kwargs.get('market', None)
+        if market:
+            criteria.append("  market = {0!r}".format(market))
+        author = kwargs.get('author', None)
+        if author:
+            criteria.append("  author LIKE '%{0:s}%'".format(author))
+        if criteria:
+            sql = sql + "WHERE" + "  AND".join(criteria)
+        print sql
+        res = fetch_sql(sql)
+        query = kwargs.get('query', None)
+        if query:
+            return res.query(query)
+        return res
+
+
 class ScoreFetcher(AlphaDBFetcher):
     """Class to fetch scores of alphas from the alpha DB."""
 
     FETCH_IDS = (
             "SELECT"
-            "  id, date, sid, score"
+            "  id, date, sid, score "
             "FROM"
-            "  score"
+            "  score "
             "WHERE"
             "  id IN ({0:s})"
             "  AND"
             "  date >= STR_TO_DATE({1:s}, '%Y%m%d')")
     FETCH_IDS_ENDDATE = (
             "SELECT"
-            "  id, date, sid, score"
+            "  id, date, sid, score "
             "FROM"
-            "  score"
+            "  score "
             "WHERE"
             "  id IN ({0:s})"
             "  AND"
@@ -121,18 +157,18 @@ class UniverseFetcher(AlphaDBFetcher):
 
     FETCH_NAME = (
             "SELECT"
-            "  date, sid, valid"
+            "  date, sid, valid "
             "FROM"
-            "  universe JOIN uinfo USING(id)"
+            "  universe JOIN uinfo USING(id) "
             "WHERE"
             "  uinfo.name = {0!r}"
             "  AND"
             "  date >= STR_TO_DATE({1:s}, '%Y%m%d')")
     FETCH_NAME_ENDDATE = (
             "SELECT"
-            "  date, sid, valid"
+            "  date, sid, valid "
             "FROM"
-            "  universe JOIN uinfo USING(id)"
+            "  universe JOIN uinfo USING(id) "
             "WHERE"
             "  uinfo.name = {0!r}"
             "  AND"
@@ -167,18 +203,18 @@ class PerformanceFetcher(AlphaDBFetcher):
 
     FETCH_DATA_IDS = (
             "SELECT"
-            "  aid, date, {0:s}"
+            "  aid, date, {0:s} "
             "FROM"
-            "  performance JOIN info ON performance.aid = info.id AND performance.uid = info.uid"
+            "  performance JOIN info ON performance.aid = info.id AND performance.uid = info.uid "
             "WHERE"
             "  id IN ({1:s})"
             "  AND"
             "  date >= STR_TO_DATE({2:s}, '%Y%m%d')")
     FETCH_DATA_IDS_ENDDATE = (
             "SELECT"
-            "  id, date, {0:s}"
+            "  id, date, {0:s} "
             "FROM"
-            "  performance JOIN info ON performance.aid = info.id AND performance.uid = info.uid"
+            "  performance JOIN info ON performance.aid = info.id AND performance.uid = info.uid "
             "WHERE"
             "  id IN ({1:s})"
             "  AND"
@@ -187,9 +223,9 @@ class PerformanceFetcher(AlphaDBFetcher):
             "  date <= STR_TO_DATE({3:s}, '%Y%m%d')")
     FETCH_DATA_IDS_UNIVERSE = (
             "SELECT"
-            "  id, date, {0:s}"
+            "  id, date, {0:s} "
             "FROM"
-            "  performance JOIN uinfo ON performance.uid = uinfo.id"
+            "  performance JOIN uinfo ON performance.uid = uinfo.id "
             "WHERE"
             "  uinfo.name = {1!r}"
             "  AND"
@@ -198,9 +234,9 @@ class PerformanceFetcher(AlphaDBFetcher):
             "  date >= STR_TO_DATE({3:s}, '%Y%m%d')")
     FETCH_DATA_IDS_UNIVERSE_ENDDATE = (
             "SELECT"
-            "  id, date, {0:s}"
+            "  id, date, {0:s} "
             "FROM"
-            "  performance JOIN uinfo ON performance.uid = uinfo.id"
+            "  performance JOIN uinfo ON performance.uid = uinfo.id "
             "WHERE"
             "  uinfo.name = {1!r}"
             "  AND"
@@ -211,18 +247,18 @@ class PerformanceFetcher(AlphaDBFetcher):
             "  date <= STR_TO_DATE({4:s}, '%Y%m%d')")
     FETCH_DATAS_ID = (
             "SELECT"
-            "  date, {0:s}"
+            "  date, {0:s} "
             "FROM"
-            "  performance JOIN info ON performance.aid = info.id AND performance.uid = info.uid"
+            "  performance JOIN info ON performance.aid = info.id AND performance.uid = info.uid "
             "WHERE"
             "  id = {1:d}"
             "  AND"
             "  date >= STR_TO_DATE({2:s}, '%Y%m%d')")
     FETCH_DATAS_ID_ENDDATE = (
             "SELECT"
-            "  date, {0:s}"
+            "  date, {0:s} "
             "FROM"
-            "  performance JOIN info ON performance.aid = info.id AND performance.uid = info.uid"
+            "  performance JOIN info ON performance.aid = info.id AND performance.uid = info.uid "
             "WHERE"
             "  id = {1:d}"
             "  AND"
@@ -231,9 +267,9 @@ class PerformanceFetcher(AlphaDBFetcher):
             "  date <= STR_TO_DATE({3:s}, '%Y%m%d')")
     FETCH_DATAS_ID_UNIVERSE = (
             "SELECT"
-            "  date, {0:s}"
+            "  date, {0:s} "
             "FROM"
-            "  performance JOIN uinfo ON performance.uid = uinfo.id"
+            "  performance JOIN uinfo ON performance.uid = uinfo.id "
             "WHERE"
             "  id = {1:d}"
             "  AND"
@@ -242,9 +278,9 @@ class PerformanceFetcher(AlphaDBFetcher):
             "  date >= STR_TO_DATE({3:s}, '%Y%m%d')")
     FETCH_DATAS_ID_UNIVERSE_ENDDATE = (
             "SELECT"
-            "  date, {0:s}"
+            "  date, {0:s} "
             "FROM"
-            "  performance JOIN uinfo ON performance.uid = uinfo.id"
+            "  performance JOIN uinfo ON performance.uid = uinfo.id "
             "WHERE"
             "  id = {1:d}"
             "  AND"
