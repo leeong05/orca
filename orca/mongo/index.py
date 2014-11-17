@@ -33,7 +33,7 @@ class IndexQuoteFetcher(KDayFetcher):
 
         """
         index = kwargs.pop('index')
-        index = IndexQuoteFetcher.index_name.get(index, index)
+        index = IndexQuoteFetcher.index_dname.get(index, index)
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
 
         query = {'index': index, 'date': {'$gte': window[0], '$lte': window[-1]}}
