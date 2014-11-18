@@ -1,0 +1,60 @@
+orca package
+============
+
+Subpackages
+-----------
+
+.. toctree::
+
+    orca.alpha
+    orca.data
+    orca.model
+    orca.mongo
+    orca.operation
+    orca.performance
+    orca.universe
+    orca.utils
+
+Submodules
+----------
+
+orca.constants module
+---------------------
+
+.. automodule:: orca.constants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.database module
+--------------------
+
+.. automodule:: orca.database
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.logger module
+------------------
+
+.. automodule:: orca.logger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.rand module
+----------------
+
+.. automodule:: orca.rand
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: orca
+    :members:
+    :undoc-members:
+    :show-inheritance:

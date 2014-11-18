@@ -1,0 +1,432 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.mongo.jyfund &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="../../../index.html"><img src="../../../_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for orca.mongo.jyfund</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Li, Wang &lt;wangziqi@foreseefund.com&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">orca</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">DB</span><span class="p">,</span>
+        <span class="n">DATES</span><span class="p">,</span>
+        <span class="n">SIDS</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">base</span> <span class="kn">import</span> <span class="n">KDayFetcher</span>
+<span class="kn">import</span> <span class="nn">util</span>
+
+<span class="n">YEAR</span><span class="p">,</span> <span class="n">SEMI</span><span class="p">,</span> <span class="n">QUARTER</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span>
+
+<span class="k">def</span> <span class="nf">myfunc1</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">sid</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">quarter_offset</span> <span class="o">=</span> <span class="n">args</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s">&#39;qtrno&#39;</span><span class="p">,</span> <span class="n">take_last</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">qtrno</span>
+    <span class="n">qtr</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">qtrno</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">quarter_offset</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">sid</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">qtr</span><span class="p">]}</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">sid</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">myfunc2</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">sid</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">rtype</span><span class="p">,</span> <span class="n">use_adjust</span> <span class="o">=</span> <span class="n">args</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">myapply</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;when we have different reports for the same quarter, if we want to use adjusted data,</span>
+<span class="sd">        we pretend that the last report date is the first report date&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">adjust</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s">&#39;ffill&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">adjust</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">date</span>
+        <span class="k">return</span> <span class="n">adjust</span>
+
+    <span class="k">if</span> <span class="n">use_adjust</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s">&#39;qtrno&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">myapply</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;qtrno&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">util</span><span class="o">.</span><span class="n">is_sorted</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">qtrno</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">sid</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
+    <span class="k">elif</span> <span class="n">use_adjust</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s">&#39;qtrno&#39;</span><span class="p">,</span> <span class="n">take_last</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">util</span><span class="o">.</span><span class="n">is_sorted</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">qtrno</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">sid</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">table</span> <span class="o">==</span> <span class="s">&#39;balancesheet&#39;</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;qtrno&#39;</span><span class="p">])</span>
+        <span class="n">qtrno</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">qtrno</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;qtrno&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">qtrno</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">row</span>
+                <span class="n">qtrno</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;qtrno&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">sid</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">res</span><span class="p">)}</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;when row[&#39;date&#39;] is already in res, it means multiple reports for different quarters</span>
+<span class="sd">        we only record the report for the most recent quarter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="sd">&quot;&quot;&quot;for quarterly data, only 0331 does not need to be subtracted;</span>
+<span class="sd">        for semi-annual data, only 0630 does not need to be subtracted</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">rtype</span> <span class="o">!=</span> <span class="n">YEAR</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;qtrno&#39;</span><span class="p">]</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">!=</span> <span class="n">rtype</span><span class="p">:</span>
+            <span class="n">prev_qtrno</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;qtrno&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">rtype</span>
+            <span class="sd">&quot;&quot;&quot;missing points?&quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">prev_qtrno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">qtrno</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="sd">&quot;&quot;&quot;when use_adjust is True/False, the qtrno column is sorted and unique;</span>
+<span class="sd">            if use_adjust is None, the situation is more complicated&quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">use_adjust</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">qtrno</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">prev_qtrno</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">prev_qtrno</span> <span class="o">==</span> <span class="n">df</span><span class="o">.</span><span class="n">qtrno</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                        <span class="n">j</span> <span class="o">=</span> <span class="n">k</span>
+                        <span class="k">break</span>
+            <span class="n">prev_row</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">iterkv</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;sid&#39;</span><span class="p">,</span> <span class="s">&#39;qtrno&#39;</span><span class="p">):</span>
+                    <span class="n">row</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span> <span class="o">-</span> <span class="n">prev_row</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">row</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">sid</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">res</span><span class="p">)}</span>
+
+
+<div class="viewcode-block" id="JYFundFetcher"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.jyfund.JYFundFetcher">[docs]</a><span class="k">class</span> <span class="nc">JYFundFetcher</span><span class="p">(</span><span class="n">KDayFetcher</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to fetch JYDB fundamental data.</span>
+
+<span class="sd">    :param str table: Table name, must be one of (&#39;balancesheet&#39;, &#39;income&#39;, &#39;cashflow&#39;)</span>
+<span class="sd">    :param startyear: Fetch data starting from this year in advance, must be in the format &#39;YYYY&#39;. Default: 2007</span>
+<span class="sd">    :type startyear: str, int</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tables</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;balancesheet&#39;</span><span class="p">,</span> <span class="s">&#39;income&#39;</span><span class="p">,</span> <span class="s">&#39;cashflow&#39;</span><span class="p">)</span>
+    <span class="n">collections</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;balancesheet&#39;</span><span class="p">:</span> <span class="n">DB</span><span class="o">.</span><span class="n">jybs</span><span class="p">,</span>
+            <span class="s">&#39;income&#39;</span><span class="p">:</span> <span class="n">DB</span><span class="o">.</span><span class="n">jyis</span><span class="p">,</span>
+            <span class="s">&#39;cashflow&#39;</span><span class="p">:</span> <span class="n">DB</span><span class="o">.</span><span class="n">jycs</span><span class="p">,</span>
+            <span class="p">}</span>
+
+    <span class="n">datas</span><span class="p">,</span> <span class="n">startyears</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{}</span>
+
+    <span class="n">mongo_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">startyear</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">datas</span> <span class="ow">and</span> <span class="p">(</span><span class="n">startyear</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">startyear</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">cls</span><span class="o">.</span><span class="n">startyears</span><span class="p">[</span><span class="n">table</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="n">table</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_data_mongo</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">startyear</span><span class="o">=</span><span class="n">startyear</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_data_mongo</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">startyear</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">cls</span><span class="o">.</span><span class="n">mongo_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">startyear</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">startyear</span> <span class="o">=</span> <span class="mi">2007</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;year&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;$gte&#39;</span><span class="p">:</span> <span class="n">startyear</span><span class="p">}}</span>
+            <span class="n">proj</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">collections</span><span class="p">[</span><span class="n">table</span><span class="p">]</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">proj</span><span class="p">)))</span>
+            <span class="n">df</span><span class="p">[</span><span class="s">&#39;qtrno&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="mi">2000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">df</span><span class="o">.</span><span class="n">quarter</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="n">table</span><span class="p">],</span> <span class="n">cls</span><span class="o">.</span><span class="n">startyears</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">,</span> <span class="n">startyear</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="n">table</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">set_data</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">startyears</span><span class="p">[</span><span class="n">table</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">year</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">startyear</span><span class="o">=</span><span class="mi">2007</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">table</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">JYFundFetcher</span><span class="o">.</span><span class="n">tables</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;No such table {0!r} exists of JYDB fundamental data&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">=</span> <span class="n">table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_startyear</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">startyear</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">JYFundFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span>
+
+    <span class="nd">@table.setter</span>
+    <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">table</span><span class="p">,</span> <span class="n">startyear</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">table</span><span class="p">,</span> <span class="n">startyear</span> <span class="o">=</span> <span class="n">args</span><span class="p">,</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">table</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">JYFundFetcher</span><span class="o">.</span><span class="n">tables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;No such table {0!r} exists of JYDB fundamental data. Nothing has changed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">=</span> <span class="n">table</span>
+        <span class="k">if</span> <span class="n">startyear</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_startyear</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">startyear</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">JYFundFetcher</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_startyear</span><span class="p">)</span>
+
+<div class="viewcode-block" id="JYFundFetcher.prepare_frame"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.jyfund.JYFundFetcher.prepare_frame">[docs]</a>    <span class="k">def</span> <span class="nf">prepare_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dnames</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">quarter_offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rtype</span><span class="o">=</span><span class="n">QUARTER</span><span class="p">,</span> <span class="n">quarter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Prepare cross-sectional data items and concatenate them into a DataFrame, using data with timestamps less than ``date`` minus ``delay``.</span>
+
+<span class="sd">        :param list dnames: List of data names. Default: None, all data items will be included(**NOT** recommended)</span>
+<span class="sd">        :param int quarter_offset: Offset in quarter numbers. Default: 0</span>
+<span class="sd">        :param enum rtype: What type of reports to be considered? QUARTER(1, default): all reports; SEMI(2): only semi-annual reports and annual reports; YEAR(4): only annual reports</span>
+<span class="sd">        :param int quarter: It will only fetch data for this particular quarter(the 4 quarters in a year is 1, 2, 3, 4), thus should be compatible with the use of ``rtype``. Default: None, fetch whatever data is available</span>
+
+<span class="sd">        .. seealso::</span>
+
+<span class="sd">           :py:meth:`JYFundFetcher.prepare_panel`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">quarter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">quarter</span> <span class="o">%</span> <span class="n">rtype</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;rtype {0!r} and quarter {1!r} are not compatible&#39;</span><span class="p">)</span>
+
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+        <span class="n">reindex</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;reindex&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reindex</span><span class="p">)</span>
+
+        <span class="n">di</span><span class="p">,</span> <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">))</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="n">di</span><span class="o">-</span><span class="n">delay</span><span class="p">]</span>
+
+        <span class="n">qtrno</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span> <span class="o">-</span> <span class="mi">2000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="n">quarter_offset</span> <span class="o">-</span> <span class="n">rtype</span>
+        <span class="k">if</span> <span class="n">quarter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s">&#39;date &lt;= {0!r} &amp; quarter == {1} &amp; qtrno &gt;= {2}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">quarter</span><span class="p">,</span> <span class="n">qtrno</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s">&#39;date &lt;= {0!r} &amp; quarter % {1} == 0 &amp; qtrno &gt;= {2}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">rtype</span><span class="p">,</span> <span class="n">qtrno</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">JYFundFetcher</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_startyear</span><span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dnames</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;sid&#39;</span><span class="p">,</span> <span class="s">&#39;qtrno&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">dname</span> <span class="ow">in</span> <span class="n">dnames</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">dname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+                    <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dname</span><span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ix</span><span class="p">[:,</span> <span class="n">columns</span><span class="p">]</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="s">&#39;sid&#39;</span><span class="p">,</span> <span class="s">&#39;qtrno&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">())</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">myfunc1</span><span class="p">,</span> <span class="p">[(</span><span class="n">sid</span><span class="p">,</span> <span class="n">sdf</span><span class="p">,</span> <span class="n">quarter_offset</span><span class="p">)</span> <span class="k">for</span> <span class="n">sid</span><span class="p">,</span> <span class="n">sdf</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s">&#39;sid&#39;</span><span class="p">)])</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">dnames</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">reindex</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">SIDS</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+</div>
+<div class="viewcode-block" id="JYFundFetcher.prepare_panel"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.jyfund.JYFundFetcher.prepare_panel">[docs]</a>    <span class="k">def</span> <span class="nf">prepare_panel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dnames</span><span class="p">,</span> <span class="n">startdate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rtype</span><span class="o">=</span><span class="n">QUARTER</span><span class="p">,</span> <span class="n">use_adjust</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fillna</span><span class="o">=</span><span class="s">&#39;ffill&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Prepare a Panel with item axis labled by data names.</span>
+
+<span class="sd">        :param list dnames: List of data names</span>
+<span class="sd">        :param startdate: Starting point of data. Default: None, defaults to the earliest date</span>
+<span class="sd">        :param enddate: Ending point of data. Default: None, defaults to the last date</span>
+<span class="sd">        :param enum rtype: What type of reports to be considered? QUARTER(1, default): all reports; SEMI(2): only semi-annual reports; YEAR(4): only annual reports</span>
+<span class="sd">        :param use_adjust: How to treat data corrections? None(default): try to use all published data along date axis. False: use only first published data. True: use only last published data which are assumed to be public up to ``enddate``, thus may entail forward-looking bias in backtesting simulation</span>
+<span class="sd">        :type use_adjust: None, boolean</span>
+<span class="sd">        :param ffill: Fill gaps long date axis for those non-reporting days, currently supports (&#39;ffill&#39;, None). Default: &#39;ffill&#39;</span>
+<span class="sd">        :type ffill: None, str</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+        <span class="n">reindex</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;reindex&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reindex</span><span class="p">)</span>
+        <span class="n">datetime_index</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;datetime_index&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datetime_index</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">enddate</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">enddate</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">enddate</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_string</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">enddate</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s">&#39;quarter % {0} == 0 &amp; date &lt;= {1!r}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rtype</span><span class="p">,</span> <span class="n">enddate</span><span class="p">)</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;sid&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;qtrno&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">dname</span> <span class="ow">in</span> <span class="n">dnames</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+                <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dname</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">JYFundFetcher</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_startyear</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">ix</span><span class="p">[:,</span> <span class="n">columns</span><span class="p">]</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="s">&#39;sid&#39;</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;qtrno&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">())</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">myfunc2</span><span class="p">,</span> <span class="p">[(</span><span class="n">sid</span><span class="p">,</span> <span class="n">sdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="n">rtype</span><span class="p">,</span> <span class="n">use_adjust</span><span class="p">)</span> <span class="k">for</span> <span class="n">sid</span><span class="p">,</span> <span class="n">sdf</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s">&#39;sid&#39;</span><span class="p">)])</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">panel</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Panel</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">startdate</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">startdate</span> <span class="o">=</span> <span class="n">panel</span><span class="o">.</span><span class="n">major_axis</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">startdate</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_string</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">enddate</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">si</span><span class="p">,</span> <span class="n">ei</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">DATES</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="p">[</span><span class="n">startdate</span><span class="p">,</span> <span class="n">enddate</span><span class="p">])</span>
+        <span class="n">panel</span> <span class="o">=</span> <span class="n">panel</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">major_axis</span><span class="o">=</span><span class="n">DATES</span><span class="p">[</span><span class="n">si</span><span class="p">:</span> <span class="n">ei</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">fillna</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">panel</span> <span class="o">=</span> <span class="n">panel</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;ffill&#39;</span><span class="p">)</span>
+
+        <span class="n">qtrno</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span><span class="n">date</span><span class="p">:</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span> <span class="o">-</span> <span class="mi">2000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span><span class="o">-</span><span class="mf">1.</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="n">rtype</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">panel</span><span class="o">.</span><span class="n">major_axis</span><span class="p">})</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="n">panel</span><span class="p">[</span><span class="s">&#39;qtrno&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">ge</span><span class="p">(</span><span class="n">qtrno</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">dname</span> <span class="ow">in</span> <span class="n">dnames</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">panel</span><span class="p">[</span><span class="n">dname</span><span class="p">]</span>
+            <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">valid</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">dname</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="n">panel</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Panel</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">datetime_index</span><span class="p">:</span>
+            <span class="n">panel</span><span class="o">.</span><span class="n">major_axis</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">panel</span><span class="o">.</span><span class="n">major_axis</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reindex</span><span class="p">:</span>
+                <span class="n">panel</span> <span class="o">=</span> <span class="n">panel</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">minor_axis</span><span class="o">=</span><span class="n">SIDS</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">panel</span>
+        <span class="k">if</span> <span class="n">reindex</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">panel</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">minor_axis</span><span class="o">=</span><span class="n">SIDS</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">panel</span>
+</div>
+<div class="viewcode-block" id="JYFundFetcher.fetch"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.jyfund.JYFundFetcher.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Disabled.</span>
+
+<span class="sd">        :raises: NotImplementedError</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+<div class="viewcode-block" id="JYFundFetcher.fetch_window"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.jyfund.JYFundFetcher.fetch_window">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Disabled.</span>
+
+<span class="sd">        :raises: NotImplementedError</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+<div class="viewcode-block" id="JYFundFetcher.fetch_history"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.jyfund.JYFundFetcher.fetch_history">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Disabled.</span>
+
+<span class="sd">        :raises: NotImplementedError</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+<div class="viewcode-block" id="JYFundFetcher.fetch_daily"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.jyfund.JYFundFetcher.fetch_daily">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">quarter_offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rtype</span><span class="o">=</span><span class="n">QUARTER</span><span class="p">,</span> <span class="n">quarter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a series of cross-sectional data.</span>
+
+<span class="sd">        :param int quarter_offset: Offset in quarter numbers. Default: 0</span>
+<span class="sd">        :param enum rtype: Which type of reports to be considered</span>
+<span class="sd">        :param int quarter: Should only used when ``rtype`` is QUARTER(2). It will only fetch data for this particular quarter, thus also making ``quarter_offset`` not meaningful. Default: None, fetch whatever data is available as of ``date-offset``</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_frame</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">dname</span><span class="p">],</span>
+                <span class="n">date</span><span class="o">=</span><span class="n">date</span><span class="p">,</span>
+                <span class="n">quarter_offset</span><span class="o">=</span><span class="n">quarter_offset</span><span class="p">,</span>
+                <span class="n">rtype</span><span class="o">=</span><span class="n">rtype</span><span class="p">,</span>
+                <span class="n">quarter</span><span class="o">=</span><span class="n">quarter</span><span class="p">,</span>
+                <span class="n">delay</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">)[</span><span class="n">dname</span><span class="p">]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

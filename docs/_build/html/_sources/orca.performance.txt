@@ -1,0 +1,38 @@
+orca.performance package
+========================
+
+Submodules
+----------
+
+orca.performance.analyser module
+--------------------------------
+
+.. automodule:: orca.performance.analyser
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.performance.perf module
+----------------------------
+
+.. automodule:: orca.performance.perf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.performance.util module
+----------------------------
+
+.. automodule:: orca.performance.util
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: orca.performance
+    :members:
+    :undoc-members:
+    :show-inheritance:

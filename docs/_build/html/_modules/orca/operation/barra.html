@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.operation.barra &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="../../../index.html"><img src="../../../_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for orca.operation.barra</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Li, Wang &lt;wangziqi@foreseefund.com&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">orca.mongo.barra</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">BarraSpecificsFetcher</span><span class="p">,</span>
+        <span class="n">BarraExposureFetcher</span><span class="p">,</span>
+        <span class="n">BarraFactorFetcher</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">base</span> <span class="kn">import</span> <span class="n">OperationBase</span>
+
+<div class="viewcode-block" id="BarraOperation"><a class="viewcode-back" href="../../../operation.html#orca.operation.barra.BarraOperation">[docs]</a><span class="k">class</span> <span class="nc">BarraOperation</span><span class="p">(</span><span class="n">OperationBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for operations based on Barra model data.</span>
+
+<span class="sd">    :param str model: Model version, currently only supports: (&#39;daily&#39;, &#39;short&#39;)</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">       This is a base class and should not be used directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">industry_factors</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;daily&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;CNE5D_COUNTRY&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_ENERGY&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_CHEM&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_CONMAT&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_MTLMIN&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5D_MATERIAL&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_AERODEF&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_BLDPROD&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_CNSTENG&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_ELECEQP&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5D_INDCONG&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_MACH&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_TRDDIST&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_COMSERV&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_AIRLINE&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5D_MARINE&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_RDRLTRAN&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_AUTO&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_HOUSEDUR&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_LEISLUX&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5D_CONSSERV&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_MEDIA&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_RETAIL&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_PERSPRD&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_BEV&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5D_FOODPROD&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_HEALTH&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_BANKS&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_DVFININS&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_REALEST&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5D_SOFTWARE&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_HDWRSEMI&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_UTILITIE&#39;</span><span class="p">,</span>
+                      <span class="p">],</span>
+            <span class="s">&#39;short&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;CNE5S_COUNTRY&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_ENERGY&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_CHEM&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_CONMAT&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_MTLMIN&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5S_MATERIAL&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_AERODEF&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_BLDPROD&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_CNSTENG&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_ELECEQP&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5S_INDCONG&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_MACH&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_TRDDIST&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_COMSERV&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_AIRLINE&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5S_MARINE&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_RDRLTRAN&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_AUTO&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_HOUSEDUR&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_LEISLUX&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5S_CONSSERV&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_MEDIA&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_RETAIL&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_PERSPRD&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_BEV&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5S_FOODPROD&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_HEALTH&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_BANKS&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_DVFININS&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_REALEST&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5S_SOFTWARE&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_HDWRSEMI&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_UTILITIE&#39;</span><span class="p">,</span>
+                      <span class="p">]</span>
+            <span class="p">}</span>
+    <span class="n">style_factors</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;daily&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;CNE5D_SIZE&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_BETA&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_MOMENTUM&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_RESVOL&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_SIZENL&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5D_BTOP&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_LIQUIDTY&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_EARNYILD&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_GROWTH&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5D_LEVERAGE&#39;</span><span class="p">,</span>
+                      <span class="p">],</span>
+            <span class="s">&#39;short&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;CNE5S_SIZE&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_BETA&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_MOMENTUM&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_RESVOL&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_SIZENL&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;CNE5S_BTOP&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_LIQUIDTY&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_EARNYILD&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_GROWTH&#39;</span><span class="p">,</span> <span class="s">&#39;CNE5S_LEVERAGE&#39;</span><span class="p">,</span>
+                      <span class="p">],</span>
+            <span class="p">}</span>
+    <span class="n">all_factors</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;daily&#39;</span><span class="p">:</span> <span class="n">industry_factors</span><span class="p">[</span><span class="s">&#39;daily&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">style_factors</span><span class="p">[</span><span class="s">&#39;daily&#39;</span><span class="p">],</span>
+            <span class="s">&#39;short&#39;</span><span class="p">:</span> <span class="n">industry_factors</span><span class="p">[</span><span class="s">&#39;short&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">style_factors</span><span class="p">[</span><span class="s">&#39;short&#39;</span><span class="p">],</span>
+            <span class="p">}</span>
+
+    <span class="n">models</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;daily&#39;</span><span class="p">,</span> <span class="s">&#39;short&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BarraOperation</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;No such version {0!r} of Barra model exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BarraOperation</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">industry_factors</span> <span class="o">=</span> <span class="n">BarraFactorNeutOperation</span><span class="o">.</span><span class="n">industry_factors</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">style_factors</span> <span class="o">=</span> <span class="n">BarraFactorNeutOperation</span><span class="o">.</span><span class="n">style_factors</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_factors</span> <span class="o">=</span> <span class="n">BarraFactorNeutOperation</span><span class="o">.</span><span class="n">all_factors</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">specifics</span> <span class="o">=</span> <span class="n">BarraSpecificsFetcher</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">=</span> <span class="n">BarraExposureFetcher</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factor</span> <span class="o">=</span> <span class="n">BarraFactorFetcher</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+
+    <span class="nd">@model.setter</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BarraOperation</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;No such version {0!r} of Barra model exists. Nothing has changed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">specifics</span> <span class="o">=</span> <span class="n">BarraSpecificsFetcher</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">=</span> <span class="n">BarraExposureFetcher</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factor</span> <span class="o">=</span> <span class="n">BarraFactorFetcher</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BarraFactorNeutOperation"><a class="viewcode-back" href="../../../operation.html#orca.operation.barra.BarraFactorNeutOperation">[docs]</a><span class="k">class</span> <span class="nc">BarraFactorNeutOperation</span><span class="p">(</span><span class="n">BarraOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to neutralize alpha along some Barra factors.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BarraFactorNeutOperation</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_operate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">factors</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param Series alpha: Row extracted from an alpha DataFrame</span>
+<span class="sd">        :param factors: Factors to be neutralized. When it is a string, it must take value in (&#39;industry&#39;, &#39;style&#39;, &#39;all&#39;)</span>
+<span class="sd">        :type factors: str, list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">factors</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">factors</span> <span class="o">==</span> <span class="s">&#39;industry&#39;</span><span class="p">:</span>
+                <span class="n">factors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">industry_factors</span>
+            <span class="k">elif</span> <span class="n">factors</span> <span class="o">==</span> <span class="s">&#39;style&#39;</span><span class="p">:</span>
+                <span class="n">factors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style_factors</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">factors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_factors</span>
+
+        <span class="n">exposure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span><span class="o">.</span><span class="n">fetch_daily</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="n">factors</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="n">sids</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">alpha</span><span class="p">[</span><span class="n">alpha</span><span class="o">.</span><span class="n">notnull</span><span class="p">()]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">nalpha</span><span class="p">,</span> <span class="n">exposure</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">[</span><span class="n">sids</span><span class="p">],</span> <span class="n">exposure</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">sids</span><span class="p">]</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">exposure</span><span class="p">),</span> <span class="n">exposure</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">nalpha</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lamb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Singular matrix, neutralization failed&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">alpha</span>
+        <span class="n">nalpha</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">nalpha</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">exposure</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lamb</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">sids</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nalpha</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">alpha</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BarraFactorNeutOperation.operate"><a class="viewcode-back" href="../../../operation.html#orca.operation.barra.BarraFactorNeutOperation.operate">[docs]</a>    <span class="k">def</span> <span class="nf">operate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">factors</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param factors: Factors to be neutralized. When it is a string, it must take value in (&#39;industry&#39;, &#39;style&#39;, &#39;all&#39;)</span>
+<span class="sd">        :type factors: str, list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">alpha</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operate</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">factors</span><span class="p">,</span> <span class="n">date</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+</div></div>
+<div class="viewcode-block" id="BarraFactorCorrNeutOperation"><a class="viewcode-back" href="../../../operation.html#orca.operation.barra.BarraFactorCorrNeutOperation">[docs]</a><span class="k">class</span> <span class="nc">BarraFactorCorrNeutOperation</span><span class="p">(</span><span class="n">BarraOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to neutralize alpha along some Barra factors.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BarraFactorCorrNeutOperation</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_operate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">factors</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param Series alpha: Row extracted from an alpha DataFrame</span>
+<span class="sd">        :param factors: Factors to be neutralized. When it is a string, it must take value in (&#39;industry&#39;, &#39;style&#39;, &#39;all&#39;)</span>
+<span class="sd">        :type factors: str, list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">factors</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">factors</span> <span class="o">==</span> <span class="s">&#39;industry&#39;</span><span class="p">:</span>
+                <span class="n">factors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">industry_factors</span>
+            <span class="k">elif</span> <span class="n">factors</span> <span class="o">==</span> <span class="s">&#39;style&#39;</span><span class="p">:</span>
+                <span class="n">factors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style_factors</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">factors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_factors</span>
+
+        <span class="n">exposure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span><span class="o">.</span><span class="n">fetch_daily</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="n">factors</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="n">sids</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">alpha</span><span class="p">[</span><span class="n">alpha</span><span class="o">.</span><span class="n">notnull</span><span class="p">()]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="n">srisk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">specifics</span><span class="o">.</span><span class="n">fetch_daily</span><span class="p">(</span><span class="s">&#39;specific_risk&#39;</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="n">sids</span><span class="p">]</span>
+        <span class="n">sids</span> <span class="o">=</span> <span class="n">sids</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">srisk</span><span class="p">[</span><span class="n">srisk</span><span class="o">.</span><span class="n">notnull</span><span class="p">()]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="n">nalpha</span><span class="p">,</span> <span class="n">exposure</span><span class="p">,</span> <span class="n">srisk</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">[</span><span class="n">sids</span><span class="p">],</span> <span class="n">exposure</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">sids</span><span class="p">],</span> <span class="n">srisk</span><span class="p">[</span><span class="n">sids</span><span class="p">]</span>
+
+        <span class="n">faccov</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor</span><span class="o">.</span><span class="n">fetch_daily</span><span class="p">(</span><span class="s">&#39;covariance&#39;</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">cov1</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">faccov</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">exposure</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">cov2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">srisk</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">sids</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">sids</span><span class="p">)</span>
+        <span class="n">covariance</span> <span class="o">=</span> <span class="n">cov1</span> <span class="o">+</span> <span class="n">cov2</span>
+
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">exposure</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">exposure</span><span class="p">),</span> <span class="n">exposure</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">nalpha</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lamb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Singular matrix, neutralization failed&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">alpha</span>
+        <span class="n">nalpha</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">nalpha</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">exposure</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lamb</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">sids</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nalpha</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">alpha</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BarraFactorCorrNeutOperation.operate"><a class="viewcode-back" href="../../../operation.html#orca.operation.barra.BarraFactorCorrNeutOperation.operate">[docs]</a>    <span class="k">def</span> <span class="nf">operate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">factors</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param factors: Factors to be neutralized. When it is a string, it must take value in (&#39;industry&#39;, &#39;style&#39;, &#39;all&#39;)</span>
+<span class="sd">        :type factors: str, list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">alpha</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">res</span><span class="p">[</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operate</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">factors</span><span class="p">,</span> <span class="n">date</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

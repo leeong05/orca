@@ -1,0 +1,359 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.mongo.base &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="../../../index.html"><img src="../../../_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for orca.mongo.base</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Li, Wang &lt;wangziqi@foreseefund.com&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">orca</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">orca</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">DATES</span><span class="p">,</span>
+        <span class="n">SIDS</span><span class="p">,</span>
+        <span class="p">)</span>
+<span class="kn">import</span> <span class="nn">util</span>
+
+<div class="viewcode-block" id="FetcherBase"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase">[docs]</a><span class="k">class</span> <span class="nc">FetcherBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for mongo fetchers.</span>
+
+<span class="sd">    :param boolean debug_on: Enable/Disable debug level messages. Default: True</span>
+<span class="sd">    :param boolean datetime_index: Whether to use DatetimeIndex or list of date strings. Default: False</span>
+<span class="sd">    :param boolean reindex: Whether to use full sids as columns in DataFrame. Default: False</span>
+<span class="sd">    :param boolean date_check: Whethter to check if passed date-related parameters are valid. Default: False</span>
+<span class="sd">    :param int delay: Delay fetched data in :py:meth:`~orca.mongo.base.FetcherBase.fetch_history`. Default: 1</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">       This is a base class and should not be used directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span>
+
+    <span class="n">LOGGER_NAME</span> <span class="o">=</span> <span class="s">&#39;mongo&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug_on</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">datetime_index</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">reindex</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">date_check</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="n">FetcherBase</span><span class="o">.</span><span class="n">LOGGER_NAME</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_debug_mode</span><span class="p">(</span><span class="n">debug_on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datetime_index</span> <span class="o">=</span> <span class="n">datetime_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reindex</span> <span class="o">=</span> <span class="n">reindex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span> <span class="o">=</span> <span class="n">date_check</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">delay</span>
+
+<div class="viewcode-block" id="FetcherBase.set_debug_mode"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.set_debug_mode">[docs]</a>    <span class="k">def</span> <span class="nf">set_debug_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug_on</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Enable/Disable debug level message in data fetchers.</span>
+<span class="sd">        This is enabled by default.&quot;&quot;&quot;</span>
+        <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span> <span class="k">if</span> <span class="n">debug_on</span> <span class="k">else</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FetcherBase.debug"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.debug">[docs]</a>    <span class="k">def</span> <span class="nf">debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Logs a message with level DEBUG on the alpha logger.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FetcherBase.info"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Logs a message with level INFO on the alpha logger.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FetcherBase.warning"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.warning">[docs]</a>    <span class="k">def</span> <span class="nf">warning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Logs a message with level WARNING on the alpha logger.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FetcherBase.error"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.error">[docs]</a>    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Logs a message with level ERROR on the alpha logger.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FetcherBase.critical"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.critical">[docs]</a>    <span class="k">def</span> <span class="nf">critical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Logs a message with level CRITICAL on the alpha logger.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</div>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">datetime_index</span><span class="p">,</span> <span class="n">reindex</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">datetime_index</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reindex</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">SIDS</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="FetcherBase.fetch"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">startdate</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">backdays</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override(**mandatory**) to fetch data within two endpoints.</span>
+
+<span class="sd">        :param str dname: Name of the data</span>
+<span class="sd">        :param startdate: The **left** (may not be the actual) endpoint</span>
+<span class="sd">        :type startdate: str, int</span>
+<span class="sd">        :param enddate: The **right** endpoint. Default: None, defaults to the last date</span>
+<span class="sd">        :type enddate: str, int, None</span>
+<span class="sd">        :param int backdays: This will shift (left/right: &gt;/&lt; 0) the left endpoint. Default: 0</span>
+<span class="sd">        :returns: DataFrame</span>
+<span class="sd">        :raises: NotImplementedError</span>
+
+<span class="sd">        .. seealso:: :py:func:`orca.mongo.util.cut_window`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="FetcherBase.fetch_window"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.fetch_window">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override(**mandatory**) to fetch data for consecutive trading days.</span>
+
+<span class="sd">        :param str dname: Name of the data</span>
+<span class="sd">        :param list window: List of consecutive trading dates</span>
+<span class="sd">        :returns: DataFrame</span>
+<span class="sd">        :raises: NotImplementedError</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="FetcherBase.fetch_history"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.fetch_history">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">backdays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override(**mandatory**) to fetch data with respect to a base point.</span>
+
+<span class="sd">        :param str dname: Name of the data</span>
+<span class="sd">        :param date: The date(with additional tweaks specified in ``kwargs`` and ``self.delay``) as a base point</span>
+<span class="sd">        :type date: str, int</span>
+<span class="sd">        :param int backdays: Number of days to look back w.r.t. the base point</span>
+<span class="sd">        :returns: DataFrame</span>
+<span class="sd">        :raises: NotImplementedError</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="FetcherBase.fetch_daily"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.FetcherBase.fetch_daily">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override(**mandatory**) to fetch data series on a certain date.</span>
+
+<span class="sd">        :param str dname: Name of the data</span>
+<span class="sd">        :param date: The base point</span>
+<span class="sd">        :type date: str, int</span>
+<span class="sd">        :param int offset: The offset w.r.t. the ``date``. The actual fetched date is calculated from ``date`` and ``offset``. Default: 0</span>
+<span class="sd">        :returns: Series</span>
+<span class="sd">        :raises: NotImplementedError</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+</div></div>
+<div class="viewcode-block" id="KDayFetcher"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KDayFetcher">[docs]</a><span class="k">class</span> <span class="nc">KDayFetcher</span><span class="p">(</span><span class="n">FetcherBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class to fetch daily data that can be formatted as DataFrame.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">       This is a base class and should not be used directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">KDayFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KDayFetcher.fetch"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KDayFetcher.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">startdate</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">backdays</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use :py:meth:`fetch_window` behind the scene.&quot;&quot;&quot;</span>
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+
+        <span class="n">window</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">cut_window</span><span class="p">(</span>
+                <span class="n">DATES</span><span class="p">,</span>
+                <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">startdate</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">),</span>
+                <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">enddate</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">)</span> <span class="k">if</span> <span class="n">enddate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+                <span class="n">backdays</span><span class="o">=</span><span class="n">backdays</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="KDayFetcher.fetch_window"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KDayFetcher.fetch_window">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetch data from a certain collection in MongoDB. For most cases, this is the **only** method that needs</span>
+<span class="sd">        to be overridden.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">datetime_index</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;datetime_index&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datetime_index</span><span class="p">)</span>
+        <span class="n">reindex</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;reindex&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reindex</span><span class="p">)</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;dname&#39;</span><span class="p">:</span> <span class="n">dname</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;$gte&#39;</span><span class="p">:</span> <span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;$lte&#39;</span><span class="p">:</span> <span class="n">window</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]}}</span>
+        <span class="n">proj</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;dvalue&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">proj</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">row</span><span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">]:</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;dvalue&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">})</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">datetime_index</span><span class="p">,</span> <span class="n">reindex</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="KDayFetcher.fetch_history"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KDayFetcher.fetch_history">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">backdays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use :py:meth:`fetch_window` behind the scene.&quot;&quot;&quot;</span>
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;delay&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span>
+
+        <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">)</span>
+        <span class="n">di</span><span class="p">,</span> <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">di</span> <span class="o">-=</span> <span class="n">delay</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="n">di</span><span class="o">-</span><span class="n">backdays</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">di</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="KDayFetcher.fetch_daily"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KDayFetcher.fetch_daily">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use :py:meth:`fetch_window` behind the scene.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_history</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+</div></div>
+<div class="viewcode-block" id="KMinFetcher"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KMinFetcher">[docs]</a><span class="k">class</span> <span class="nc">KMinFetcher</span><span class="p">(</span><span class="n">FetcherBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class to fetch minute-bar interval data.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">       This is a base class and should not be used directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">KMinFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KMinFetcher.fetch"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KMinFetcher.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">startdate</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">backdays</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use :py:meth:`fetch_window` behind the scene.&quot;&quot;&quot;</span>
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+
+        <span class="n">window</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">cut_window</span><span class="p">(</span>
+                <span class="n">DATES</span><span class="p">,</span>
+                <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">startdate</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">),</span>
+                <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">enddate</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">)</span> <span class="k">if</span> <span class="n">enddate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+                <span class="n">backdays</span><span class="o">=</span><span class="n">backdays</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="KMinFetcher.fetch_window"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KMinFetcher.fetch_window">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetch minute-bar data(specified by time stamps) for a consecutive days.</span>
+
+<span class="sd">        :param times: Time stamps to indicate which minute-bars should be fetched. This will affect the returned data type</span>
+<span class="sd">        :type times: str, list</span>
+<span class="sd">        :returns: DataFrame(if ``type(times)`` is ``str``) or Panel(with ``times`` as the item-axis)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">datetime_index</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;datetime_index&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datetime_index</span><span class="p">)</span>
+        <span class="n">reindex</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;reindex&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reindex</span><span class="p">)</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;dname&#39;</span><span class="p">:</span> <span class="n">dname</span><span class="p">,</span>
+                 <span class="s">&#39;date&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;$gte&#39;</span><span class="p">:</span> <span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;$lte&#39;</span><span class="p">:</span> <span class="n">window</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]},</span>
+                 <span class="s">&#39;time&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;$in&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">times</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">times</span><span class="p">}}</span>
+        <span class="n">proj</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;dvalue&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;time&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">proj</span><span class="p">)</span>
+        <span class="n">dfs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({(</span><span class="n">row</span><span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">]):</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;dvalue&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">})</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">dfs</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">,</span> <span class="s">&#39;time&#39;</span><span class="p">]</span>
+        <span class="n">panel</span> <span class="o">=</span> <span class="n">dfs</span><span class="o">.</span><span class="n">to_panel</span><span class="p">()</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">datetime_index</span><span class="p">:</span>
+            <span class="n">panel</span><span class="o">.</span><span class="n">major_axis</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">panel</span><span class="o">.</span><span class="n">major_axis</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reindex</span><span class="p">:</span>
+                <span class="n">panel</span> <span class="o">=</span> <span class="n">panel</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">major_axis</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">window</span><span class="p">),</span> <span class="n">minor_axis</span><span class="o">=</span><span class="n">SIDS</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reindex</span><span class="p">:</span>
+            <span class="n">panel</span> <span class="o">=</span> <span class="n">panel</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">major_axis</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">minor_axis</span><span class="o">=</span><span class="n">SIDS</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">panel</span><span class="p">[</span><span class="n">times</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">panel</span>
+</div>
+<div class="viewcode-block" id="KMinFetcher.fetch_history"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KMinFetcher.fetch_history">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">backdays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use :py:meth:`fetch_window` behind the scene.&quot;&quot;&quot;</span>
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;delay&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span>
+
+        <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">)</span>
+        <span class="n">di</span><span class="p">,</span> <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">di</span> <span class="o">-=</span> <span class="n">delay</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="n">di</span><span class="o">-</span><span class="n">backdays</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">di</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="KMinFetcher.fetch_daily"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.base.KMinFetcher.fetch_daily">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use :py:meth:`fetch_window` behind the scene.</span>
+
+<span class="sd">        :returns: Series(if ``type(times)`` is ``str``) or DataFrame(with ``times`` as the columns)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_history</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">major_xs</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">major_axis</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

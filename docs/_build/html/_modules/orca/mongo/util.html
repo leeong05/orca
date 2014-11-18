@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.mongo.util &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="../../../index.html"><img src="../../../_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for orca.mongo.util</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Li, Wang &lt;wangziqi@foreseefund.com&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">bisect</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">time</span>
+<span class="kn">from</span> <span class="nn">calendar</span> <span class="kn">import</span> <span class="n">monthrange</span>
+
+<div class="viewcode-block" id="is_sorted"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.util.is_sorted">[docs]</a><span class="k">def</span> <span class="nf">is_sorted</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if a list is sorted.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ascending</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="find_ge"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.util.find_ge">[docs]</a><span class="k">def</span> <span class="nf">find_ge</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find the leftmost item in the sorted(**ascending**) list &gt;= ``x``.&quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_left</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">i</span><span class="p">,</span> <span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;No item in the list &gt;= {0!r}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="find_le"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.util.find_le">[docs]</a><span class="k">def</span> <span class="nf">find_le</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find the rightmost item in the sorted(**ascending**) list &lt;= ``x``&quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_right</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">i</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">l</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;No item in the list &lt;= {0!r}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="parse_date"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.util.parse_date">[docs]</a><span class="k">def</span> <span class="nf">parse_date</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find the item in ``dates`` that is closest(specified by ``direction``) to ``date``</span>
+
+<span class="sd">    :param list dates: The pre-defined list, must be sorted in ascending order</span>
+<span class="sd">    :param date: ``date`` may be already in ``dates``; otherwise, it will be parsed into another item in the list</span>
+<span class="sd">    :param int direction: 1(default): the desired item &gt;= ``date``;-1: the desired item &lt;= ``date``</span>
+
+<span class="sd">    :returns: (i, dates[i]), ``i`` is the index of the desired item in ``dates``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">dates</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dates</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">date</span><span class="p">),</span> <span class="n">date</span>
+
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">find_le</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">date</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">find_ge</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">date</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="compliment_datestring"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.util.compliment_datestring">[docs]</a><span class="k">def</span> <span class="nf">compliment_datestring</span><span class="p">(</span><span class="n">datestr</span><span class="p">,</span> <span class="n">direction</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compliment a 4- or 6-length date string into 8-length in format ``yyyymmdd``.</span>
+
+<span class="sd">    :param str datestr: For example, &#39;2014&#39;, &#39;201401&#39; or &#39;20140101&#39;</span>
+<span class="sd">    :param int direction: -1(default): compliment as the minimal possible; 1: compliment as the maximal possible</span>
+<span class="sd">    :param boolean date_check: Whether to check if ``datestr`` is a valid date string. Default: False</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">datestr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">date_check</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datestr</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">datestr</span><span class="p">,</span> <span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> is not a valid argument&#39;</span><span class="p">,</span> <span class="n">datestr</span><span class="o">.</span><span class="n">__repr__</span><span class="p">())</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">datestr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">date_check</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datestr</span> <span class="o">+</span> <span class="s">&#39;31&#39;</span> <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">datestr</span> <span class="o">+</span> <span class="s">&#39;01&#39;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">year</span><span class="p">,</span> <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">datestr</span><span class="p">[:</span><span class="mi">4</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">datestr</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+            <span class="n">day</span> <span class="o">=</span> <span class="n">monthrange</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="s">&#39;{0:4d}{1:02d}{2:02d}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;{0!r} is not a valid argument&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">datestr</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">datestr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datestr</span> <span class="o">+</span> <span class="s">&#39;1231&#39;</span> <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">datestr</span> <span class="o">+</span> <span class="s">&#39;0101&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;{0!r} is not a valid argument&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">datestr</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="cut_window"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.util.cut_window">[docs]</a><span class="k">def</span> <span class="nf">cut_window</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">startdate</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">backdays</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cut out the portion of a list specified by left and right endpoints.</span>
+
+<span class="sd">    :param list dates: The pre-defined list, must be sorted in ascending order</span>
+<span class="sd">    :param startdate: The **left** (may not be the actual) cut-out point</span>
+<span class="sd">    :param enddate: The **right** cut-out point. Default: None, defaults to the last item in the list</span>
+<span class="sd">    :param int backdays: This will shift (left/right: &gt;/&lt; 0) the left cut-out point. Default: 0</span>
+<span class="sd">    :returns: The cut-out portion</span>
+<span class="sd">    :rtype: list</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">startindex</span><span class="p">,</span> <span class="n">startdate</span> <span class="o">=</span> <span class="n">parse_date</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">startdate</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">startindex</span> <span class="o">&lt;</span> <span class="n">backdays</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot left-shift {0!r} with step {1} in the list&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">startdate</span><span class="p">,</span> <span class="n">backdays</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">enddate</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">enddate</span> <span class="o">=</span> <span class="n">dates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">endindex</span><span class="p">,</span> <span class="n">enddate</span> <span class="o">=</span> <span class="n">parse_date</span><span class="p">(</span><span class="n">dates</span><span class="p">,</span> <span class="n">enddate</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dates</span><span class="p">[</span><span class="n">startindex</span><span class="o">-</span><span class="n">backdays</span><span class="p">:</span> <span class="n">endindex</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+</div>
+<span class="n">_dummy_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1900</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<div class="viewcode-block" id="generate_timestamps"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.util.generate_timestamps">[docs]</a><span class="k">def</span> <span class="nf">generate_timestamps</span><span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">end_excluded</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate consecutive time stamps.</span>
+
+<span class="sd">    :param str starttime, endtime: Must be 6-length time string in the format &#39;hhmmss&#39;</span>
+<span class="sd">    :param int step: Number of **seconds** as step</span>
+<span class="sd">    :param boolean end_excluded: Whether the ``endtime`` itself should be excluded from the result. Default: True</span>
+<span class="sd">    :returns: Python generator</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">starttime</span> <span class="o">=</span> <span class="n">time</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">starttime</span><span class="p">[:</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">starttime</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">starttime</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]))</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">step</span><span class="p">))</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">_dummy_date</span><span class="p">,</span> <span class="n">starttime</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%H%M%S&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">end_excluded</span> <span class="ow">and</span> <span class="n">timestamp</span> <span class="o">&lt;</span> <span class="n">endtime</span><span class="p">)</span> <span class="ow">or</span> \
+                <span class="p">(</span><span class="ow">not</span> <span class="n">end_excluded</span> <span class="ow">and</span> <span class="n">timestamp</span> <span class="o">&lt;=</span> <span class="n">endtime</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">timestamp</span>
+            <span class="n">dt</span> <span class="o">+=</span> <span class="n">step</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">break</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,214 @@
+orca.update_scripts package
+===========================
+
+Submodules
+----------
+
+orca.update_scripts.barra module
+--------------------------------
+
+.. automodule:: orca.update_scripts.barra
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.barra_sql module
+------------------------------------
+
+.. automodule:: orca.update_scripts.barra_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.base module
+-------------------------------
+
+.. automodule:: orca.update_scripts.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.cax module
+------------------------------
+
+.. automodule:: orca.update_scripts.cax
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.cax_sql module
+----------------------------------
+
+.. automodule:: orca.update_scripts.cax_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.components module
+-------------------------------------
+
+.. automodule:: orca.update_scripts.components
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.components_sql module
+-----------------------------------------
+
+.. automodule:: orca.update_scripts.components_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.indexquote module
+-------------------------------------
+
+.. automodule:: orca.update_scripts.indexquote
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.indexquote_sql module
+-----------------------------------------
+
+.. automodule:: orca.update_scripts.indexquote_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.industry module
+-----------------------------------
+
+.. automodule:: orca.update_scripts.industry
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.industry_sql module
+---------------------------------------
+
+.. automodule:: orca.update_scripts.industry_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.jybs_sql module
+-----------------------------------
+
+.. automodule:: orca.update_scripts.jybs_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.jycs_sql module
+-----------------------------------
+
+.. automodule:: orca.update_scripts.jycs_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.jyfund module
+---------------------------------
+
+.. automodule:: orca.update_scripts.jyfund
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.jyis_sql module
+-----------------------------------
+
+.. automodule:: orca.update_scripts.jyis_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.quote module
+--------------------------------
+
+.. automodule:: orca.update_scripts.quote
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.quote_sql module
+------------------------------------
+
+.. automodule:: orca.update_scripts.quote_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.sywgquote module
+------------------------------------
+
+.. automodule:: orca.update_scripts.sywgquote
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.sywgquote_sql module
+----------------------------------------
+
+.. automodule:: orca.update_scripts.sywgquote_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.tsmin module
+--------------------------------
+
+.. automodule:: orca.update_scripts.tsmin
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.tsmin_sql module
+------------------------------------
+
+.. automodule:: orca.update_scripts.tsmin_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.zyadjust module
+-----------------------------------
+
+.. automodule:: orca.update_scripts.zyadjust
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.zyadjust_sql module
+---------------------------------------
+
+.. automodule:: orca.update_scripts.zyadjust_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.zyconsensus module
+--------------------------------------
+
+.. automodule:: orca.update_scripts.zyconsensus
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orca.update_scripts.zyconsensus_sql module
+------------------------------------------
+
+.. automodule:: orca.update_scripts.zyconsensus_sql
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: orca.update_scripts
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.mongo.barra &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="../../../index.html"><img src="../../../_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for orca.mongo.barra</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Li, Wang &lt;wangziqi@foreseefund.com&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">orca</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">DB</span><span class="p">,</span>
+        <span class="n">DATES</span><span class="p">,</span>
+        <span class="n">SIDS</span><span class="p">,</span>
+        <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">base</span> <span class="kn">import</span> <span class="n">KDayFetcher</span>
+<span class="kn">import</span> <span class="nn">util</span>
+
+<div class="viewcode-block" id="BarraFetcher"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraFetcher">[docs]</a><span class="k">class</span> <span class="nc">BarraFetcher</span><span class="p">(</span><span class="n">KDayFetcher</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for Barra model data fetchers.</span>
+
+<span class="sd">    :param str model: Model version, currently only supports: (&#39;daily&#39;, &#39;short&#39;)</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">       This is a base class and should not be used directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">models</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;daily&#39;</span><span class="p">,</span> <span class="s">&#39;short&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BarraFetcher</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;No such version {0!r} of Barra model exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">collections</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BarraFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+
+    <span class="nd">@model.setter</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BarraFetcher</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;No such version {0!r} of Barra model exists. Nothing has changed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">collections</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="BarraSpecificsFetcher"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraSpecificsFetcher">[docs]</a><span class="k">class</span> <span class="nc">BarraSpecificsFetcher</span><span class="p">(</span><span class="n">BarraFetcher</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to fetch stock specifics in Barra model.&quot;&quot;&quot;</span>
+
+    <span class="n">collections</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;daily&#39;</span><span class="p">:</span> <span class="n">DB</span><span class="o">.</span><span class="n">barra_D_specifics</span><span class="p">,</span>
+        <span class="s">&#39;short&#39;</span><span class="p">:</span> <span class="n">DB</span><span class="o">.</span><span class="n">barra_S_specifics</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="n">dnames</span> <span class="o">=</span> <span class="n">DB</span><span class="o">.</span><span class="n">barra_D_specifics</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s">&#39;dname&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BarraExposureFetcher"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraExposureFetcher">[docs]</a><span class="k">class</span> <span class="nc">BarraExposureFetcher</span><span class="p">(</span><span class="n">BarraFetcher</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to fetch stock to factor exposure.&quot;&quot;&quot;</span>
+
+    <span class="n">collections</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;daily&#39;</span><span class="p">:</span> <span class="n">DB</span><span class="o">.</span><span class="n">barra_D_exposure</span><span class="p">,</span>
+        <span class="s">&#39;short&#39;</span><span class="p">:</span> <span class="n">DB</span><span class="o">.</span><span class="n">barra_S_exposure</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BarraExposureFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dnames</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s">&#39;dname&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BarraExposureFetcher.fetch_daily"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraExposureFetcher.fetch_daily">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This differs from the default :py:meth:`orca.mongo.base.KDayFetcher.fetch_daily` in only</span>
+<span class="sd">        one aspect: when the ``dname`` is not given, this will fetch all factors exposure on ``date``.</span>
+
+<span class="sd">        :returns: Series(if a factor name is given), DataFrame(all factor names are in the columns)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">factor</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="s">&#39;offset&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;offset&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># is the first argument a date?</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+                <span class="c"># yes, it is a date</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c"># the first argument is not a date, presumably, it is the factor name!</span>
+                <span class="n">factor</span><span class="p">,</span> <span class="n">date</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="c"># offset provided as the 3rd argument?</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">factor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">BarraExposureFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">fetch_daily</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">di</span><span class="p">,</span> <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="n">di</span><span class="o">-</span><span class="n">offset</span><span class="p">]</span>
+
+        <span class="n">reindex</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;reindex&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reindex</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;date&#39;</span><span class="p">:</span> <span class="n">date</span><span class="p">}</span>
+        <span class="n">proj</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;dname&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;exposure&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">proj</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">row</span><span class="p">[</span><span class="s">&#39;dname&#39;</span><span class="p">]:</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;exposure&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">})</span>
+        <span class="k">if</span> <span class="n">reindex</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">SIDS</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+</div></div>
+<div class="viewcode-block" id="BarraFactorFetcher"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraFactorFetcher">[docs]</a><span class="k">class</span> <span class="nc">BarraFactorFetcher</span><span class="p">(</span><span class="n">KDayFetcher</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to fetch factor returns/covariance data.&quot;&quot;&quot;</span>
+
+    <span class="n">collections</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;daily&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">DB</span><span class="o">.</span><span class="n">barra_D_returns</span><span class="p">,</span> <span class="n">DB</span><span class="o">.</span><span class="n">barra_D_covariance</span><span class="p">),</span>
+        <span class="s">&#39;short&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">DB</span><span class="o">.</span><span class="n">barra_S_returns</span><span class="p">,</span> <span class="n">DB</span><span class="o">.</span><span class="n">barra_S_covariance</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BarraFetcher</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;No such version {0!r} of Barra model exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ret</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span> <span class="o">=</span> <span class="n">BarraFactorFetcher</span><span class="o">.</span><span class="n">collections</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_factors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ret</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s">&#39;factor&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BarraFactorFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">factors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factors</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+
+    <span class="nd">@model.setter</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BarraFetcher</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;No such version {0!r} of Barra model exists. Nothing has changed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ret</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">collections</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_factors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ret</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s">&#39;factor&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BarraFactorFetcher.fetch_returns"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraFactorFetcher.fetch_returns">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetch returns for factors.</span>
+
+<span class="sd">        :param factor: Factor name or a list of factor names. Default: None, all factors will be fetched</span>
+<span class="sd">        :type factor: None, str, list</span>
+<span class="sd">        :returns: Series(if ``type(factor)`` is ``str``) or DataFrame</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">datetime_index</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;datetime_index&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datetime_index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">factor</span> <span class="ow">is</span> <span class="bp">None</span> <span class="p">:</span>
+            <span class="n">factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factors</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;factor&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;$in&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">factor</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">factor</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">factor</span><span class="p">},</span>
+                <span class="s">&#39;date&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;$gte&#39;</span><span class="p">:</span> <span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;$lte&#39;</span><span class="p">:</span> <span class="n">window</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]}}</span>
+        <span class="n">proj</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;factor&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;returns&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;date&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ret</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">proj</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({(</span><span class="n">row</span><span class="p">[</span><span class="s">&#39;date&#39;</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;factor&#39;</span><span class="p">]):</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;returns&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">})</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">datetime_index</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">factor</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">factor</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">df</span>
+</div>
+<div class="viewcode-block" id="BarraFactorFetcher.fetch_covariance"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraFactorFetcher.fetch_covariance">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fecth factor covariance matrix on a given date.&quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;date&#39;</span><span class="p">:</span> <span class="n">date</span><span class="p">}</span>
+        <span class="n">proj</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;factor&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;covariance&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">proj</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">row</span><span class="p">[</span><span class="s">&#39;factor&#39;</span><span class="p">]:</span> <span class="n">row</span><span class="p">[</span><span class="s">&#39;covariance&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">df</span>
+</div>
+<div class="viewcode-block" id="BarraFactorFetcher.fetch"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraFactorFetcher.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param str dname: &#39;returns&#39; or factor name</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dname</span> <span class="o">==</span> <span class="s">&#39;returns&#39;</span><span class="p">:</span>
+            <span class="n">dname</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">BarraFactorFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BarraFactorFetcher.fetch_window"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraFactorFetcher.fetch_window">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Wrapper for :py:meth:`fetch_returns`.</span>
+
+<span class="sd">        :param str dname: &#39;returns&#39; or factor name</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dname</span> <span class="o">==</span> <span class="s">&#39;returns&#39;</span><span class="p">:</span>
+            <span class="n">dname</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_returns</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BarraFactorFetcher.fetch_history"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraFactorFetcher.fetch_history">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param str dname: &#39;returns&#39; or factor name</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dname</span> <span class="o">==</span> <span class="s">&#39;returns&#39;</span><span class="p">:</span>
+            <span class="n">dname</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">BarraFactorFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">fetch_history</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BarraFactorFetcher.fetch_daily"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.barra.BarraFactorFetcher.fetch_daily">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Wrapper for :py:meth:`fetch_returns` and :py:meth:`fetch_covariance`.</span>
+
+<span class="sd">        :param str dname: &#39;returns&#39;, &#39;covariance&#39; or any factor name</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dname</span> <span class="o">==</span> <span class="s">&#39;covariance&#39;</span><span class="p">:</span>
+            <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">)</span>
+            <span class="n">di</span><span class="p">,</span> <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="n">di</span><span class="o">-</span><span class="n">offset</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_covariance</span><span class="p">(</span><span class="n">date</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dname</span> <span class="o">==</span> <span class="s">&#39;returns&#39;</span><span class="p">:</span>
+            <span class="n">dname</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">BarraFactorFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">fetch_daily</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

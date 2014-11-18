@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.mongo.adjquote &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="../../../index.html"><img src="../../../_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for orca.mongo.adjquote</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Li, Wang &lt;wangziqi@foreseefund.com&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">orca</span> <span class="kn">import</span> <span class="n">DATES</span>
+
+<span class="kn">from</span> <span class="nn">base</span> <span class="kn">import</span> <span class="n">KDayFetcher</span>
+<span class="kn">from</span> <span class="nn">quote</span> <span class="kn">import</span> <span class="n">QuoteFetcher</span>
+<span class="kn">from</span> <span class="nn">kday</span> <span class="kn">import</span> <span class="n">CaxFetcher</span>
+<span class="kn">import</span> <span class="nn">util</span>
+
+<span class="n">BACKWARD</span><span class="p">,</span> <span class="n">FORWARD</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+
+
+<div class="viewcode-block" id="AdjQuoteFetcher"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.adjquote.AdjQuoteFetcher">[docs]</a><span class="k">class</span> <span class="nc">AdjQuoteFetcher</span><span class="p">(</span><span class="n">KDayFetcher</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to fetch adjusted price/volume data.</span>
+
+<span class="sd">    :param int mode: Mode to adjust price/volume. Default: BACKWARD(1)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_prices</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;prev_close&#39;</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">,</span> <span class="s">&#39;open&#39;</span><span class="p">,</span> <span class="s">&#39;high&#39;</span><span class="p">,</span> <span class="s">&#39;low&#39;</span><span class="p">,</span> <span class="s">&#39;vwap&#39;</span><span class="p">)</span>
+    <span class="n">_volumes</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;volume&#39;</span><span class="p">)</span>
+    <span class="n">_noadjust</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;returns&#39;</span><span class="p">,</span> <span class="s">&#39;amount&#39;</span><span class="p">)</span>
+
+    <span class="n">dnames</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;adj_&#39;</span> <span class="o">+</span> <span class="n">dname</span> <span class="k">for</span> <span class="n">dname</span> <span class="ow">in</span> <span class="n">QuoteFetcher</span><span class="o">.</span><span class="n">dnames</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">BACKWARD</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quote</span> <span class="o">=</span> <span class="n">QuoteFetcher</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cax</span> <span class="o">=</span> <span class="n">CaxFetcher</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AdjQuoteFetcher</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_adjust_price</span><span class="p">(</span><span class="n">price</span><span class="p">,</span> <span class="n">adj_factor</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+        <span class="n">adj_price</span> <span class="o">=</span> <span class="n">adj_factor</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">price</span><span class="o">.</span><span class="n">index</span><span class="p">]</span> <span class="o">*</span> <span class="n">price</span>
+        <span class="n">adj_price</span> <span class="o">=</span> <span class="n">adj_price</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">adj_factor</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">date</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">adj_price</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_adjust_volume</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">adj_factor</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+        <span class="n">adj_factor</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">adj_factor</span>
+        <span class="n">adj_volume</span> <span class="o">=</span> <span class="n">adj_factor</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">volume</span><span class="o">.</span><span class="n">index</span><span class="p">]</span> <span class="o">*</span> <span class="n">volume</span>
+        <span class="n">adj_volume</span> <span class="o">=</span> <span class="n">adj_volume</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">adj_factor</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">date</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">adj_volume</span>
+
+    <span class="k">def</span> <span class="nf">_get_adjust_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">basedate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">basedate</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">basedate</span> <span class="o">=</span> <span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">FORWARD</span> <span class="k">else</span> <span class="n">window</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">adj_window</span> <span class="o">=</span> <span class="n">window</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sdi</span><span class="p">,</span> <span class="n">startdate</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">edi</span><span class="p">,</span> <span class="n">enddate</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">window</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">basedate</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">basedate</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">date_check</span><span class="p">)</span>
+            <span class="n">bdi</span><span class="p">,</span> <span class="n">basedate</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">basedate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">FORWARD</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">bdi</span> <span class="o">&gt;</span> <span class="n">sdi</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;With FORWARD mode, basedate </span><span class="si">%s</span><span class="s"> cannot be larger than startdate </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">basedate</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">startdate</span><span class="p">)))</span>
+                <span class="n">adj_window</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="n">bdi</span><span class="p">:</span> <span class="n">edi</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">bdi</span> <span class="o">&lt;</span> <span class="n">edi</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;With BACKWARD mode, basedate </span><span class="si">%s</span><span class="s"> cannot be smaller than enddate </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">basedate</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">startdate</span><span class="p">)))</span>
+                <span class="n">adj_window</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="n">sdi</span><span class="p">:</span> <span class="n">bdi</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">adj_window</span>
+
+<div class="viewcode-block" id="AdjQuoteFetcher.fetch"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.adjquote.AdjQuoteFetcher.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">startdate</span><span class="p">,</span> <span class="n">enddate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">backdays</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">basedate</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param basedate: Date on which the data adjusting is based. Default: None, defaults to ``enddate``</span>
+<span class="sd">        :type basedate: str, None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dname</span> <span class="o">=</span> <span class="n">dname</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">dname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noadjust</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quote</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">startdate</span><span class="p">,</span> <span class="n">enddate</span><span class="p">)</span>
+
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">cut_window</span><span class="p">(</span>
+                <span class="n">DATES</span><span class="p">,</span>
+                <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">startdate</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">),</span>
+                <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">enddate</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">)</span> <span class="k">if</span> <span class="n">enddate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span>
+                <span class="n">backdays</span><span class="o">=</span><span class="n">backdays</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">basedate</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AdjQuoteFetcher.fetch_window"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.adjquote.AdjQuoteFetcher.fetch_window">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">basedate</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param str basedate: Date on which the data adjusting is based</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">adj_window</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_adjust_window</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">basedate</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quote</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prices</span><span class="p">:</span>
+            <span class="n">adj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cax</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="s">&#39;adjfactor&#39;</span><span class="p">,</span> <span class="n">adj_window</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_price</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">basedate</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_volumes</span><span class="p">:</span>
+            <span class="n">adj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cax</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="s">&#39;volfactor&#39;</span><span class="p">,</span> <span class="n">adj_window</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_volume</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">basedate</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> is not a valid data name&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">dname</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="AdjQuoteFetcher.fetch_history"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.adjquote.AdjQuoteFetcher.fetch_history">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">backdays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This will always use ``BACKWARD`` mode with ``basedate`` equal to ``date``.&quot;&quot;&quot;</span>
+        <span class="n">dname</span> <span class="o">=</span> <span class="n">dname</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">dname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noadjust</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quote</span><span class="o">.</span><span class="n">fetch_history</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">backdays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">original_mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">BACKWARD</span>
+
+        <span class="n">date_check</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_check</span><span class="p">)</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;date_check&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">compliment_datestring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">date_check</span><span class="p">)</span>
+        <span class="n">di</span><span class="p">,</span> <span class="n">date</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">DATES</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">di</span> <span class="o">-=</span> <span class="n">delay</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">DATES</span><span class="p">[</span><span class="n">di</span><span class="o">-</span><span class="n">backdays</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">di</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_window</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">original_mode</span>
+        <span class="k">return</span> <span class="n">df</span>
+</div>
+<div class="viewcode-block" id="AdjQuoteFetcher.fetch_daily"><a class="viewcode-back" href="../../../mongo.html#orca.mongo.adjquote.AdjQuoteFetcher.fetch_daily">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Non-sensical to fetch just one day adjusted data.</span>
+
+<span class="sd">        :raises: NotImplementedError</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

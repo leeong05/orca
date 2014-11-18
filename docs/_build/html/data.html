@@ -1,0 +1,395 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>data – Build data cache &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="index.html" />
+    <link rel="up" title="Code Documentation" href="documentation.html" />
+    <link rel="next" title="alpha – Alpha interface" href="alpha.html" />
+    <link rel="prev" title="mongo – MongoDB interface" href="mongo.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="index.html"><img src="_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="alpha.html" title="alpha – Alpha interface"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mongo.html" title="mongo – MongoDB interface"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a> | </li>
+        <li><a href="search.html">search</a></li>
+
+          <li><a href="documentation.html" accesskey="U">Code Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">data &#8211; Build data cache</a><ul>
+<li><a class="reference internal" href="#module-orca.data.base">data.base</a></li>
+<li><a class="reference internal" href="#module-orca.data.csv">data.csv</a></li>
+<li><a class="reference internal" href="#module-orca.data.hdf">data.hdf</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mongo.html"
+                        title="previous chapter">mongo &#8211; MongoDB interface</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="alpha.html"
+                        title="next chapter">alpha &#8211; Alpha interface</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/data.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="data-build-data-cache">
+<h1>data &#8211; Build data cache<a class="headerlink" href="#data-build-data-cache" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-orca.data.base">
+<span id="data-base"></span><h2>data.base<a class="headerlink" href="#module-orca.data.base" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="orca.data.base.IOBase">
+<em class="property">class </em><tt class="descclassname">orca.data.base.</tt><tt class="descname">IOBase</tt><big>(</big><em>cachedir</em>, <em>debug_on=True</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<p>Base class for data savers/loaders.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cachedir</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Cache diretory path</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This is a base class and should not be used directly.</p>
+</div>
+<dl class="attribute">
+<dt id="orca.data.base.IOBase.__metaclass__">
+<tt class="descname">__metaclass__</tt><a class="headerlink" href="#orca.data.base.IOBase.__metaclass__" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">ABCMeta</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.set_debug_mode">
+<tt class="descname">set_debug_mode</tt><big>(</big><em>debug_on</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.set_debug_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.set_debug_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable/Disable debug level message in data savers/loaders.
+This is enabled by default.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.debug">
+<tt class="descname">debug</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs a message with level DEBUG on the data logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.info">
+<tt class="descname">info</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs a message with level INFO on the data logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.warning">
+<tt class="descname">warning</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.warning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.warning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs a message with level WARNING on the data logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.error">
+<tt class="descname">error</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs a message with level ERROR on the data logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.critical">
+<tt class="descname">critical</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.critical"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.critical" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs a message with level CRITICAL on the data logger.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.save">
+<tt class="descname">save</tt><big>(</big><em>name</em>, <em>data</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override (<strong>mandatory</strong>) to save data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; File name of the saved data on disk</li>
+<li><strong>data</strong> &#8211; The data to be saved</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">NotImplementedError</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.delete">
+<tt class="descname">delete</tt><big>(</big><em>fname</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override (<strong>mandatory</strong>) to delete data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fname</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; File name on disk</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">NotImplementedError</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.IOBase.load">
+<tt class="descname">load</tt><big>(</big><em>name</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#IOBase.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.IOBase.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override (<strong>mandatory</strong>) to load data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; File name of the saved data on disk</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">NotImplementedError</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="orca.data.base.SaverBase">
+<em class="property">class </em><tt class="descclassname">orca.data.base.</tt><tt class="descname">SaverBase</tt><big>(</big><em>cachedir</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#SaverBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.SaverBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#orca.data.base.IOBase" title="orca.data.base.IOBase"><tt class="xref py py-class docutils literal"><span class="pre">orca.data.base.IOBase</span></tt></a></p>
+<p>Base class for data savers.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This is a base class and should not be used directly.</p>
+</div>
+<dl class="method">
+<dt id="orca.data.base.SaverBase.load">
+<tt class="descname">load</tt><big>(</big><em>name</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#SaverBase.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.SaverBase.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method should never be called by a data saver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">NotImplementedError</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.SaverBase.delete">
+<tt class="descname">delete</tt><big>(</big><em>fname</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#SaverBase.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.SaverBase.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simple-minded file deletion.
+Override (<strong>mandatory</strong>) for any non plain file formats.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.SaverBase.__setitem__">
+<tt class="descname">__setitem__</tt><big>(</big><em>key</em>, <em>val</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#SaverBase.__setitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.SaverBase.__setitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Covenient helper special method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>val</strong> &#8211; When it is None, this is equivalent to deleting the data file with name <tt class="docutils literal"><span class="pre">key</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.SaverBase.__delitem__">
+<tt class="descname">__delitem__</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#SaverBase.__delitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.SaverBase.__delitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenient helper special method.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="orca.data.base.LoaderBase">
+<em class="property">class </em><tt class="descclassname">orca.data.base.</tt><tt class="descname">LoaderBase</tt><big>(</big><em>cachedir</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#LoaderBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.LoaderBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#orca.data.base.IOBase" title="orca.data.base.IOBase"><tt class="xref py py-class docutils literal"><span class="pre">orca.data.base.IOBase</span></tt></a></p>
+<p>Base class for data loaders.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This is a base class and should not be used directly.</p>
+</div>
+<dl class="method">
+<dt id="orca.data.base.LoaderBase.configure">
+<tt class="descname">configure</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#LoaderBase.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.LoaderBase.configure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to pass parameters to file parse function internally used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.LoaderBase.save">
+<tt class="descname">save</tt><big>(</big><em>name</em>, <em>data</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#LoaderBase.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.LoaderBase.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method should never be called by a data loader.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">NotImplementedError</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.LoaderBase.delete">
+<tt class="descname">delete</tt><big>(</big><em>fname</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#LoaderBase.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.LoaderBase.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method should never be called by a data loader.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">NotImplementedError</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="orca.data.base.LoaderBase.__getitem__">
+<tt class="descname">__getitem__</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="_modules/orca/data/base.html#LoaderBase.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.base.LoaderBase.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenient helper function. This avoids loading the data from disk over and over again.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-orca.data.csv">
+<span id="data-csv"></span><h2>data.csv<a class="headerlink" href="#module-orca.data.csv" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="orca.data.csv.CSVSaver">
+<em class="property">class </em><tt class="descclassname">orca.data.csv.</tt><tt class="descname">CSVSaver</tt><big>(</big><em>cachedir</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/csv.html#CSVSaver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.csv.CSVSaver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#orca.data.base.SaverBase" title="orca.data.base.SaverBase"><tt class="xref py py-class docutils literal"><span class="pre">orca.data.base.SaverBase</span></tt></a></p>
+<p>Class for saving data in csv format files.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="orca.data.csv.CSVLoader">
+<em class="property">class </em><tt class="descclassname">orca.data.csv.</tt><tt class="descname">CSVLoader</tt><big>(</big><em>cachedir</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/csv.html#CSVLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.csv.CSVLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#orca.data.base.LoaderBase" title="orca.data.base.LoaderBase"><tt class="xref py py-class docutils literal"><span class="pre">orca.data.base.LoaderBase</span></tt></a></p>
+<p>Class for loading data in csv format files.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-orca.data.hdf">
+<span id="data-hdf"></span><h2>data.hdf<a class="headerlink" href="#module-orca.data.hdf" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="orca.data.hdf.HDFSaver">
+<em class="property">class </em><tt class="descclassname">orca.data.hdf.</tt><tt class="descname">HDFSaver</tt><big>(</big><em>cachedir</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/hdf.html#HDFSaver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.hdf.HDFSaver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#orca.data.base.SaverBase" title="orca.data.base.SaverBase"><tt class="xref py py-class docutils literal"><span class="pre">orca.data.base.SaverBase</span></tt></a></p>
+<p>Class for saving data in HDF5 format files.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="orca.data.hdf.HDFLoader">
+<em class="property">class </em><tt class="descclassname">orca.data.hdf.</tt><tt class="descname">HDFLoader</tt><big>(</big><em>cachedir</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/orca/data/hdf.html#HDFLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.data.hdf.HDFLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#orca.data.base.LoaderBase" title="orca.data.base.LoaderBase"><tt class="xref py py-class docutils literal"><span class="pre">orca.data.base.LoaderBase</span></tt></a></p>
+<p>Class for loading data in HDF5 format files.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="alpha.html" title="alpha – Alpha interface"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mongo.html" title="mongo – MongoDB interface"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a> | </li>
+        <li><a href="search.html">search</a></li>
+
+          <li><a href="documentation.html" >Code Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

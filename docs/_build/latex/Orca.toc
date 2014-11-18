@@ -1,0 +1,11 @@
+\select@language {english}
+\contentsline {chapter}{\numberline {1}Introduction}{3}{chapter.1}
+\contentsline {chapter}{\numberline {2}Tutorial}{5}{chapter.2}
+\contentsline {section}{\numberline {2.1}Play with data}{5}{section.2.1}
+\contentsline {section}{\numberline {2.2}Build cache}{6}{section.2.2}
+\contentsline {section}{\numberline {2.3}Write alphas}{6}{section.2.3}
+\contentsline {section}{\numberline {2.4}Choose universes}{7}{section.2.4}
+\contentsline {section}{\numberline {2.5}Performance analysis}{7}{section.2.5}
+\contentsline {section}{\numberline {2.6}Parallel}{8}{section.2.6}
+\contentsline {chapter}{\numberline {3}Indices and tables}{9}{chapter.3}
+\contentsline {chapter}{Index}{11}{section*.4}

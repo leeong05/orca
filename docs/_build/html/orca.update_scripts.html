@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.update_scripts package &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="index.html"><img src="_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">home</a> | </li>
+        <li><a href="search.html">search</a></li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">orca.update_scripts package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-barra-module">orca.update_scripts.barra module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.barra_sql">orca.update_scripts.barra_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-base-module">orca.update_scripts.base module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-cax-module">orca.update_scripts.cax module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.cax_sql">orca.update_scripts.cax_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-components-module">orca.update_scripts.components module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.components_sql">orca.update_scripts.components_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-indexquote-module">orca.update_scripts.indexquote module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.indexquote_sql">orca.update_scripts.indexquote_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-industry-module">orca.update_scripts.industry module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.industry_sql">orca.update_scripts.industry_sql module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.jybs_sql">orca.update_scripts.jybs_sql module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.jycs_sql">orca.update_scripts.jycs_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-jyfund-module">orca.update_scripts.jyfund module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.jyis_sql">orca.update_scripts.jyis_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-quote-module">orca.update_scripts.quote module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.quote_sql">orca.update_scripts.quote_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-sywgquote-module">orca.update_scripts.sywgquote module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.sywgquote_sql">orca.update_scripts.sywgquote_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-tsmin-module">orca.update_scripts.tsmin module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.tsmin_sql">orca.update_scripts.tsmin_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-zyadjust-module">orca.update_scripts.zyadjust module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.zyadjust_sql">orca.update_scripts.zyadjust_sql module</a></li>
+<li><a class="reference internal" href="#orca-update-scripts-zyconsensus-module">orca.update_scripts.zyconsensus module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts.zyconsensus_sql">orca.update_scripts.zyconsensus_sql module</a></li>
+<li><a class="reference internal" href="#module-orca.update_scripts">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/orca.update_scripts.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="orca-update-scripts-package">
+<h1>orca.update_scripts package<a class="headerlink" href="#orca-update-scripts-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-barra-module">
+<h2>orca.update_scripts.barra module<a class="headerlink" href="#orca-update-scripts-barra-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.barra_sql">
+<span id="orca-update-scripts-barra-sql-module"></span><h2>orca.update_scripts.barra_sql module<a class="headerlink" href="#module-orca.update_scripts.barra_sql" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.fetch_and_parse">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">fetch_and_parse</tt><big>(</big><em>date</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#fetch_and_parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.fetch_and_parse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.fetch_files">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">fetch_files</tt><big>(</big><em>date</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#fetch_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.fetch_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.get_exposure">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">get_exposure</tt><big>(</big><em>date</em>, <em>model</em>, <em>idmaps</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#get_exposure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.get_exposure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.get_idmaps">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">get_idmaps</tt><big>(</big><em>date</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#get_idmaps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.get_idmaps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.gp_dir">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">gp_dir</tt><big>(</big><em>date</em>, <em>model</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#gp_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.gp_dir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.gp_expjson">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">gp_expjson</tt><big>(</big><em>date</em>, <em>model</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#gp_expjson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.gp_expjson" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.gp_faccov">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">gp_faccov</tt><big>(</big><em>date</em>, <em>model</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#gp_faccov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.gp_faccov" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.gp_facret">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">gp_facret</tt><big>(</big><em>date</em>, <em>model</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#gp_facret"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.gp_facret" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.gp_idfile">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">gp_idfile</tt><big>(</big><em>date</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#gp_idfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.gp_idfile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.gp_idmaps">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">gp_idmaps</tt><big>(</big><em>date</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#gp_idmaps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.gp_idmaps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.gp_specret">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">gp_specret</tt><big>(</big><em>date</em>, <em>model</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#gp_specret"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.gp_specret" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.gp_specs">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">gp_specs</tt><big>(</big><em>date</em>, <em>model</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#gp_specs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.gp_specs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="orca.update_scripts.barra_sql.unzip_files">
+<tt class="descclassname">orca.update_scripts.barra_sql.</tt><tt class="descname">unzip_files</tt><big>(</big><em>date</em>, <em>zips</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/barra_sql.html#unzip_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.barra_sql.unzip_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="orca-update-scripts-base-module">
+<h2>orca.update_scripts.base module<a class="headerlink" href="#orca-update-scripts-base-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-cax-module">
+<h2>orca.update_scripts.cax module<a class="headerlink" href="#orca-update-scripts-cax-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.cax_sql">
+<span id="orca-update-scripts-cax-sql-module"></span><h2>orca.update_scripts.cax_sql module<a class="headerlink" href="#module-orca.update_scripts.cax_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-components-module">
+<h2>orca.update_scripts.components module<a class="headerlink" href="#orca-update-scripts-components-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.components_sql">
+<span id="orca-update-scripts-components-sql-module"></span><h2>orca.update_scripts.components_sql module<a class="headerlink" href="#module-orca.update_scripts.components_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-indexquote-module">
+<h2>orca.update_scripts.indexquote module<a class="headerlink" href="#orca-update-scripts-indexquote-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.indexquote_sql">
+<span id="orca-update-scripts-indexquote-sql-module"></span><h2>orca.update_scripts.indexquote_sql module<a class="headerlink" href="#module-orca.update_scripts.indexquote_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-industry-module">
+<h2>orca.update_scripts.industry module<a class="headerlink" href="#orca-update-scripts-industry-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.industry_sql">
+<span id="orca-update-scripts-industry-sql-module"></span><h2>orca.update_scripts.industry_sql module<a class="headerlink" href="#module-orca.update_scripts.industry_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.jybs_sql">
+<span id="orca-update-scripts-jybs-sql-module"></span><h2>orca.update_scripts.jybs_sql module<a class="headerlink" href="#module-orca.update_scripts.jybs_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.jycs_sql">
+<span id="orca-update-scripts-jycs-sql-module"></span><h2>orca.update_scripts.jycs_sql module<a class="headerlink" href="#module-orca.update_scripts.jycs_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-jyfund-module">
+<h2>orca.update_scripts.jyfund module<a class="headerlink" href="#orca-update-scripts-jyfund-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.jyis_sql">
+<span id="orca-update-scripts-jyis-sql-module"></span><h2>orca.update_scripts.jyis_sql module<a class="headerlink" href="#module-orca.update_scripts.jyis_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-quote-module">
+<h2>orca.update_scripts.quote module<a class="headerlink" href="#orca-update-scripts-quote-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.quote_sql">
+<span id="orca-update-scripts-quote-sql-module"></span><h2>orca.update_scripts.quote_sql module<a class="headerlink" href="#module-orca.update_scripts.quote_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-sywgquote-module">
+<h2>orca.update_scripts.sywgquote module<a class="headerlink" href="#orca-update-scripts-sywgquote-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.sywgquote_sql">
+<span id="orca-update-scripts-sywgquote-sql-module"></span><h2>orca.update_scripts.sywgquote_sql module<a class="headerlink" href="#module-orca.update_scripts.sywgquote_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-tsmin-module">
+<h2>orca.update_scripts.tsmin module<a class="headerlink" href="#orca-update-scripts-tsmin-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.tsmin_sql">
+<span id="orca-update-scripts-tsmin-sql-module"></span><h2>orca.update_scripts.tsmin_sql module<a class="headerlink" href="#module-orca.update_scripts.tsmin_sql" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="orca.update_scripts.tsmin_sql.is_stock">
+<tt class="descclassname">orca.update_scripts.tsmin_sql.</tt><tt class="descname">is_stock</tt><big>(</big><em>sid</em><big>)</big><a class="reference internal" href="_modules/orca/update_scripts/tsmin_sql.html#is_stock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orca.update_scripts.tsmin_sql.is_stock" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="orca-update-scripts-zyadjust-module">
+<h2>orca.update_scripts.zyadjust module<a class="headerlink" href="#orca-update-scripts-zyadjust-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.zyadjust_sql">
+<span id="orca-update-scripts-zyadjust-sql-module"></span><h2>orca.update_scripts.zyadjust_sql module<a class="headerlink" href="#module-orca.update_scripts.zyadjust_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="orca-update-scripts-zyconsensus-module">
+<h2>orca.update_scripts.zyconsensus module<a class="headerlink" href="#orca-update-scripts-zyconsensus-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts.zyconsensus_sql">
+<span id="orca-update-scripts-zyconsensus-sql-module"></span><h2>orca.update_scripts.zyconsensus_sql module<a class="headerlink" href="#module-orca.update_scripts.zyconsensus_sql" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-orca.update_scripts">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-orca.update_scripts" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">home</a> | </li>
+        <li><a href="search.html">search</a></li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

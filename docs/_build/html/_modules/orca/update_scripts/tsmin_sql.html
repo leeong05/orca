@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.update_scripts.tsmin_sql &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="../../../index.html"><img src="../../../_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for orca.update_scripts.tsmin_sql</h1><div class="highlight"><pre>
+<span class="n">srcdir</span> <span class="o">=</span> <span class="s">&#39;/home/SambaServer/TinySoftData/&#39;</span>
+<span class="n">col_index</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">42</span><span class="p">]</span>
+<span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;sid&#39;</span><span class="p">,</span> <span class="s">&#39;datetime&#39;</span><span class="p">,</span> <span class="s">&#39;open&#39;</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">,</span> <span class="s">&#39;high&#39;</span><span class="p">,</span> <span class="s">&#39;low&#39;</span><span class="p">,</span> <span class="s">&#39;volume&#39;</span><span class="p">,</span> <span class="s">&#39;amount&#39;</span><span class="p">,</span> <span class="s">&#39;bid1&#39;</span><span class="p">,</span> <span class="s">&#39;bid2&#39;</span><span class="p">,</span> <span class="s">&#39;bid3&#39;</span><span class="p">,</span> <span class="s">&#39;bid4&#39;</span><span class="p">,</span> <span class="s">&#39;bid5&#39;</span><span class="p">,</span> <span class="s">&#39;ask1&#39;</span><span class="p">,</span> <span class="s">&#39;ask2&#39;</span><span class="p">,</span> <span class="s">&#39;ask3&#39;</span><span class="p">,</span> <span class="s">&#39;ask4&#39;</span><span class="p">,</span> <span class="s">&#39;ask5&#39;</span><span class="p">,</span> <span class="s">&#39;bds1&#39;</span><span class="p">,</span> <span class="s">&#39;bds2&#39;</span><span class="p">,</span> <span class="s">&#39;bds3&#39;</span><span class="p">,</span> <span class="s">&#39;bds4&#39;</span><span class="p">,</span> <span class="s">&#39;bds5&#39;</span><span class="p">,</span> <span class="s">&#39;aks1&#39;</span><span class="p">,</span> <span class="s">&#39;aks2&#39;</span><span class="p">,</span> <span class="s">&#39;aks3&#39;</span><span class="p">,</span> <span class="s">&#39;aks4&#39;</span><span class="p">,</span> <span class="s">&#39;aks5&#39;</span><span class="p">,</span> <span class="s">&#39;bvolume&#39;</span><span class="p">,</span> <span class="s">&#39;bamount&#39;</span><span class="p">,</span> <span class="s">&#39;svolume&#39;</span><span class="p">,</span> <span class="s">&#39;samount&#39;</span><span class="p">,</span> <span class="s">&#39;iwbds&#39;</span><span class="p">,</span> <span class="s">&#39;iwaks&#39;</span><span class="p">]</span>
+<span class="n">dnames</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;open&#39;</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">,</span> <span class="s">&#39;high&#39;</span><span class="p">,</span> <span class="s">&#39;low&#39;</span><span class="p">,</span> <span class="s">&#39;volume&#39;</span><span class="p">,</span> <span class="s">&#39;amount&#39;</span><span class="p">,</span> <span class="s">&#39;bid1&#39;</span><span class="p">,</span> <span class="s">&#39;bid2&#39;</span><span class="p">,</span> <span class="s">&#39;bid3&#39;</span><span class="p">,</span>   <span class="s">&#39;bid4&#39;</span><span class="p">,</span> <span class="s">&#39;bid5&#39;</span><span class="p">,</span> <span class="s">&#39;ask1&#39;</span><span class="p">,</span> <span class="s">&#39;ask2&#39;</span><span class="p">,</span> <span class="s">&#39;ask3&#39;</span><span class="p">,</span> <span class="s">&#39;ask4&#39;</span><span class="p">,</span> <span class="s">&#39;ask5&#39;</span><span class="p">,</span> <span class="s">&#39;bds1&#39;</span><span class="p">,</span> <span class="s">&#39;bds2&#39;</span><span class="p">,</span> <span class="s">&#39;bds3&#39;</span><span class="p">,</span> <span class="s">&#39;bds4&#39;</span><span class="p">,</span> <span class="s">&#39;bds5&#39;</span><span class="p">,</span> <span class="s">&#39;aks1&#39;</span><span class="p">,</span> <span class="s">&#39;aks2&#39;</span><span class="p">,</span> <span class="s">&#39;aks3&#39;</span><span class="p">,</span> <span class="s">&#39;aks4&#39;</span><span class="p">,</span> <span class="s">&#39;aks5&#39;</span><span class="p">,</span> <span class="s">&#39;bvolume&#39;</span><span class="p">,</span> <span class="s">&#39;bamount&#39;</span><span class="p">,</span> <span class="s">&#39;svolume&#39;</span><span class="p">,</span> <span class="s">&#39;samount&#39;</span><span class="p">,</span> <span class="s">&#39;iwbds&#39;</span><span class="p">,</span> <span class="s">&#39;iwaks&#39;</span><span class="p">,</span> <span class="s">&#39;vwap&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="is_stock"><a class="viewcode-back" href="../../../orca.update_scripts.html#orca.update_scripts.tsmin_sql.is_stock">[docs]</a><span class="k">def</span> <span class="nf">is_stock</span><span class="p">(</span><span class="n">sid</span><span class="p">):</span>
+    <span class="n">market</span><span class="p">,</span> <span class="n">ticker</span> <span class="o">=</span> <span class="n">sid</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">sid</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">market</span> <span class="o">==</span> <span class="s">&#39;SH&#39;</span> <span class="ow">and</span> <span class="n">ticker</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;60&#39;</span><span class="p">)</span> <span class="ow">or</span> \
+           <span class="p">(</span><span class="n">market</span> <span class="o">==</span> <span class="s">&#39;SZ&#39;</span> <span class="ow">and</span> <span class="n">ticker</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;30&#39;</span><span class="p">)</span> <span class="ow">or</span> \
+           <span class="p">(</span><span class="n">market</span> <span class="o">==</span> <span class="s">&#39;SZ&#39;</span> <span class="ow">and</span> <span class="n">ticker</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;00&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

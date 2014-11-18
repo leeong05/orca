@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>orca.operation.api &mdash; Orca 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Orca 1.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 0px 0px 0px 0px">
+<a href="../../../index.html"><img src="../../../_static/logo.jpg" border="0" alt="py4sci"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for orca.operation.api</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Li, Wang &lt;wangziqi@foreseefund.com&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">orca</span> <span class="kn">import</span> <span class="n">SIDS</span>
+
+<div class="viewcode-block" id="format"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.format">[docs]</a><span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Format DataFrame into DatetimeIndex and full sids columns.</span>
+
+<span class="sd">    :param value: Value to be filled for missing points</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">SIDS</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+</div>
+<div class="viewcode-block" id="intersect"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.intersect">[docs]</a><span class="k">def</span> <span class="nf">intersect</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">univ</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Intersect DataFrame with a universe.&quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">univ</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">]]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="n">df</span>
+</div>
+<div class="viewcode-block" id="neutralize"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.neutralize">[docs]</a><span class="k">def</span> <span class="nf">neutralize</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make DataFrame with mean 0 for each row.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make DataFrame with absolute sum 1 for each row.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="top"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.top">[docs]</a><span class="k">def</span> <span class="nf">top</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return top n elements for each row in DataFrame.</span>
+
+<span class="sd">    :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">n</span>
+</div>
+<div class="viewcode-block" id="bottom"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.bottom">[docs]</a><span class="k">def</span> <span class="nf">bottom</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return bottom n elements for each row in DataFrame.</span>
+
+<span class="sd">    :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">n</span>
+</div>
+<div class="viewcode-block" id="qtop"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.qtop">[docs]</a><span class="k">def</span> <span class="nf">qtop</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return top q-quantile elements for each row in DataFrame.</span>
+
+<span class="sd">    :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">ge</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">q</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="qbottom"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.qbottom">[docs]</a><span class="k">def</span> <span class="nf">qbottom</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return bottom q-quantile elements for each row in DataFrame.</span>
+
+<span class="sd">    :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">le</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="quantiles"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.quantiles">[docs]</a><span class="k">def</span> <span class="nf">quantiles</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cut DataFrames into quantiles.</span>
+
+<span class="sd">    :returns: A list of ``n`` boolean DataFrames with same shape as ``df`` with desired element position as True, the first one being bottom quantile and last one being top quantile</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">qtls</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">qs</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">qs</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">qtls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">le</span><span class="p">(</span><span class="n">qs</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">qtls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">le</span><span class="p">(</span><span class="n">qs</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">df</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="n">qs</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">qtls</span>
+</div>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helper APIs from operation classes</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">decay</span> <span class="kn">import</span> <span class="n">DecayOperation</span>
+<span class="kn">from</span> <span class="nn">barra</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">BarraFactorNeutOperation</span><span class="p">,</span>
+        <span class="n">BarraFactorCorrNeutOperation</span><span class="p">,</span>
+        <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">neutralize</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">GroupNeutOperation</span><span class="p">,</span>
+        <span class="n">IndustryNeutOperation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="decay"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.decay">[docs]</a><span class="k">def</span> <span class="nf">decay</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :py:class:`orca.operation.decay.DecayOperation`.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">DecayOperation</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="n">dense</span><span class="p">)</span><span class="o">.</span><span class="n">operate</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="barra_neut"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.barra_neut">[docs]</a><span class="k">def</span> <span class="nf">barra_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">factors</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :py:class:`orca.operation.barra.BarraFactorNeutOperation`.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">BarraFactorNeutOperation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">operate</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">factors</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="barra_corr_neut"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.barra_corr_neut">[docs]</a><span class="k">def</span> <span class="nf">barra_corr_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">factors</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :py:class:`orca.operation.barra.BarraFactorCorrNeutOperation`.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">BarraFactorCorrNeutOperation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">operate</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">factors</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="group_neut"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.group_neut">[docs]</a><span class="k">def</span> <span class="nf">group_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :py:class:`orca.operation.neutralize.GroupNeutOperation`.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">GroupNeutOperation</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">operate</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="industry_neut"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.industry_neut">[docs]</a><span class="k">def</span> <span class="nf">industry_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s">&#39;SW2014&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :py:class:`orca.operation.neutralize.IndustryNeutOperation`.</span>
+
+<span class="sd">    :param str group: &#39;level1&#39;, &#39;level2&#39;, &#39;level3&#39;</span>
+<span class="sd">    :param str standard: Industry classification standard, currently only supports: (&#39;SW2014&#39;, &#39;ZX&#39;)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">IndustryNeutOperation</span><span class="p">(</span><span class="n">standard</span><span class="p">)</span><span class="o">.</span><span class="n">operate</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="level1_neut"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.level1_neut">[docs]</a><span class="k">def</span> <span class="nf">level1_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s">&#39;SW2014&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group=&#39;level1&#39;``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">industry_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s">&#39;level1&#39;</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="n">standard</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="level2_neut"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.level2_neut">[docs]</a><span class="k">def</span> <span class="nf">level2_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s">&#39;SW2014&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group=&#39;level2&#39;``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">industry_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s">&#39;level2&#39;</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="n">standard</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="level3_neut"><a class="viewcode-back" href="../../../operation.html#orca.operation.api.level3_neut">[docs]</a><span class="k">def</span> <span class="nf">level3_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="s">&#39;SW2014&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group=&#39;level3&#39;``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">industry_neut</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s">&#39;level3&#39;</span><span class="p">,</span> <span class="n">standard</span><span class="o">=</span><span class="n">standard</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">home</a> | </li>
+        <li><a href="../../../search.html">search</a></li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Li, Wang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
