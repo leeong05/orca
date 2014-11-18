@@ -1,7 +1,0 @@
-\begin{theindex}
-\def\bigletter#1{{\Large\sffamily#1}\nopagebreak\vspace{1mm}}
-
-  \bigletter D
-  \item delay, \hyperpage{5}
-
-\end{theindex}
