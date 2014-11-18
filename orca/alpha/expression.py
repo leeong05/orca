@@ -1,4 +1,9 @@
+"""
+.. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
+"""
+
 from orca.alpha.base import BacktestingAlpha
+
 
 class ExpressionAlpha(BacktestingAlpha):
     """Base class for alphas constructed from expressions.
