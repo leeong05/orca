@@ -20,6 +20,8 @@ class ComponentsFetcher(KDayFetcher):
             'SH50':  'SH000016',
             }
 
+    dnames = DB.index_components.distinct('dname')
+
     def __init__(self, as_bool=True, **kwargs):
         self.collection = DB.index_components
         self.as_bool = as_bool

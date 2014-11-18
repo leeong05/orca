@@ -14,10 +14,9 @@ import util
 class Analyser(object):
     """Class for alpha performance analysis.
 
-    :param DataFrame alpha: Alpha to be analysed. Be sure to properly format the dataframe as in :py:func:`orca.operation.api.format`
-    :param str index: Benchmark index, currently only supports: 'HS300', 'CS500', 'CS800'. Default: 'HS300'
-    :param DataFrame data: Daily returns data properly formatted. Default: None
-    :param Series index_data: Index returns series that has the same index as ``alpha``. Default: None
+    :param DataFrame alpha: Alpha to be analysed. Be sure to properly format the DataFrame as in :py:func:`orca.operation.api.format`
+    :param DataFrame data: Daily returns data properly formatted
+    :param Series index_data: Series of index daily returns that has the same index as ``alpha``. Default: None
 
     .. py:attribute:: IC
 
@@ -44,7 +43,7 @@ class Analyser(object):
        A ``Series`` of daily returns without any cost considerations.
     """
 
-    def __init__(self, alpha, data, index_data=None, **kwargs):
+    def __init__(self, alpha, data, index_data=None):
         self.alpha = api.scale(alpha)
         self.dates = date_util.to_datestr(self.alpha.index)
 
@@ -101,8 +100,8 @@ class Analyser(object):
 
     def get_returns(self, cost=0, index=False):
         """
-        :param float cost: Trading cost. Default: 0, i.e. with each 1-dollar buy or sell, there will be a 0 charge
-        :param boolean index: Whether we measure returns against ``self.index``. Default: False
+        :param float cost: Linear amount-proportion trading cost. Default: 0
+        :param boolean index: Whether we measure returns against index. Default: False
 
         """
 
@@ -126,12 +125,9 @@ class Analyser(object):
         """Calculated metrics based on the daily returns time-series.
 
         :param function how: Used in resampling method
-        :param by: Caculation frequency
-           * None: Whole period
-           * 'A': Yearly
-           * 'Q': Quarterly
-           * 'M': Monthly
-        :param boolean index: Whether we measure returns against ``self.index``. Default: False
+        :param by: Caculation frequency. None(default): whole period; 'A': yearly; 'Q': quarterly; 'M': monthly
+        :param boolean index: Whether we measure returns against index. Default: False
+
         """
         returns = self.get_returns(cost=cost, index=index)
 
@@ -141,24 +137,25 @@ class Analyser(object):
         return returns.resample(by, how=how)
 
     def get_drawdown(self, cost=0, by=None, index=False):
+        """Use :py:meth:`get_returns_metric` to calculate drawdown."""
         return self.get_returns_metric(util.drawdown, cost=cost, by=by, index=index)
 
     def get_annualized_returns(self, cost=0, by=None, index=False):
+        """Use :py:meth:`get_returns_metric` to calculate annualized returns."""
         return self.get_returns_metric(util.annualized_returns, cost=cost, by=by, index=index)
 
     def get_perwin(self, cost=0, by=None, index=False):
+        """Use :py:meth:`get_returns_metric` to calculate winning percentage."""
         return self.get_returns_metric(util.perwin, cost=cost, by=by, index=index)
 
     def get_returns_sharpe(self, cost=0, by=None, index=False):
+        """Use :py:meth:`get_returns_metric` to calculate Sharpe ratio."""
         return self.get_returns_metric(util.Sharpe, cost=cost, by=by, index=index)
 
     def summary_ir(self, by=None, freq='daily'):
         """Returns a IR-related metrics summary series(``by`` is None, default)/dataframe.
 
-        :param str freq: Which frequency of statistics is of interest?
-           * 'daily'(Default): only returns IR1, rIR1
-           * 'weekly': returns also IR5, rIR5
-           * 'monthly': returns also IR20, rIR20
+        :param str freq: Which frequency of statistics is of interest? 'daily'(default): only returns IR1, rIR1; 'weekly': returns also IR5, rIR5; 'monthly': returns also IR20, rIR20
 
         These metrics are:
            * IR1: mean(IC(1)) / std(IC(1))
@@ -197,10 +194,7 @@ class Analyser(object):
     def summary_turnover(self, by=None, freq='daily'):
         """Returns a turnover-related metrics summary series(``by`` is None, default)/dataframe.
 
-        :param str freq: Which frequency of statistics is of interest?
-           * 'daily'(Default): only returns turnover, AC1, rAC1
-           * 'weekly': returns also AC5, rAC5
-           * 'monthly': returns also AC20, rAC20
+        :param str freq: Which frequency of statistics is of interest? 'daily'(default): only returns turnover, AC1, rAC1; 'weekly': returns also AC5, rAC5; 'monthly': returns also AC20, rAC20
 
         These metrics are:
            * turnover: average daily turnover
@@ -279,12 +273,8 @@ class Analyser(object):
     def summary(self, cost=0, by=None, group='ir', freq='daily'):
         """Returns a summary series(``by`` is None, default)/dataframe.
 
-        :param str group: Which aspect to be summarized
-           * 'ir': IR-related metrics
-           * 'turnover': Turnover-related metrics
-           * 'returns': Returns/PNL-related metrics
-           * 'all': All metrics in the above 3 groups
-        :param str freq: Which frequency of statistics is of interest?
+        :param str group: Which aspect to be summarized. 'ir'(default): IR-related metrics; 'turnover': Turnover-related metrics; 'returns': Returns/PNL-related metrics; 'all': All metrics in the above 3 groups
+        :param str freq: Which frequency of statistics is of interest? Default: 'daily'
 
         """
 

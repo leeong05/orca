@@ -25,10 +25,9 @@ class AlphaBase(object):
 
     LOGGER_NAME = 'alpha'
 
-    def __init__(self, **kwargs):
+    def __init__(self, debug_on=True):
         self.logger = logger.get_logger(AlphaBase.LOGGER_NAME)
-        self.set_debug_mode(kwargs.get('debug_on', True))
-        self.__dict__.update(kwargs)
+        self.set_debug_mode(debug_on)
 
     @abc.abstractmethod
     def generate(self, date):
@@ -36,7 +35,8 @@ class AlphaBase(object):
 
         **This is the sole interface of an alpha class**.
 
-        :param str date: a 8-length date string like ``yyyymmdd``.
+        :param str date: a 8-length date string like ``yyyymmdd``
+        :raises: NotImplementedError
 
         """
         raise NotImplementedError

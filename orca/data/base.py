@@ -22,11 +22,10 @@ class IOBase(object):
 
     LOGGER_NAME = 'data'
 
-    def __init__(self, cachedir, **kwargs):
+    def __init__(self, cachedir, debug_on=True):
         self.cachedir = cachedir
         self.logger = logger.get_logger(IOBase.LOGGER_NAME)
-        self.set_debug_mode(kwargs.get('debug_on', True))
-        self.__dict__.update(kwargs)
+        self.set_debug_mode(debug_on)
 
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level message in data savers/loaders.
@@ -55,27 +54,33 @@ class IOBase(object):
         self.logger.critical(msg)
 
     @abc.abstractmethod
-    def _save(self, name, data, **kwargs):
+    def save(self, name, data, **kwargs):
         """Override (**mandatory**) to save data.
 
         :param str name: File name of the saved data on disk
         :param data: The data to be saved
+        :raises: NotImplementedError
+
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _delete(self, fname):
-        """Override (**mandatory**) to save data.
+    def delete(self, fname):
+        """Override (**mandatory**) to delete data.
 
         :param str fname: File name on disk
+        :raises: NotImplementedError
+
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _load(self, name, **kwargs):
+    def load(self, name, **kwargs):
         """Override (**mandatory**) to load data.
 
         :param str name: File name of the saved data on disk
+        :raises: NotImplementedError
+
         """
         raise NotImplementedError
 
@@ -99,11 +104,15 @@ class SaverBase(IOBase):
     def configure(self, **kwargs):
         self.params.update(kwargs)
 
-    def _load(self, name, **kwargs):
-        """This method should never be called by a data saver."""
+    def load(self, name, **kwargs):
+        """This method should never be called by a data saver.
+
+        :raises: NotImplementedError
+
+        """
         raise NotImplementedError
 
-    def _delete(self, fname):
+    def delete(self, fname):
         """Simple-minded file deletion.
         Override (**mandatory**) for any non plain file formats.
         """
@@ -120,12 +129,13 @@ class SaverBase(IOBase):
         """Covenient helper special method.
 
         :param val: When it is None, this is equivalent to deleting the data file with name ``key``
+
         """
         if val is None:
             del self[key]
             return
 
-        self._save(key, val)
+        self.save(key, val)
 
     def __delitem__(self, key):
         """Convenient helper special method."""
@@ -133,7 +143,7 @@ class SaverBase(IOBase):
             self.warning('No such data with name {0!r} exists'.format(key))
             return
 
-        self._delete(self.datafiles[key])
+        self.delete(self.datafiles[key])
         del self.datafiles[key]
 
 
@@ -152,14 +162,23 @@ class LoaderBase(IOBase):
         self.datas = {}
 
     def configure(self, **kwargs):
+        """Method to pass parameters to file parse function internally used."""
         self.params.update(kwargs)
 
-    def _save(self, name, data, **kwargs):
-        """This method should never be called by a data loader."""
+    def save(self, name, data, **kwargs):
+        """This method should never be called by a data loader.
+
+        :raises: NotImplementedError
+
+        """
         raise NotImplementedError
 
-    def _delete(self, fname):
-        """This method should never be called by a data loader."""
+    def delete(self, fname):
+        """This method should never be called by a data loader.
+
+        :raises: NotImplementedError
+
+        """
         raise NotImplementedError
 
     def __getitem__(self, key):
@@ -167,6 +186,6 @@ class LoaderBase(IOBase):
         if key in self.datas:
             return self.datas[key]
 
-        data = self._load(key)
+        data = self.load(key)
         self.datas[key] = data
         return data

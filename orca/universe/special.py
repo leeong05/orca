@@ -81,7 +81,8 @@ class ActiveFilter(SimpleDataFilter):
 class ComponentsFilter(SimpleDataFilter):
     """Class to filter out stocks that are components in an index.
 
-    :param str index: Index name, currently only supports: 'HS300', 'CS500', 'CS800', 'SH50'
+    :param str index: Index name, currently only supports: ('HS300', 'CS500', 'CS800', 'SH50')
+
     """
 
     def __init__(self, index, **kwargs):
@@ -98,7 +99,8 @@ class IndustryFilter(SimpleDataFilter):
     """Class to filter out stocks based on their industry classification.
 
     :param list industry: Indutries that should be included in the universe
-    :param str standard: Industry classification standard, currently only supports: 'SW2014', 'SW', 'ZX'. Default: 'SW2014'
+    :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX'). Default: 'SW2014'
+
     """
 
     def __init__(self, industry, standard='SW2014', **kwargs):

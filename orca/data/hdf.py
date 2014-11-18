@@ -23,16 +23,16 @@ class HDFSaver(SaverBase):
             os.makedirs(dirname)
         self.store = HDFStore(self.cachedir)
 
-    def _save(self, name, data):
+    def save(self, name, data):
         self.store[name] = data
         self.store.flush()
         fname = os.path.join(self.cachedir, name)
         self.debug('Saved data in file: {0!r}'.format(fname))
         self.datafiles[name] = name
 
-    def _delete(self, name):
-        del self.store[name]
-        self.debug('Removed file: {0!r}'.format(name))
+    def delete(self, fname):
+        del self.store[fname]
+        self.debug('Removed file: {0!r}'.format(fname))
         self.store.flush()
 
     def __del__(self):
@@ -46,7 +46,7 @@ class HDFLoader(LoaderBase):
         super(HDFLoader, self).__init__(cachedir, **kwargs)
         self.store = HDFStore(self.cachedir)
 
-    def _load(self, name):
+    def load(self, name):
         return self.store[name]
 
     def __del__(self):

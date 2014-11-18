@@ -16,7 +16,7 @@ from base import OperationBase
 class BarraOperation(OperationBase):
     """Base class for operations based on Barra model data.
 
-    :param str model: Model version. Currently only supports 'daily' and 'short'
+    :param str model: Model version, currently only supports: ('daily', 'short')
 
     .. note::
 
@@ -87,11 +87,7 @@ class BarraOperation(OperationBase):
 
 
 class BarraFactorNeutOperation(BarraOperation):
-    """Class to neutralize alpha along some Barra factors.
-
-    :param str model: Model version. Currently only supports 'daily' and 'short'
-
-    """
+    """Class to neutralize alpha along some Barra factors."""
 
     def __init__(self, model, **kwargs):
         super(BarraFactorNeutOperation, self).__init__(self, model, **kwargs)
@@ -100,7 +96,7 @@ class BarraFactorNeutOperation(BarraOperation):
         """
         :param Series alpha: Row extracted from an alpha DataFrame
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
-        :type factors: str or list
+        :type factors: str, list
 
         """
         try:
@@ -129,6 +125,11 @@ class BarraFactorNeutOperation(BarraOperation):
         return nalpha.reindex(index=alpha.index)
 
     def operate(self, alpha, factors):
+        """
+        :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
+        :type factors: str, list
+
+        """
         res = {}
         for _, row in alpha.iterrows():
             date = row.name
@@ -137,11 +138,7 @@ class BarraFactorNeutOperation(BarraOperation):
 
 
 class BarraFactorCorrNeutOperation(BarraOperation):
-    """Class to neutralize alpha along some Barra factors.
-
-    :param str model: Model version. Currently only supports 'daily' and 'short'
-
-    """
+    """Class to neutralize alpha along some Barra factors."""
 
     def __init__(self, model, **kwargs):
         super(BarraFactorCorrNeutOperation, self).__init__(self, model, **kwargs)
@@ -150,7 +147,7 @@ class BarraFactorCorrNeutOperation(BarraOperation):
         """
         :param Series alpha: Row extracted from an alpha DataFrame
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
-        :type factors: str or list
+        :type factors: str, list
 
         """
         try:
@@ -189,6 +186,11 @@ class BarraFactorCorrNeutOperation(BarraOperation):
         return nalpha.reindex(index=alpha.index)
 
     def operate(self, alpha, factors):
+        """
+        :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
+        :type factors: str, list
+
+        """
         res = {}
         for _, row in alpha.iterrows():
             date = row.name

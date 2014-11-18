@@ -32,14 +32,13 @@ class FetcherBase(object):
 
     LOGGER_NAME = 'mongo'
 
-    def __init__(self, **kwargs):
+    def __init__(self, debug_on=True, datetime_index=False, reindex=False, date_check=False, delay=1):
         self.logger = logger.get_logger(FetcherBase.LOGGER_NAME)
-        self.set_debug_mode(kwargs.get('debug_on', True))
-        self.datetime_index = kwargs.get('datetime_index', False)
-        self.reindex = kwargs.get('reindex', False)
-        self.date_check = kwargs.get('date_check', False)
-        self.delay = kwargs.get('delay', 1)
-        self.__dict__.update(kwargs)
+        self.set_debug_mode(debug_on)
+        self.datetime_index = datetime_index
+        self.reindex = reindex
+        self.date_check = date_check
+        self.delay = delay
 
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level message in data fetchers.
@@ -77,15 +76,16 @@ class FetcherBase(object):
 
     @abc.abstractmethod
     def fetch(self, dname, startdate, enddate=None, backdays=0, **kwargs):
-        """Override (**mandatory**) to fetch data within two endpoints.
+        """Override(**mandatory**) to fetch data within two endpoints.
 
         :param str dname: Name of the data
-        :param startdate: The *left* (may not be the actual) endpoint
+        :param startdate: The **left** (may not be the actual) endpoint
         :type startdate: str, int
-        :param enddate: The right endpoint. Default: None, defaults to the last date
+        :param enddate: The **right** endpoint. Default: None, defaults to the last date
         :type enddate: str, int, None
         :param int backdays: This will shift (left/right: >/< 0) the left endpoint. Default: 0
         :returns: DataFrame
+        :raises: NotImplementedError
 
         .. seealso:: :py:func:`orca.mongo.util.cut_window`
         """
@@ -93,37 +93,40 @@ class FetcherBase(object):
 
     @abc.abstractmethod
     def fetch_window(self, dname, window, **kwargs):
-        """Override (**mandatory**) to fetch data for a consecutive days.
+        """Override(**mandatory**) to fetch data for consecutive trading days.
 
         :param str dname: Name of the data
-        :param list window: A consecutive list of trading dates
+        :param list window: List of consecutive trading dates
         :returns: DataFrame
+        :raises: NotImplementedError
 
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def fetch_history(self, dname, date, backdays, **kwargs):
-        """Override (**mandatory**) to fetch data with respect to a base point.
+        """Override(**mandatory**) to fetch data with respect to a base point.
 
         :param str dname: Name of the data
-        :param date: The date(with additional tweaks specified in ``kwargs``, i.e. ``delay``) as a base point
+        :param date: The date(with additional tweaks specified in ``kwargs`` and ``self.delay``) as a base point
         :type date: str, int
         :param int backdays: Number of days to look back w.r.t. the base point
         :returns: DataFrame
+        :raises: NotImplementedError
 
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def fetch_daily(self, dname, date, offset=0, **kwargs):
-        """Override (**mandatory**) to fetch data series on a certain date.
+        """Override(**mandatory**) to fetch data series on a certain date.
 
         :param str dname: Name of the data
         :param date: The base point
         :type date: str, int
         :param int offset: The offset w.r.t. the ``date``. The actual fetched date is calculated from ``date`` and ``offset``. Default: 0
         :returns: Series
+        :raises: NotImplementedError
 
         """
         raise NotImplementedError
@@ -141,6 +144,7 @@ class KDayFetcher(FetcherBase):
         super(KDayFetcher, self).__init__(**kwargs)
 
     def fetch(self, dname, startdate, enddate=None, backdays=0, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
         date_check = kwargs.get('date_check', self.date_check)
 
         window = util.cut_window(
@@ -151,6 +155,9 @@ class KDayFetcher(FetcherBase):
         return self.fetch_window(dname, window, **kwargs)
 
     def fetch_window(self, dname, window, **kwargs):
+        """Fetch data from a certain collection in MongoDB. For most cases, this is the **only** method that needs
+        to be overridden.
+        """
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
         reindex = kwargs.get('reindex', self.reindex)
 
@@ -161,6 +168,7 @@ class KDayFetcher(FetcherBase):
         return self.format(df, datetime_index, reindex)
 
     def fetch_history(self, dname, date, backdays, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
         date_check = kwargs.get('date_check', self.date_check)
         delay = kwargs.get('delay', self.delay)
 
@@ -171,6 +179,7 @@ class KDayFetcher(FetcherBase):
         return self.fetch_window(dname, window, **kwargs)
 
     def fetch_daily(self, dname, date, offset=0, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
         return self.fetch_history(dname, date, 1, delay=offset, **kwargs).iloc[0]
 
 
@@ -186,12 +195,7 @@ class KMinFetcher(FetcherBase):
         super(KMinFetcher, self).__init__(**kwargs)
 
     def fetch(self, dname, times, startdate, enddate=None, backdays=0, **kwargs):
-        """
-        :param times: Time stamps to indicate which minute-bars should be fetched
-        :type times: str or list. This will affect the returned data type
-        :returns: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
-
-        """
+        """Use :py:meth:`fetch_window` behind the scene."""
         date_check = kwargs.get('date_check', self.date_check)
 
         window = util.cut_window(
@@ -204,9 +208,9 @@ class KMinFetcher(FetcherBase):
     def fetch_window(self, dname, times, window, **kwargs):
         """Fetch minute-bar data(specified by time stamps) for a consecutive days.
 
-        :param times: Time stamps to indicate which minute-bars should be fetched
-        :type times: str or list. This will affect the returned data type
-        :returns: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
+        :param times: Time stamps to indicate which minute-bars should be fetched. This will affect the returned data type
+        :type times: str, list
+        :returns: DataFrame(if ``type(times)`` is ``str``) or Panel(with ``times`` as the item-axis)
 
         """
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
@@ -230,12 +234,7 @@ class KMinFetcher(FetcherBase):
         return panel[times] if isinstance(times, str) else panel
 
     def fetch_history(self, dname, times, date, backdays, **kwargs):
-        """
-        :param times: Time stamps to indicate which minute-bars should be fetched
-        :type times: str or list. This will affect the returned data type
-        :returns: DataFrame(if ``type(times)`` is str) or Panel(with ``times`` as the item-axis)
-
-        """
+        """Use :py:meth:`fetch_window` behind the scene."""
         date_check = kwargs.get('date_check', self.date_check)
         delay = kwargs.get('delay', self.delay)
 
@@ -246,10 +245,9 @@ class KMinFetcher(FetcherBase):
         return self.fetch_window(dname, times, window, **kwargs)
 
     def fetch_daily(self, dname, times, date, offset=0, **kwargs):
-        """
-        :param times: Time stamps to indicate which minute-bars should be fetched
-        :type times: str or list. This will affect the returned data type
-        :returns: Series(if ``type(times)`` is str) or DataFrame(with ``times`` as the columns)
+        """Use :py:meth:`fetch_window` behind the scene.
+
+        :returns: Series(if ``type(times)`` is ``str``) or DataFrame(with ``times`` as the columns)
 
         """
         res = self.fetch_history(dname, times, date, 1, delay=offset, **kwargs)

@@ -16,7 +16,7 @@ import util
 class IndustryFetcher(KDayFetcher):
     """Class to fetch industry data.
 
-    :param str standard: Industry classification standard, currently only supports: 'SW2014', 'ZX'. Default: 'SW2014'
+    :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX'). Default: 'SW2014'
 
     """
 
@@ -47,8 +47,9 @@ class IndustryFetcher(KDayFetcher):
     def fetch_info(self, dname='name', level=0, date=None, **kwargs):
         """Fetch industry-name/industry-index correspondance.
 
-        :param str dname: 'name': fetch industry-name mapping; 'index': fetch industry-index mapping
+        :param str dname: 'name'(default): fetch industry-name mapping; 'index': fetch industry-index mapping
         :param int level: Which level of industry is of interest? Default: 0, all 3 levels' information are fetched
+        :rtype: dict
 
         """
         standard = kwargs.get('standard', self.standard)

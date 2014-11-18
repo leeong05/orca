@@ -14,7 +14,7 @@ from base import OperationBase
 class GroupNeutOperation(OperationBase):
     """Class to neutralize alpha within a group.
 
-    :param group: Groupings, either a Series(static grouping) or a DataFrame(dynamic grouping); in latter case, you are advised to make the index of type DatatimeIndex. Default: None
+    :param group: Groupings, either a Series(static grouping) or a DataFrame(dynamic grouping); in latter case, you are **advised** to make the index of type DatatimeIndex. Default: None
 
     """
 
@@ -43,7 +43,7 @@ class GroupNeutOperation(OperationBase):
 class IndustryNeutOperation(GroupNeutOperation):
     """Class to neutralize alpha by industry classifications.
 
-    :param str standard: Industry classification standard, currently only supports ('SW', 'SW2014', 'ZX'). Default: 'SW2014'
+    :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX'). Default: 'SW2014'
 
     """
 

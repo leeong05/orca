@@ -33,13 +33,12 @@ class FilterBase(object):
 
     LOGGER_NAME = 'universe'
 
-    def __init__(self, **kwargs):
+    def __init__(self, debug_on=True, datetime_index=True, reindex=True, date_check=False):
         self.logger = logger.get_logger(FilterBase.LOGGER_NAME)
-        self.set_debug_mode(kwargs.get('debug_on', True))
-        self.datetime_index = True
-        self.reindex = True
-        self.date_check = False
-        self.__dict__.update(kwargs)
+        self.set_debug_mode(debug_on)
+        self.datetime_index = datetime_index
+        self.reindex = reindex
+        self.date_check = date_check
 
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level message in data fetchers.
@@ -69,7 +68,6 @@ class FilterBase(object):
 
     @staticmethod
     def format(df, datetime_index, reindex):
-        """Format a dataframe by ``datetime_index`` and ``reindex``."""
         if reindex:
             df = df.reindex(columns=SIDS).fillna(False)
         if datetime_index:
@@ -103,6 +101,7 @@ class FilterBase(object):
         :param DataFrame parent: The super- or parent-universe to be filtered. Default: None
         :param boolean return_parent: Whether to return parent along with the universe
         :returns: DataFrame(if ``return_parent`` is False), or a tuple with the 2nd element the formatted ``parent`` DataFrame
+        :raises: NotImplementedError
 
         """
         raise NotImplementedError
@@ -129,7 +128,7 @@ class FilterBase(object):
 class DataFilter(FilterBase):
     """Base class for filters based on data(s).
 
-    :param list datas: Its element is 2/3-tuple as (dname, fetcherclass[, kwargs]). The purpose is to instantiate a fetcher object by calling ``fetcherclass(**kwargs)`` and then use the fetching methods to fetch data ``dname``
+    :param list datas: Its element is 2/3-tuple as ``(dname, fetcherclass[, kwargs])``. The purpose is to instantiate a fetcher object by calling ``fetcherclass(**kwargs)`` and then use the fetching methods to fetch data ``dname``
     :param function synth: Function to synthesis these fetched datas
     :param int window: Used as in ``pd.rolling_apply(arg, window, ...)``. It is also used in determining data fetching window, thus is worthy to be seperated from ``rule``
     :param function rule: When called in ``rule(window)``, it returns a function that can be applied on DataFrame objects. Thus ``rule(window)(df)`` should be equivalent to ``pd.rolling_apply(df, window, func, ...)``

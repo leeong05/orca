@@ -15,7 +15,7 @@ import util
 class BarraFetcher(KDayFetcher):
     """Base class for Barra model data fetchers.
 
-    :param str model: Model version. Currently only supports 'daily' and 'short'
+    :param str model: Model version, currently only supports: ('daily', 'short')
 
     .. note::
 
@@ -51,6 +51,7 @@ class BarraSpecificsFetcher(BarraFetcher):
         'daily': DB.barra_D_specifics,
         'short': DB.barra_S_specifics,
         }
+    dnames = DB.barra_D_specifics.distinct('dname')
 
 
 class BarraExposureFetcher(BarraFetcher):
@@ -60,6 +61,10 @@ class BarraExposureFetcher(BarraFetcher):
         'daily': DB.barra_D_exposure,
         'short': DB.barra_S_exposure,
         }
+
+    def __init__(self, model, **kwargs):
+        super(BarraExposureFetcher, self).__init__(model, **kwargs)
+        self.dnames = self.collection.distinct('dname')
 
     def fetch_daily(self, *args, **kwargs):
         """This differs from the default :py:meth:`orca.mongo.base.KDayFetcher.fetch_daily` in only
@@ -103,6 +108,7 @@ class BarraExposureFetcher(BarraFetcher):
 
 
 class BarraFactorFetcher(KDayFetcher):
+    """Class to fetch factor returns/covariance data."""
 
     collections = {
         'daily': (DB.barra_D_returns, DB.barra_D_covariance),
@@ -113,7 +119,7 @@ class BarraFactorFetcher(KDayFetcher):
         if model not in BarraFetcher.models:
             raise ValueError('No such version {0!r} of Barra model exists'.format(model))
         self._model = model
-        self.ret, self.cov = self.__class__.collections[model]
+        self.ret, self.cov = BarraFactorFetcher.collections[model]
         self._factors = self.ret.distinct('factor')
         super(BarraFactorFetcher, self).__init__(**kwargs)
 
@@ -134,21 +140,30 @@ class BarraFactorFetcher(KDayFetcher):
         self.ret, self.cov = self.__class__.collections[model]
         self._factors = self.ret.distinct('factor')
 
-    def fetch_returns(self, factors, window, **kwargs):
-        datetime_index = kwargs.get('datetime_index', self.datetime_index)
-        if factors is None :
-            factors = self._factors
+    def fetch_returns(self, factor, window, **kwargs):
+        """Fetch returns for factors.
 
-        query = {'factor': {'$in': [factors] if isinstance(factors, str) else factors},
+        :param factor: Factor name or a list of factor names. Default: None, all factors will be fetched
+        :type factor: None, str, list
+        :returns: Series(if ``type(factor)`` is ``str``) or DataFrame
+
+        """
+
+        datetime_index = kwargs.get('datetime_index', self.datetime_index)
+        if factor is None :
+            factor = self._factors
+
+        query = {'factor': {'$in': [factor] if isinstance(factor, str) else factor},
                 'date': {'$gte': window[0], '$lte': window[-1]}}
         proj = {'_id': 0, 'factor': 1, 'returns': 1, 'date': 1}
         cursor = self.ret.find(query, proj)
         df = pd.Series({(row['date'], row['factor']): row['returns'] for row in cursor}).unstack()
         if datetime_index:
             df.index = pd.to_datetime(df.index)
-        return df[factors] if isinstance(factors, str) else df
+        return df[factor] if isinstance(factor, str) else df
 
     def fetch_covariance(self, date):
+        """Fecth factor covariance matrix on a given date."""
         query = {'date': date}
         proj = {'_id': 0, 'factor': 1, 'covariance': 1}
         cursor = self.cov.find(query, proj)
@@ -165,7 +180,8 @@ class BarraFactorFetcher(KDayFetcher):
         return super(BarraFactorFetcher, self).fetch(dname, *args, **kwargs)
 
     def fetch_window(self, dname, window, **kwargs):
-        """
+        """Wrapper for :py:meth:`fetch_returns`.
+
         :param str dname: 'returns' or factor name
 
         """
@@ -183,7 +199,8 @@ class BarraFactorFetcher(KDayFetcher):
         return super(BarraFactorFetcher, self).fetch_history(dname, *args, **kwargs)
 
     def fetch_daily(self, dname, date, offset=0, **kwargs):
-        """
+        """Wrapper for :py:meth:`fetch_returns` and :py:meth:`fetch_covariance`.
+
         :param str dname: 'returns', 'covariance' or any factor name
 
         """

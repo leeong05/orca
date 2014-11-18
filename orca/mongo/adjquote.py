@@ -23,6 +23,8 @@ class AdjQuoteFetcher(KDayFetcher):
     _volumes = ('volume')
     _noadjust = ('returns', 'amount')
 
+    dnames = ['adj_' + dname for dname in QuoteFetcher.dnames]
+
     def __init__(self, mode=BACKWARD, **kwargs):
         self.mode = mode
         self.quote = QuoteFetcher(**kwargs)
@@ -62,10 +64,10 @@ class AdjQuoteFetcher(KDayFetcher):
                 adj_window = DATES[sdi: bdi+1]
         return adj_window
 
-    def fetch(self, dname, startdate, enddate=None, backdays=0, basedate=None, **kwargs):
+    def fetch(self, dname, startdate, enddate=None, backdays=None, basedate=None, **kwargs):
         """
-        :param basedate: Date on which the data adjusting is based
-        :type basedate: str or None. Default: None, defaults to ``enddate``
+        :param basedate: Date on which the data adjusting is based. Default: None, defaults to ``enddate``
+        :type basedate: str, None
 
         """
         dname = dname[4:]
@@ -117,4 +119,9 @@ class AdjQuoteFetcher(KDayFetcher):
         return df
 
     def fetch_daily(self, *args, **kwargs):
-        raise NotImplementedError('Non-sensical to fetch just one day adjusted data')
+        """Non-sensical to fetch just one day adjusted data.
+
+        :raises: NotImplementedError
+
+        """
+        raise NotImplementedError

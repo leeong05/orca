@@ -168,13 +168,13 @@ class JYFundFetcher(KDayFetcher):
     def load(self):
         JYFundFetcher.get_data(self.table, self._startyear)
 
-    def prepare_frame(self, dnames=None, date=None, quarter_offset=0, rtype=QUARTER, quarter=None, **kwargs):
-        """Prepare all cross-sectional ``dnames`` in the format of DataFrame.
+    def prepare_frame(self, dnames=None, date=None, quarter_offset=0, rtype=QUARTER, quarter=None, delay=1, **kwargs):
+        """Prepare cross-sectional data items and concatenate them into a DataFrame, using data with timestamps less than ``date`` minus ``delay``.
 
-        :param dnames: List of data names. Default: None, all data items will be included
+        :param list dnames: List of data names. Default: None, all data items will be included(**NOT** recommended)
         :param int quarter_offset: Offset in quarter numbers. Default: 0
         :param enum rtype: What type of reports to be considered? QUARTER(1, default): all reports; SEMI(2): only semi-annual reports and annual reports; YEAR(4): only annual reports
-        :param int quarter: Should only used when ``rtype`` is QUARTER(2). It will only fetch data for this particular quarter, thus should be compatible with the use of ``rtype``. Default: None, fetch whatever data is available as of ``date-offset``
+        :param int quarter: It will only fetch data for this particular quarter(the 4 quarters in a year is 1, 2, 3, 4), thus should be compatible with the use of ``rtype``. Default: None, fetch whatever data is available
 
         .. seealso::
 
@@ -187,7 +187,6 @@ class JYFundFetcher(KDayFetcher):
                 raise ValueError('rtype {0!r} and quarter {1!r} are not compatible')
 
         date_check = kwargs.get('date_check', self.date_check)
-        delay = kwargs.get('delay', self.delay)
         reindex = kwargs.get('reindex', self.reindex)
 
         di, date = util.parse_date(DATES, util.compliment_datestring(date, -1, date_check))
@@ -229,7 +228,9 @@ class JYFundFetcher(KDayFetcher):
         :param enddate: Ending point of data. Default: None, defaults to the last date
         :param enum rtype: What type of reports to be considered? QUARTER(1, default): all reports; SEMI(2): only semi-annual reports; YEAR(4): only annual reports
         :param use_adjust: How to treat data corrections? None(default): try to use all published data along date axis. False: use only first published data. True: use only last published data which are assumed to be public up to ``enddate``, thus may entail forward-looking bias in backtesting simulation
+        :type use_adjust: None, boolean
         :param ffill: Fill gaps long date axis for those non-reporting days, currently supports ('ffill', None). Default: 'ffill'
+        :type ffill: None, str
 
         """
         date_check = kwargs.get('date_check', self.date_check)
@@ -287,12 +288,27 @@ class JYFundFetcher(KDayFetcher):
         return panel
 
     def fetch(self, *args, **kwargs):
+        """Disabled.
+
+        :raises: NotImplementedError
+
+        """
         raise NotImplementedError
 
     def fetch_window(self, *args, **kwargs):
+        """Disabled.
+
+        :raises: NotImplementedError
+
+        """
         raise NotImplementedError
 
     def fetch_history(self, *args, **kwargs):
+        """Disabled.
+
+        :raises: NotImplementedError
+
+        """
         raise NotImplementedError
 
     def fetch_daily(self, dname, date, offset=0, quarter_offset=0, rtype=QUARTER, quarter=None, **kwargs):

@@ -17,6 +17,7 @@ class IndexQuoteFetcher(KDayFetcher):
             'CS500': 'SH000905',
             'CS800': 'SH000906',
             }
+    dnames = ['amount', 'close', 'high', 'low', 'open', 'prev_close', 'returns', 'volume', 'vwap']
 
     def __init__(self, **kwargs):
         self.collection = DB.index_quote
@@ -25,14 +26,15 @@ class IndexQuoteFetcher(KDayFetcher):
             self.warning('Force reindex to be False')
             self.reindex = False
 
-    def fetch_window(self, dname, window, **kwargs):
+    def fetch_window(self, dname, window, index=None, **kwargs):
         """
         :param dname: Data name or a list of data names
         :type dname: str, list
+        :param str index: Index name
         :returns: Series if ``dname`` is only a string or DataFrame with ``dname`` in the columns
 
         """
-        index = kwargs.pop('index')
+        assert index is not None
         index = IndexQuoteFetcher.index_dname.get(index, index)
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
 

@@ -8,15 +8,21 @@ from base import KMinFetcher
 class IntervalFetcher(KMinFetcher):
     """Class to fetch TinySoft minute-bar data.
 
-    :param str freq: Frequency of minute-bar data. Currently only supports '5min', '1min'
+    :param str freq: Frequency of minute-bar data, currently only supports: ('5min', '1min')
 
     """
+
+    collections = {
+            '5min': DB.ts_5min,
+            '1min': DB.ts_1min,
+            }
+    dnames = DB.ts_5min.distinct('dname')
 
     def __init__(self, freq, **kwargs):
         if freq not in ('5min', '1min'):
             raise ValueError('No minute-bar data of frequency {0!r} exists'.format(freq))
         self._freq = freq
-        self.collection = self.__class__.collections[freq]
+        self.collection = IntervalFetcher.collections[freq]
         super(IntervalFetcher, self).__init__(**kwargs)
 
     @property
@@ -29,10 +35,4 @@ class IntervalFetcher(KMinFetcher):
             self.warning('No minute-bar data of frequency {0!r} exists. Nothing has changed'.format(freq))
             return
         self._freq = freq
-        self.collection = self.__class__.collections[freq]
-
-
-IntervalFetcher.collections = {
-        '5min': DB.ts_5min,
-        '1min': DB.ts_1min,
-        }
+        self.collection = IntervalFetcher.collections[freq]

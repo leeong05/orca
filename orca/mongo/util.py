@@ -48,9 +48,7 @@ def compliment_datestring(datestr, direction=-1, date_check=False):
     """Compliment a 4- or 6-length date string into 8-length in format ``yyyymmdd``.
 
     :param str datestr: For example, '2014', '201401' or '20140101'
-    :param int direction: Default: 1
-        * -1(default): compliment as the minimal possible
-        * 1: compliment as the maximal possible
+    :param int direction: -1(default): compliment as the minimal possible; 1: compliment as the maximal possible
     :param boolean date_check: Whether to check if ``datestr`` is a valid date string. Default: False
 
     """
@@ -81,8 +79,8 @@ def cut_window(dates, startdate, enddate=None, backdays=0):
     """Cut out the portion of a list specified by left and right endpoints.
 
     :param list dates: The pre-defined list, must be sorted in ascending order
-    :param startdate: The *left* (may not be the actual) cut-out point
-    :param enddate: The right cut-out point. Default: None, defaults to the last item in the list
+    :param startdate: The **left** (may not be the actual) cut-out point
+    :param enddate: The **right** cut-out point. Default: None, defaults to the last item in the list
     :param int backdays: This will shift (left/right: >/< 0) the left cut-out point. Default: 0
     :returns: The cut-out portion
     :rtype: list
@@ -99,7 +97,7 @@ def cut_window(dates, startdate, enddate=None, backdays=0):
 
 _dummy_date = datetime(1900, 1, 1)
 def generate_timestamps(starttime, endtime, step, end_excluded=True):
-    """Generate a consecutive time stamps.
+    """Generate consecutive time stamps.
 
     :param str starttime, endtime: Must be 6-length time string in the format 'hhmmss'
     :param int step: Number of **seconds** as step

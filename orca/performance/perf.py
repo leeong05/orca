@@ -85,7 +85,7 @@ class Performance(object):
         self.startdate = self.alpha.index[0]
 
     def get_original(self):
-        """Be sure to use this method when either the alpha is neutralized or you know what you are doing."""
+        """**Be sure** to use this method when either the alpha is neutralized or you know what you are doing."""
         return Analyser(self.alpha, Performance.get_returns(self.startdate))
 
     def get_longshort(self):
@@ -133,7 +133,7 @@ class Performance(object):
                 Performance.get_returns(self.startdate))
 
     def get_quantiles(self, n):
-        """Return analysers for the ``n``-quantiles."""
+        """Return a list of analysers for n quantiles."""
         return [Analyser(qt, Performance.get_returns(self.startdate)) \
                 for qt in api.quantiles(self.alpha, n)]
 
@@ -142,7 +142,7 @@ class Performance(object):
         return Performance(api.intersect(self.alpha, univ))
 
     def get_bms(self):
-        """Return performance objects for alphas in HS300, CS500 and other."""
+        """Return a list of 3 performance objects for alphas in HS300, CS500 and other."""
         big = Performance.get_index_components(self.startdate, 'HS300').ix[self.alpha.index]
         mid = Performance.get_index_components(self.startdate, 'CS500').ix[self.alpha.index]
         sml = Performance.get_index_components(self.startdate, 'other').ix[self.alpha.index]
