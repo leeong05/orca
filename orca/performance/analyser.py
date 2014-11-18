@@ -99,9 +99,9 @@ class Analyser(object):
         self.rAC[n] = ac
         return ac
 
-    def get_returns(self, cost=0.001, index=False):
+    def get_returns(self, cost=0, index=False):
         """
-        :param float cost: Trading cost. Default: 0.001, i.e. with each 1-dollar buy or sell, there will be a 0.001 charge
+        :param float cost: Trading cost. Default: 0, i.e. with each 1-dollar buy or sell, there will be a 0 charge
         :param boolean index: Whether we measure returns against ``self.index``. Default: False
 
         """
@@ -122,7 +122,7 @@ class Analyser(object):
 
         return (self.returns-index_returns if index else self.returns) - cost * self.get_turnover()
 
-    def get_returns_metric(self, how, cost=0.001, by=None, index=False):
+    def get_returns_metric(self, how, cost=0, by=None, index=False):
         """Calculated metrics based on the daily returns time-series.
 
         :param function how: Used in resampling method
@@ -140,16 +140,16 @@ class Analyser(object):
 
         return returns.resample(by, how=how)
 
-    def get_drawdown(self, cost=0.001, by=None, index=False):
+    def get_drawdown(self, cost=0, by=None, index=False):
         return self.get_returns_metric(util.drawdown, cost=cost, by=by, index=index)
 
-    def get_annualized_returns(self, cost=0.001, by=None, index=False):
+    def get_annualized_returns(self, cost=0, by=None, index=False):
         return self.get_returns_metric(util.annualized_returns, cost=cost, by=by, index=index)
 
-    def get_perwin(self, cost=0.001, by=None, index=False):
+    def get_perwin(self, cost=0, by=None, index=False):
         return self.get_returns_metric(util.perwin, cost=cost, by=by, index=index)
 
-    def get_returns_sharpe(self, cost=0.001, by=None, index=False):
+    def get_returns_sharpe(self, cost=0, by=None, index=False):
         return self.get_returns_metric(util.Sharpe, cost=cost, by=by, index=index)
 
     def summary_ir(self, by=None, freq='daily'):
@@ -236,7 +236,7 @@ class Analyser(object):
         res = res.reindex(index)
         return res
 
-    def summary_returns(self, cost=0.001, by=None, index=False):
+    def summary_returns(self, cost=0, by=None, index=False):
         """Returns a turnover-related metrics summary series(``by`` is None, default)/dataframe.
 
         These metrics are:
@@ -276,7 +276,7 @@ class Analyser(object):
         res = res.reindex(index)
         return res
 
-    def summary(self, cost=0.001, by=None, group='ir', freq='daily'):
+    def summary(self, cost=0, by=None, group='ir', freq='daily'):
         """Returns a summary series(``by`` is None, default)/dataframe.
 
         :param str group: Which aspect to be summarized
