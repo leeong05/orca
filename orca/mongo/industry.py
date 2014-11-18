@@ -44,9 +44,10 @@ class IndustryFetcher(KDayFetcher):
         df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
         return self.format(df, datetime_index, reindex)
 
-    def fetch_info(self, level, date=None, standard='SW2014', **kwargs):
-        """Fetch industry-name corespondance.
+    def fetch_info(self, dname='name', level=0, date=None, **kwargs):
+        """Fetch industry-name/industry-index correspondance.
 
+        :param str dname: 'name': fetch industry-name mapping; 'index': fetch industry-index mapping
         :param int level: Which level of industry is of interest? Default: 0, all 3 levels' information are fetched
 
         """
@@ -60,9 +61,9 @@ class IndustryFetcher(KDayFetcher):
 
         query = {'standard': standard, 'date': date}
         if level == 0:
-            query.update({'dname': 'industry_name'})
+            query.update({'dname': 'industry_%s' % dname})
         else:
-            query.update({'dname': 'level%d_name' % level})
+            query.update({'dname': 'level%d_%s' % (level, dname)})
         proj = {'_id': 0, 'dvalue': 1}
 
         return self.info.find_one(query, proj)['dvalue']
