@@ -16,6 +16,8 @@ from base import KDayFetcher
 class QuoteFetcher(KDayFetcher):
     """Class to fetch daily market quote data."""
 
+    dnames = ['open', 'high', 'low', 'close', 'prevclose', 'volume', 'amount', 'returns']
+
     def __init__(self, **kwargs):
         self.collection = DB.quote
         super(QuoteFetcher, self).__init__(**kwargs)

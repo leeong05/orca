@@ -122,7 +122,10 @@ class JYFundFetcher(KDayFetcher):
     def get_data(cls, table, startyear=None):
         if table in cls.datas and (startyear is None or int(startyear) >= cls.startyears[table]):
             return cls.datas[table]
+        return cls.get_data_mongo(table, startyear=startyear)
 
+    @classmethod
+    def get_data_mongo(cls, table, startyear=None):
         with cls.mongo_lock:
             if startyear is None:
                 startyear = 2007
@@ -132,6 +135,11 @@ class JYFundFetcher(KDayFetcher):
             df['qtrno'] = (df.year - 2000) * 4 + df.quarter
             cls.datas[table], cls.startyears[table] = df, startyear
         return cls.datas[table]
+
+    @classmethod
+    def set_data(cls, table, df):
+        cls.datas[table] = df
+        cls.startyears[table] = df.year.min()
 
     def __init__(self, table, startyear=2007, **kwargs):
         if table not in JYFundFetcher.tables:

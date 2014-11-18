@@ -37,7 +37,7 @@ class IndexQuoteFetcher(KDayFetcher):
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
 
         query = {'index': index, 'date': {'$gte': window[0], '$lte': window[-1]}}
-        proj = {'_id': 0, 'index': 0, 'date': 1}
+        proj = {'_id': 0}
         _dname = [dname] if isinstance(dname, str) else dname
         for d in _dname:
             proj.update({d: 1})
