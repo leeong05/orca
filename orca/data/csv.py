@@ -37,8 +37,9 @@ class CSVLoader(LoaderBase):
                 'parse_dates': False,
                 'index_col': 0,
                 }
+        self.postfix = kwargs.get('postfix', '')
 
     def _load(self, name, **kwargs):
         params = self.params.copy()
         params.update(kwargs)
-        return pd.read_csv(os.path.join(self.cachedir, name), **params)
+        return pd.read_csv(os.path.join(self.cachedir, name + self.postfix), **params)

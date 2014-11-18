@@ -61,7 +61,6 @@ class IOBase(object):
         :param str name: File name of the saved data on disk
         :param data: The data to be saved
         """
-
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -70,7 +69,6 @@ class IOBase(object):
 
         :param str fname: File name on disk
         """
-
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -79,7 +77,6 @@ class IOBase(object):
 
         :param str name: File name of the saved data on disk
         """
-
         raise NotImplementedError
 
 
@@ -104,14 +101,12 @@ class SaverBase(IOBase):
 
     def _load(self, name, **kwargs):
         """This method should never be called by a data saver."""
-
         raise NotImplementedError
 
     def _delete(self, fname):
         """Simple-minded file deletion.
         Override (**mandatory**) for any non plain file formats.
         """
-
         if not self.plain:
             raise NotImplementedError
 
@@ -126,7 +121,6 @@ class SaverBase(IOBase):
 
         :param val: When it is None, this is equivalent to deleting the data file with name ``key``
         """
-
         if val is None:
             del self[key]
             return
@@ -135,7 +129,6 @@ class SaverBase(IOBase):
 
     def __delitem__(self, key):
         """Convenient helper special method."""
-
         if key not in self.datafiles:
             self.warning('No such data with name {0!r} exists'.format(key))
             return
@@ -163,17 +156,14 @@ class LoaderBase(IOBase):
 
     def _save(self, name, data, **kwargs):
         """This method should never be called by a data loader."""
-
         raise NotImplementedError
 
     def _delete(self, fname):
         """This method should never be called by a data loader."""
-
         raise NotImplementedError
 
     def __getitem__(self, key):
         """Convenient helper function. This avoids loading the data from disk over and over again."""
-
         if key in self.datas:
             return self.datas[key]
 
