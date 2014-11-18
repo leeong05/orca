@@ -16,7 +16,7 @@ import util
 class IndustryFetcher(KDayFetcher):
     """Class to fetch industry data.
 
-    :param str standard: Industry classification standard, currently only supports: 'SW2014', 'SW', 'ZX'. Default: 'SW2014'
+    :param str standard: Industry classification standard, currently only supports: 'SW2014', 'ZX'. Default: 'SW2014'
 
     """
 

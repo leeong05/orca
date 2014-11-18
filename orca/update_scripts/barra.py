@@ -65,7 +65,7 @@ class BarraUpdater(UpdaterBase):
         date = self.dates[self.dates.index(date)-1]
         if not os.path.exists(barra_sql.gp_idfile(date)):
             logger.error('Barra model data does not exist on %s', date)
-            barra_sql.fetch_and_parse()
+            barra_sql.fetch_and_parse(date)
         self.idmaps = json.load(open(barra_sql.gp_idmaps(date)))
         self.update_exposure(date)
         self.update_facret(date)

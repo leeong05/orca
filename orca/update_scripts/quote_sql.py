@@ -6,7 +6,7 @@ SELECT
 FROM
   QT_DailyQuote qt JOIN SecuMain sm ON qt.InnerCode = sm.InnerCode
 WHERE
-  qt.TradingDay = TO_DATE({date}, 'yyyymmdd')
+  qt.TradingDay = CONVERT(DATE, '{date}')
   AND
   qt.TurnoverVolume > 0
   AND
@@ -14,7 +14,7 @@ WHERE
   AND
   sm.SecuMarket IN (83, 90)
   AND
-  SUBSTR(sm.SecuCode, 1, 2) IN ('60', '00', '30')
+  LEFT(sm.SecuCode, 2) IN ('60', '00', '30')
 """
 
 dnames = ['prev_close', 'open', 'high', 'low', 'close', 'volume', 'amount', 'vwap', 'returns']

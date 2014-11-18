@@ -44,7 +44,7 @@ class SYWGQuoteUpdater(UpdaterBase):
 
         for dname in sywgquote_sql.dnames:
             key = {'dname': dname, 'date': date}
-            self.db.sywgindex_quote.update(key, {'$set': {'dvalue': df[dname].dropna().to_dict()}}, upsert=True)
+            self.db.sywgindex_quote.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
         logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s',
                 len(df), self.db.sywgindex_quote.name, self.db.name, date)
 

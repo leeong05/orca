@@ -55,6 +55,7 @@ class IndustryUpdater(UpdaterBase):
             logger.warning('No records found for %s[standard=%s] on %s', self.db.industry.name, sname, date)
             return
 
+        DF[[0, 1, 3, 5]] = DF[[0, 1, 3, 5]].astype(str)
         df = DF[[0, 1, 3, 5]]
         l1_name, l2_name, l3_name, ind_name = {}, {}, {}, {}
         for _, row in DF.iterrows():
@@ -78,13 +79,15 @@ class IndustryUpdater(UpdaterBase):
         for row in self.cursor:
             if row[1] is None:
                 continue
-            ind_index[row[0]] = row[1]
-            if row[0] in l1_name:
-                l1_index[row[0]] = row[1]
-            if row[0] in l2_name:
-                l2_index[row[0]] = row[1]
-            if row[0] in l3_name:
-                l3_index[row[0]] = row[1]
+            ind, index = str(row[0]), str(row[1])
+            if ind in ind_name:
+                ind_index[ind] = index
+            if ind in l1_name:
+                l1_index[ind] = index
+            if ind in l2_name:
+                l2_index[ind] = index
+            if ind in l3_name:
+                l3_index[ind] = index
 
         f = lambda dname, dvalue: \
                 self.db.industry_info.update(

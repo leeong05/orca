@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger('updater')
 
+import numpy as np
 import pandas as pd
 
 from base import UpdaterBase
@@ -43,7 +44,10 @@ class IndexQuoteUpdater(UpdaterBase):
             key = {'index': row.name, 'date': date}
             res = {}
             for dname in indexquote_sql.dnames:
-                res[dname] = row[dname]
+                try:
+                    res[dname] = float(str(row[dname]))
+                except:
+                    res[dname] = np.nan
             self.db.index_quote.update(key, {'$set': res}, upsert=True)
         logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s',
                 len(df), self.db.index_quote.name, self.db.name, date)

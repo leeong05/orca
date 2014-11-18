@@ -46,10 +46,10 @@ class CaxUpdater(UpdaterBase):
             logger.warning('%s is not a trading day?', date)
             return
         self.db.dates.update({'date': date}, {'date': date}, upsert=True)
-        self._update(date, cax_sql.CMD1, cax_sql.dnames1, self.db.cax)
-        self._update(date, cax_sql.CMD2, cax_sql.dnames2, self.db.shares)
+        self._update(date, cax_sql.CMD1, cax_sql.dnames1, self.db.cax, float)
+        self._update(date, cax_sql.CMD2, cax_sql.dnames2, self.db.shares, int)
 
-    def _update(self, date, CMD, dnames, col):
+    def _update(self, date, CMD, dnames, col, dtype):
         CMD = CMD.format(date=date)
         logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
@@ -63,7 +63,7 @@ class CaxUpdater(UpdaterBase):
 
         for dname in dnames:
             key = {'dname': dname, 'date': date}
-            col.update(key, {'$set': {'dvalue': df[dname].dropna().to_dict()}}, upsert=True)
+            col.update(key, {'$set': {'dvalue': df[dname].dropna().astype(dtype).to_dict()}}, upsert=True)
         logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s',
                 len(df), col.name, self.db.name, date)
 

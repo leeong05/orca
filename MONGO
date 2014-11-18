@@ -1,4 +1,4 @@
-db.dates.ensureIndex({'date': 1, unique: true, dropDups: true})
+db.dates.ensureIndex({date: 1, unique: true, dropDups: true})
 
 db.cax.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.cax.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})

@@ -6,7 +6,7 @@ SELECT
 FROM
   QT_IndexQuote qt JOIN SecuMain sm ON sm.InnerCode = qt.InnerCode
 WHERE
-  qt.TradingDay = TO_DATE({date}, 'yyyymmdd')
+  qt.TradingDay = CONVERT(DATE, '{date}')
   AND
   qt.TurnoverVolume > 0
   AND
@@ -16,9 +16,9 @@ WHERE
   AND
   sm.SecuMarket IN (83, 90)
   AND
-  LENTH(sm.SecuCOde) = 6
+  LEN(sm.SecuCOde) = 6
   AND
-  SUBSTR(sm.SecuCode, 1, 1) IN ('3', '0')
+  LEFT(sm.SecuCode, 1) IN ('3', '0')
 """
 
 dnames = ['prev_close', 'open', 'high', 'low', 'close', 'volume', 'amount', 'vwap', 'returns']

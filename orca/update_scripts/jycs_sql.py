@@ -6,9 +6,9 @@ FROM
 WHERE
   SecuCategory = 1
   AND
-  (SecuMarket = 83 or SecuMarket = 90)
+  SecuMarket IN (83, 90)
   AND
-  SUBSTR(SecuCode, 1, 2) IN ('60', '00', '30')
+  LEFT(SecuCode, 2) IN ('60', '00', '30')
 """
 
 CMD = """

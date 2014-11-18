@@ -8,7 +8,6 @@ from multiprocessing import Process
 import pandas as pd
 import lockfile
 from pymongo import MongoClient
-import cx_Oracle
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(levelname)s@%(asctime)s]: %(message)s',
@@ -47,12 +46,21 @@ class UpdaterBase(object):
         pass
 
     def connect_jydb(self):
-        connection = cx_Oracle.connect('jydb/jydb@jydb')
+        import pymssql
+        connection = pymssql.connect('192.168.1.181', 'sa', 'Nm,.hjkl', 'jydb')
         cursor = connection.cursor()
-        logger.debug('Connected to Oracle Database jydb/jydb@jydb')
+        logger.debug('Connected to MSSQL Database jydb on 192.168.1.181')
+        self.__dict__.update({'connection': connection, 'cursor': cursor})
+
+    def connect_wind(self):
+        import pymssql
+        connection = pymssql.connect('192.168.1.181', 'sa', 'Nm,.hjkl', 'wind')
+        cursor = connection.cursor()
+        logger.debug('Connected to MSSQL Database wind on 192.168.1.181')
         self.__dict__.update({'connection': connection, 'cursor': cursor})
 
     def connect_zyyx(self):
+        import cx_Oracle
         connection = cx_Oracle.connect('zyyx/zyyx@zyyx')
         cursor = connection.cursor()
         logger.debug('Connected to Oracle Database zyyx/zyyx@zyyx')

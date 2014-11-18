@@ -5,9 +5,9 @@ FROM
   LC_IndexComponent ic JOIN SecuMain sm1 ON ic.IndexInnerCode = sm1.InnerCode
   JOIN SecuMain sm2 ON ic.SecuInnerCode = sm2.InnerCode
 WHERE
-  ic.InDate <= TO_DATE({date}, 'yyyymmdd')
+  ic.InDate <= CONVERT(DATE, '{date}')
   AND
-  (ic.OutDate IS NULL OR ic.OutDate > TO_DATE({date}, 'yyyymmdd'))
+  (ic.OutDate IS NULL OR ic.OutDate > CONVERT(DATE, '{date}'))
   AND
   sm1.SecuMarket IN (83, 90)
   AND
@@ -17,7 +17,11 @@ WHERE
   AND
   sm2.SecuMarket IN (83, 90)
   AND
-  SUBSTR(sm2.SecuCode, 0, 2) IN ('60', '00', '30')
+  LEFT(sm2.SecuCode, 2) IN ('60', '00', '30')
+  AND
+  LEN(sm1.SecuCode) = 6
+  AND
+  LEFT(sm1.SecuCode, 1) IN ('3', '0')
 """
 
 CMD2 = """
@@ -29,7 +33,7 @@ FROM
 WHERE
   cw.EndDate = (SELECT MAX(EndDate)
                 FROM LC_IndexComponentsWeight
-                WHERE IndexCode = cw.IndexCode AND EndDate <= TO_DATE({date}, 'yyyymmdd'))
+                WHERE IndexCode = cw.IndexCode AND EndDate <= CONVERT(DATE, '{date}'))
   AND
   sm1.SecuMarket IN (83, 90)
   AND
@@ -39,5 +43,9 @@ WHERE
   AND
   sm2.SecuMarket IN (83, 90)
   AND
-  SUBSTR(sm2.SecuCode, 0, 2) IN ('60', '00', '30')
+  LEFT(sm2.SecuCode, 2) IN ('60', '00', '30')
+  AND
+  LEN(sm1.SecuCode) = 6
+  AND
+  LEFT(sm1.SecuCode, 1) IN ('3', '0')
 """

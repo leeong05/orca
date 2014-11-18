@@ -1,6 +1,6 @@
 CMD0 = """
 SELECT
-  MAX(TO_CHAR(TradingDate, 'yyyymmdd'))
+  MAX(CONVERT(VARCHAR(8), TradingDate, 112))
 FROM
   QT_TradingDayNew
 WHERE
@@ -8,7 +8,7 @@ WHERE
   AND
   SecuMarket = 83
   AND
-  TradingDate <= TO_DATE({date}, 'yyyymmdd')
+  TradingDate <= CONVERT(DATE, '{date}')
 """
 
 CMD1 = """
@@ -19,13 +19,13 @@ WITH summary AS (
   FROM
     SecuMain sm INNER JOIN QT_AdjustingFactor adj ON sm.InnerCode = adj.InnerCode
   WHERE
-    adj.ExDiviDate <= TO_DATE({date}, 'yyyymmdd')
+    adj.ExDiviDate <= CONVERT(DATE, '{date}')
     AND
     sm.SecuCategory = 1
     AND
     sm.SecuMarket IN (83, 90)
     AND
-    SUBSTR(sm.SecuCode, 1, 2) IN ('60', '00', '30'))
+    LEFT(sm.SecuCode, 2) IN ('60', '00', '30'))
 SELECT s.SecuCode, s.RatioAdjustingFactor, s.AccuBonusShareRatio
 FROM summary s
 WHERE s.rk = 1
@@ -39,15 +39,15 @@ WITH summary AS (
   FROM
     SecuMain sm INNER JOIN LC_ShareStru ss ON sm.CompanyCode = ss.CompanyCode
   WHERE
-    ss.InfoPublDate <= TO_DATE({date}, 'yyyymmdd')
+    ss.InfoPublDate <= CONVERT(DATE, '{date}')
     AND
-    ss.EndDate <= TO_DATE({date}, 'yyyymmdd')
+    ss.EndDate <= CONVERT(DATE, '{date}')
     AND
     sm.SecuCategory = 1
     AND
     sm.SecuMarket IN (83, 90)
     AND
-    SUBSTR(sm.SecuCode, 1, 2) IN ('60', '00', '30'))
+    LEFT(sm.SecuCode, 2) IN ('60', '00', '30'))
 SELECT
   s.SecuCode, s.Ashares, s.AFloats, s.RestrictedAShares, s.NonRestrictedShares, s.FloatShare, s.AFloatListed
 FROM summary s

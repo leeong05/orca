@@ -3,6 +3,7 @@ import logging
 logger = logging.getLogger('updater')
 
 from datetime import datetime
+from decimal import Decimal
 
 import pandas as pd
 
@@ -91,7 +92,14 @@ class JYFundUpdater(UpdaterBase):
 
         for _, row in df.iterrows():
             key = {'date': prev_date, 'year': row['year'], 'quarter': row['quarter'], 'sid': row['sid']}
-            self.collection.update(key, row.to_dict(), upsert=True)
+            doc = {}
+            for k, v in row.iteritems():
+                if v is None: continue
+                if isinstance(v, Decimal):
+                    doc[k] = float(str(v))
+                else:
+                    doc[k] = v
+            self.collection.update(key, doc, upsert=True)
         logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s', len(df['sid'].unique()), self.collection.name, self.db.name, prev_date)
 
 

@@ -1,33 +1,32 @@
 standards = {
   3:    'ZX',
-  9:    'SW',
   24:   'SW2014',
 }
 
 CMD1 = """
 SELECT
-  sm.SecuCode, TO_CHAR(ind.FirstIndustryCode), TO_CHAR(ind.FirstIndustryName), TO_CHAR(ind.SecondIndustryCode), TO_CHAR(ind.SecondIndustryName), TO_CHAR(ind.ThirdIndustryCode), TO_CHAR(ind.ThirdIndustryName)
+  sm.SecuCode, ind.FirstIndustryCode, ind.FirstIndustryName, ind.SecondIndustryCode, ind.SecondIndustryName, ind.ThirdIndustryCode, ind.ThirdIndustryName
 FROM
   SecuMain sm JOIN LC_ExgIndustry ind ON sm.CompanyCode = ind.CompanyCode
 WHERE
   sm.SecuCategory = 1
   AND
-  (sm.SecuMarket = 83 or sm.SecuMarket = 90)
+  sm.SecuMarket IN (83, 90)
   AND
-  SUBSTR(sm.SecuCode, 1, 2) IN ('60', '00', '30')
+  LEFT(sm.SecuCode, 2) IN ('60', '00', '30')
   AND
   ind.Standard = {standard}
   AND
-  ind.InfoPublDate <= TO_DATE({date}, 'yyyymmdd') AND (ind.CancelDate IS NULL OR ind.CancelDate > TO_DATE({date}, 'yyyymmdd'))
+  ind.InfoPublDate <= CONVERT(DATE, '{date}') AND (ind.CancelDate IS NULL OR ind.CancelDate > CONVERT(DATE, '{date}'))
 """
 
 CMD2 = """
 SELECT
-  TO_CHAR(ii.IndustryCode), sm.SecuCode
+  ii.IndustryCode, sm.SecuCode
 FROM
   SecuMain sm JOIN LC_CorrIndexIndustry ii ON sm.InnerCode = ii.IndexCode
 WHERE
-  (ii.EndDate IS NULL OR ii.EndDate >= TO_DATE({date}, 'yyyymmdd'))
+  (ii.EndDate IS NULL OR ii.EndDate >= CONVERT(DATE, '{date}'))
   AND
   ii.IndustryStandard = {standard}
   AND

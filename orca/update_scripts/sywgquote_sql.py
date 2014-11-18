@@ -6,7 +6,7 @@ SELECT
 FROM
   QT_SYWGIndexQuote qt JOIN SecuMain sm ON sm.InnerCode = qt.InnerCode
 WHERE
-  qt.TradingDay = TO_DATE({date}, 'yyyymmdd')
+  qt.TradingDay = CONVERT(DATE, '{date}')
   AND
   qt.TurnoverVolume > 0
 """
