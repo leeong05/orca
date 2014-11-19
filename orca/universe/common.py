@@ -48,36 +48,37 @@ CS800 = ComponentsFilter('CS800')
 """industry filter"""
 FINANCE = IndustryFilter(['480000', '490000'])
 NONFIN = NegateFilter(FINANCE)
+BANK = IndustryFilter(['480000'])
+NONBANK = NegateFilter(BANK)
 
 """cap filters"""
 TotalCapFilter = create_cap_filter('TotalCapFilter', 'a_shares')
-TotalCap70 = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lt(70))
-TotalCap60 = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lt(60))
+TotalCap70 = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(70))
+TotalCap60 = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(60))
 
-TotalCapT30 = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lt(30))
-TotalCapB30 = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lt(30, ascending=True))
+TotalCapT30 = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30))
+TotalCapB30 = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30, ascending=True))
 TotalCapM40 = NegateFilter(UnionFilter([TotalCapT30, TotalCapB30]))
 
 FloatCapFilter = create_cap_filter('FloatCapFilter', 'a_float_nonrestricted')
-FloatCap70 = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lt(70))
-FloatCap60 = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lt(60))
+FloatCap70 = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(70))
+FloatCap60 = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(60))
 
-FloatCapT30 = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lt(30))
-FloatCapB30 = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lt(30, ascending=True))
+FloatCapT30 = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30))
+FloatCapB30 = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30, ascending=True))
 FloatCapM40 = NegateFilter(UnionFilter([FloatCapT30, FloatCapB30]))
 
 """liquidity filters"""
 AmountFilter = create_quote_filter('AmountFilter', 'amount')
-Liq70 = AmountFilter(DAYS_IN_QUARTER, rules.sum_rank_pct_lt(70))
-Liq60 = AmountFilter(DAYS_IN_QUARTER, rules.sum_rank_pct_lt(60))
+Liq70 = AmountFilter(DAYS_IN_QUARTER, rules.sum_rank_pct_lte(70))
+Liq60 = AmountFilter(DAYS_IN_QUARTER, rules.sum_rank_pct_lte(60))
 
 """composite filters factory methods"""
 
 def create_topliquid_filter(cap, liq, window=DAYS_IN_QUARTER):
-    return ChainFilter([T1Y, (TotalCapFilter(window, rules.sum_rank_pct_lt(cap)),
-                              AmountFilter(window, rules.sum_rank_pct_lt(liq)))
+    return ChainFilter([T1Y, (TotalCapFilter(window, rules.sum_rank_pct_lte(cap)),
+                              AmountFilter(window, rules.sum_rank_pct_lte(liq)))
                        ])
-
 
 def create_backtesting_topliquid_filter(cap, liq, window=DAYS_IN_QUARTER):
     return ChainFilter([(create_topliquid_filter(cap, liq, window=window), ACTIVE)])

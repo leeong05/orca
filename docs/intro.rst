@@ -16,15 +16,16 @@ and install the following dependency libraries properly:
 * `PyTables <http://www.pytables.org/moin/>`_
 * `TA-Lib <https://github.com/mrjbq7/ta-lib>`_
 
-Orca has 8 main components:
+Orca has 9 main components:
 
 * MongoDB interface
 * Data cache
-* Universes
 * Alphas
+* Operations
 * Performance
+* Universes
 * Utilities
 * Updaters
 * Alpha DB interface
 
-For backtesting purpose, one only have to focus on the first 6 components which are explained in detail in this documentation.
+For backtesting purpose, one only have to focus on the first 7 components which are explained in detail in this documentation.

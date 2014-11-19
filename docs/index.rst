@@ -14,6 +14,8 @@ Contents:
    intro.rst
    tutorial.rst
    documentation.rst
+   tools.rst
+   submit.rst
 
 
 Indices and tables

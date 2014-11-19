@@ -201,7 +201,7 @@ def startswith(x):
     else:
         return lambda s: any(s[:len(y)] == y for y in x)
 
-def endsiwth(x):
+def endswith(x):
     """Returns a function that returns a function to check if element has certain suffixes."""
     if isinstance(x, str):
         l = len(x)

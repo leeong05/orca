@@ -12,3 +12,4 @@ Contents:
    operation.rst
    universe.rst
    perf.rst
+   util.rst

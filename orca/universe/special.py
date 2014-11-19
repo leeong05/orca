@@ -100,13 +100,14 @@ class IndustryFilter(SimpleDataFilter):
 
     :param list industry: Indutries that should be included in the universe
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX'). Default: 'SW2014'
+    :param int level: Industry level, i.e. one of (1, 2, 3). Default: 1
 
     """
 
-    def __init__(self, industry, standard='SW2014', **kwargs):
+    def __init__(self, industry, standard='SW2014', level=1, **kwargs):
         SimpleDataFilter.__init__(
                 self,
-                ('sector', IndustryFetcher, {'standard': standard}),
+                ('level%s' % str(level), IndustryFetcher, {'standard': standard}),
                 1,
                 rule=rules.isin(industry),
                 delay=0,
