@@ -1,6 +1,6 @@
-import logging
-
-logger = logging.getLogger('updater')
+"""
+.. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
+"""
 
 from datetime import datetime
 from decimal import Decimal
@@ -11,10 +11,6 @@ from base import UpdaterBase
 import jybs_sql
 import jycs_sql
 import jyis_sql
-
-"""
-The updater class for collections 'jybs', 'jycs', 'jyis'
-"""
 
 def quarter(dstr):
     md = dstr[4:8]
@@ -29,6 +25,7 @@ def quarter(dstr):
 
 
 class JYFundUpdater(UpdaterBase):
+    """The updater class for collections 'jybs', 'jycs', 'jyis'."""
 
     def __init__(self, timeout=30, table='balancesheet'):
         UpdaterBase.__init__(self, timeout)
@@ -58,22 +55,23 @@ class JYFundUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        logger.debug('Ensuring index date_1_year_1_quarter_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index date_1_year_1_quarter_1 on collection %s', self.collection.name)
         self.collection.ensure_index([('date', 1), ('year', 1), ('quarter', 1)],
                 background = True)
-        logger.debug('Ensuring index year_1_quarter_1_date_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index year_1_quarter_1_date_1 on collection %s', self.collection.name)
         self.collection.ensure_index([('year', 1), ('quarter', 1), ('date', 1)],
                 background=True)
 
     def update(self, date):
+        """Update fundamental data for the **previous** day before market open."""
         prev_date = self.dates[self.dates.index(date)-1]
         CMD = self.sql.CMD.format(date=self.get_milliseconds(date),
                                   prev_date=self.get_milliseconds(prev_date))
-        logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            logger.warning('No records found for %s on %s', self.collection.name, prev_date)
+            self.logger.warning('No records found for %s on %s', self.collection.name, prev_date)
             return
 
         df = df[self.sql.cols]
@@ -87,7 +85,7 @@ class JYFundUpdater(UpdaterBase):
         df.sid = df.sid.apply(lambda x: self.company_sid[x])
         df['date'] = prev_date
         if len(df) == 0:
-            logger.warning('No records found for %s on %s', self.collection.name, prev_date)
+            self.logger.warning('No records found for %s on %s', self.collection.name, prev_date)
             return
 
         for _, row in df.iterrows():
@@ -100,7 +98,7 @@ class JYFundUpdater(UpdaterBase):
                 else:
                     doc[k] = v
             self.collection.update(key, doc, upsert=True)
-        logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s', len(df['sid'].unique()), self.collection.name, self.db.name, prev_date)
+        self.logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s', len(df['sid'].unique()), self.collection.name, self.db.name, prev_date)
 
 
 class JYBalancesheetUpdater(JYFundUpdater):

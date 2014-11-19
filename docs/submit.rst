@@ -58,4 +58,4 @@ To submit, these two files should be merged and re-constructed as::
 
         def generate(self, date):
             returns5 = self.quote.fetch_daily('returns5', date, offset=1)
-            return returns5
+            return -returns5

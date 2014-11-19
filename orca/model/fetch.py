@@ -3,11 +3,11 @@
 """
 
 import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)s [%(levelname)s] %(message)s')
 
 import pandas as pd
 
 from engine import fetch_sql
+from orca import logger
 
 
 class AlphaDBFetcher(object):
@@ -21,7 +21,7 @@ class AlphaDBFetcher(object):
     LOGGER_NAME = 'alphadb'
 
     def __init__(self, **kwargs):
-        self.logger = logging.getLogger(AlphaDBFetcher.LOGGER_NAME)
+        self.logger = logger.get_logger(AlphaDBFetcher.LOGGER_NAME)
         self.set_debug_mode(kwargs.get('debug_on', True))
         self.delay = kwargs.get('delay', 0)
 

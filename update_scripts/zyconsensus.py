@@ -1,6 +1,6 @@
-import logging
-
-logger = logging.getLogger('updater')
+"""
+.. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
+"""
 
 import itertools
 from multiprocessing import Pool
@@ -10,10 +10,6 @@ import pandas as pd
 
 from base import UpdaterBase
 import zyconsensus_sql as zysql
-
-"""
-The updater class for collection 'zyconsensus'
-"""
 
 def worker(args):
     sid, df = args
@@ -30,6 +26,7 @@ def worker(args):
 
 
 class ZYConsensusUpdater(UpdaterBase):
+    """The updater class for collection 'zyconsensus'."""
 
     def __init__(self, threads=16, cutoff='08:30:00', timeout=60):
         UpdaterBase.__init__(self, timeout)
@@ -46,25 +43,26 @@ class ZYConsensusUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        logger.debug('Ensuring index date_1_dname_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index date_1_dname_1 on collection %s', self.collection.name)
         self.collection.ensure_index([('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
-        logger.debug('Ensuring index dname_1_date_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index dname_1_date_1 on collection %s', self.collection.name)
         self.collection.ensure_index([('dname', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
 
     def update(self, date):
+        """Update target prices, consensus data for the **previous** day before market open."""
         prev_date = self.dates[self.dates.index(date)-1]
         self.update_target_price(date, prev_date)
         self.update_consensus(date, prev_date)
 
     def update_target_price(self, date, prev_date):
         CMD = zysql.CMD1.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
-        logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            logger.warning('No records found for %s@dname=target_price on %s', self.collection.name, prev_date)
+            self.logger.warning('No records found for %s@dname=target_price on %s', self.collection.name, prev_date)
             return
 
         df.columns = ['sid'] + zysql.dnames1
@@ -73,15 +71,15 @@ class ZYConsensusUpdater(UpdaterBase):
         for dname in zysql.dnames1:
             key = {'dname': dname, 'date': prev_date}
             self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().to_dict()}}, upsert=True)
-        logger.info('UPSERT documents for %d sids into (c: [%s@dname=target_price]) of (d: [%s]) on %s', len(df), self.collection.name, self.db.name, prev_date)
+        self.logger.info('UPSERT documents for %d sids into (c: [%s@dname=target_price]) of (d: [%s]) on %s', len(df), self.collection.name, self.db.name, prev_date)
 
     def update_consensus(self, date, prev_date):
         CMD = zysql.CMD2.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
-        logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            logger.warning('No records found for %s@dname=consensus on %s', self.collection.name, prev_date)
+            self.logger.warning('No records found for %s@dname=consensus on %s', self.collection.name, prev_date)
             return
 
         df.columns = ['sid', 'consensus_type', 'forecast_year', 'growth'] + zysql._dnames2
@@ -94,7 +92,7 @@ class ZYConsensusUpdater(UpdaterBase):
         for dname in zysql.dnames2:
             key = {'dname': dname, 'date': prev_date}
             self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().to_dict()}}, upsert=True)
-        logger.info('UPSERT documents for %d sids into (c: [%s@dname=consensus]) of (d: [%s]) on %s', len(df), self.collection.name, self.db.name, prev_date)
+        self.logger.info('UPSERT documents for %d sids into (c: [%s@dname=consensus]) of (d: [%s]) on %s', len(df), self.collection.name, self.db.name, prev_date)
 
 
 if __name__ == '__main__':

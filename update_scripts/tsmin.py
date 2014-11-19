@@ -1,7 +1,8 @@
-import os
-import logging
+"""
+.. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
+"""
 
-logger = logging.getLogger('updater')
+import os
 
 from multiprocessing import Pool
 
@@ -11,10 +12,6 @@ import pandas as pd
 from base import UpdaterBase
 import tsmin_sql
 
-"""
-The updater class for collections 'ts_1min', 'ts_5min'
-"""
-
 def worker(args):
     date, time, df = args
     for dname in tsmin_sql.dnames:
@@ -22,7 +19,9 @@ def worker(args):
         dvalue = df[dname].dropna().to_dict()
         COLLECTION.update(key, {'$set': {'dvalue': dvalue}}, upsert=True)
 
+
 class TSMinUpdater(UpdaterBase):
+    """The updater class for collections 'ts_1min', 'ts_5min'."""
 
     def __init__(self, bar='1min', timeout=300, threads=16):
         UpdaterBase.__init__(self, timeout)
@@ -39,18 +38,19 @@ class TSMinUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        logger.debug('Ensuring index date_1_dname_1_time_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index date_1_dname_1_time_1 on collection %s', self.collection.name)
         self.collection.ensure_index([('date', 1), ('dname', 1), ('time', 1)],
                 unique=True, dropDups=True, background=True)
-        logger.debug('Ensuring index dname_1_date_1_time_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index dname_1_date_1_time_1 on collection %s', self.collection.name)
         self.collection.ensure_index([('dname', 1), ('date', 1), ('time', 1)],
                 unique=True, dropDups=True, background=True)
 
     def update(self, date):
+        """Update TinySoft minute-bar data for the **same** day after market close."""
         fname = '%s-%s-%s.csv' % (date[:4], date[4:6], date[6:8])
         srcfile = os.path.join(self.srcdir, fname)
         if not os.path.exists(srcfile):
-            logger.error('No records found for %s on %s', self.collection.name, date)
+            self.logger.error('No records found for %s on %s', self.collection.name, date)
             return
 
         df = pd.read_csv(srcfile, header=0, usecols=tsmin_sql.col_index, names=tsmin_sql.col_names, dtype={0: np.str})
@@ -67,7 +67,7 @@ class TSMinUpdater(UpdaterBase):
         grouped = df.groupby('time')
         pool = Pool(self.threads)
         pool.imap(worker, ((date, time, df) for time, df in grouped), self.threads)
-        logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
+        self.logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
 
 if __name__ == '__main__':
     ts_5min = TSMinUpdater(bar='5min')
