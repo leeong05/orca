@@ -63,7 +63,6 @@ class NegateFilter(FilterBase):
     """Class to negate a filter.
 
     :param filter: Filter to be negated
-
     """
 
     def __init__(self, filter, **kwargs):

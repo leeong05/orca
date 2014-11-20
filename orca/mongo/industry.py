@@ -17,7 +17,6 @@ class IndustryFetcher(KDayFetcher):
     """Class to fetch industry data.
 
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX'). Default: 'SW2014'
-
     """
 
     name_dname = {
@@ -50,7 +49,6 @@ class IndustryFetcher(KDayFetcher):
         :param str dname: 'name'(default): fetch industry-name mapping; 'index': fetch industry-index mapping
         :param int level: Which level of industry is of interest? Default: 0, all 3 levels' information are fetched
         :rtype: dict
-
         """
         standard = kwargs.get('standard', self.standard)
         date_check = kwargs.get('date_check', self.date_check)

@@ -102,7 +102,6 @@ class FilterBase(object):
         :param boolean return_parent: Whether to return parent along with the universe
         :returns: DataFrame(if ``return_parent`` is False), or a tuple with the 2nd element the formatted ``parent`` DataFrame
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -114,7 +113,6 @@ class FilterBase(object):
         :param int offset: The offset w.r.t. the ``date``. The actual date is calculated from ``date`` and ``offset``. Default: 0
         :param DataFrame parent: The super- or parent-universe to be filtered. Default: None
         :returns: Series
-
         """
         date = mongo_util.compliment_datestring(str(date), -1, self.date_check)
         di, date = mongo_util.parse_date(DATES, date, -1)
@@ -133,7 +131,6 @@ class DataFilter(FilterBase):
     :param int window: Used as in ``pd.rolling_apply(arg, window, ...)``. It is also used in determining data fetching window, thus is worthy to be seperated from ``rule``
     :param function rule: When called in ``rule(window)``, it returns a function that can be applied on DataFrame objects. Thus ``rule(window)(df)`` should be equivalent to ``pd.rolling_apply(df, window, func, ...)``
     :param int delay: Delay of the underlying data. Default: 1, which means, loosely speaking, universe on ``DATES[di]`` is filtered out using datas up to ``DATES[di-1]``
-
     """
 
     def __init__(self, datas, synth, window, rule=None, delay=1, **kwargs):
@@ -187,7 +184,6 @@ class SimpleDataFilter(DataFilter):
     """Base class for filters based on a **single** data.
 
     :param tuple data: Like ``(dname, fetcherclass[, kwargs])``
-
     """
 
     def __init__(self, data, window, rule=None, delay=1, **kwargs):

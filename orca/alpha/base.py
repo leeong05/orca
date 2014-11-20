@@ -37,7 +37,6 @@ class AlphaBase(object):
 
         :param str date: a 8-length date string like ``yyyymmdd``
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 

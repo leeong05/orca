@@ -10,7 +10,6 @@ class ComponentsFetcher(KDayFetcher):
     """Class to fetch index components data.
 
     :param boolean as_bool: Whether the returned result be a weight matrix or just a boolean matrix. Default: True
-
     """
 
     index_dname = {

@@ -1,20 +1,26 @@
 performance -- Performance analysis
 ===================================
 
-performance.analyser
+perf.analyser
 --------------------
 
-.. automodule:: orca.performance.analyser
+.. automodule:: orca.perf.analyser
    :exclude-members: __weakref__
 
-performance.perf
+perf.performance
 ----------------
 
-.. automodule:: orca.performance.perf
+.. automodule:: orca.perf.performance
+   :exclude-members: __weakref__
+
+perf.plotter
+------------
+
+.. automodule:: orca.perf.plotter
    :exclude-members: __weakref__
 
 performance.util
 ----------------
 
-.. automodule:: orca.performance.util
+.. automodule:: orca.perf.util
    :exclude-members: __weakref__

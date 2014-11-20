@@ -104,7 +104,6 @@ class JYFundFetcher(KDayFetcher):
     :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow')
     :param startyear: Fetch data starting from this year in advance, must be in the format 'YYYY'. Default: 2007
     :type startyear: str, int
-
     """
 
     tables = ('balancesheet', 'income', 'cashflow')
@@ -176,9 +175,7 @@ class JYFundFetcher(KDayFetcher):
         :param enum rtype: What type of reports to be considered? QUARTER(1, default): all reports; SEMI(2): only semi-annual reports and annual reports; YEAR(4): only annual reports
         :param int quarter: It will only fetch data for this particular quarter(the 4 quarters in a year is 1, 2, 3, 4), thus should be compatible with the use of ``rtype``. Default: None, fetch whatever data is available
 
-        .. seealso::
-
-           :py:meth:`JYFundFetcher.prepare_panel`
+        .. seealso:: :py:meth:`JYFundFetcher.prepare_panel`
         """
         if quarter is not None:
             try:
@@ -231,7 +228,6 @@ class JYFundFetcher(KDayFetcher):
         :type use_adjust: None, boolean
         :param ffill: Fill gaps long date axis for those non-reporting days, currently supports ('ffill', None). Default: 'ffill'
         :type ffill: None, str
-
         """
         date_check = kwargs.get('date_check', self.date_check)
         reindex = kwargs.get('reindex', self.reindex)
@@ -291,7 +287,6 @@ class JYFundFetcher(KDayFetcher):
         """Disabled.
 
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -299,7 +294,6 @@ class JYFundFetcher(KDayFetcher):
         """Disabled.
 
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -307,7 +301,6 @@ class JYFundFetcher(KDayFetcher):
         """Disabled.
 
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -317,7 +310,6 @@ class JYFundFetcher(KDayFetcher):
         :param int quarter_offset: Offset in quarter numbers. Default: 0
         :param enum rtype: Which type of reports to be considered
         :param int quarter: Should only used when ``rtype`` is QUARTER(2). It will only fetch data for this particular quarter, thus also making ``quarter_offset`` not meaningful. Default: None, fetch whatever data is available as of ``date-offset``
-
         """
         return self.prepare_frame(
                 [dname],

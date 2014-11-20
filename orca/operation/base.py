@@ -32,7 +32,6 @@ class OperationBase(object):
 
         :param DataFrame alpha: Alpha to be operated on
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 

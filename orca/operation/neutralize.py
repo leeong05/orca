@@ -15,7 +15,6 @@ class GroupNeutOperation(OperationBase):
     """Class to neutralize alpha within a group.
 
     :param group: Groupings, either a Series(static grouping) or a DataFrame(dynamic grouping); in latter case, you are **advised** to make the index of type DatatimeIndex. Default: None
-
     """
 
     def __init__(self, group=None, **kwargs):
@@ -44,7 +43,6 @@ class IndustryNeutOperation(GroupNeutOperation):
     """Class to neutralize alpha by industry classifications.
 
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX'). Default: 'SW2014'
-
     """
 
     def __init__(self, standard='SW2014', **kwargs):

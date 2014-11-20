@@ -116,7 +116,6 @@ class ScoreFetcher(AlphaDBFetcher):
         """
         :param ids: Alpha id numbers
         :type ids: int, list
-
         """
         if isinstance(ids, int):
             ids_ = [ids]
@@ -179,7 +178,6 @@ class UniverseFetcher(AlphaDBFetcher):
     def fetch(self, uname, startdate, enddate=None):
         """
         :param str uname: Universe name
-
         """
         sql = UniverseFetcher.FETCH_NAME.format(uname, startdate) if enddate is None else \
               UniverseFetcher.FETCH_NAME_ENDDATE.format(uname, startdate, enddate)
@@ -295,7 +293,6 @@ class PerformanceFetcher(AlphaDBFetcher):
         :param datas: Names of the performance metrics, for example: 'returns'
         :type datas: str, list
         :raises ValueError: When ``datas`` is a list, ``id`` in ``kwargs`` can only a single alpha id(i.e. an integer)
-
         """
         ids = kwargs.pop('id')
         str_ids = ids if isinstance(ids, int) else ', '.join([str(i) for i in ids])

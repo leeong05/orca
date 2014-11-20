@@ -16,7 +16,6 @@ class AdjQuoteFetcher(KDayFetcher):
     """Class to fetch adjusted price/volume data.
 
     :param int mode: Mode to adjust price/volume. Default: BACKWARD(1)
-
     """
 
     _prices = ('prev_close', 'close', 'open', 'high', 'low', 'vwap')
@@ -68,7 +67,6 @@ class AdjQuoteFetcher(KDayFetcher):
         """
         :param basedate: Date on which the data adjusting is based. Default: None, defaults to ``enddate``
         :type basedate: str, None
-
         """
         dname = dname[4:]
         if dname in self._noadjust:
@@ -85,7 +83,6 @@ class AdjQuoteFetcher(KDayFetcher):
     def fetch_window(self, dname, window, basedate, **kwargs):
         """
         :param str basedate: Date on which the data adjusting is based
-
         """
         adj_window = self._get_adjust_window(window, basedate, **kwargs)
         df = self.quote.fetch_window(dname, window, **kwargs)
@@ -122,6 +119,5 @@ class AdjQuoteFetcher(KDayFetcher):
         """Non-sensical to fetch just one day adjusted data.
 
         :raises: NotImplementedError
-
         """
         raise NotImplementedError

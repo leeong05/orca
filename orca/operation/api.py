@@ -11,7 +11,6 @@ def format(df, value=np.nan):
     """Format DataFrame into DatetimeIndex and full sids columns.
 
     :param value: Value to be filled for missing points
-
     """
     df = df.reindex(columns=SIDS, copy=True).fillna(value)
     df.index = pd.to_datetime(df.index)
@@ -35,7 +34,6 @@ def top(df, n):
     """Return top n elements for each row in DataFrame.
 
     :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True
-
     """
     return df.rank(ascending=False, axis=1) <= n
 
@@ -43,7 +41,6 @@ def bottom(df, n):
     """Return bottom n elements for each row in DataFrame.
 
     :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True
-
     """
     return df.rank(ascending=True, axis=1) <= n
 
@@ -51,7 +48,6 @@ def qtop(df, q):
     """Return top q-quantile elements for each row in DataFrame.
 
     :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True
-
     """
     return df.ge(df.quantile(1-q, axis=1), axis=0)
 
@@ -59,7 +55,6 @@ def qbottom(df, q):
     """Return bottom q-quantile elements for each row in DataFrame.
 
     :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True
-
     """
     return df.le(df.quantile(q, axis=1), axis=0)
 
@@ -67,7 +62,6 @@ def quantiles(df, n):
     """Cut DataFrames into quantiles.
 
     :returns: A list of ``n`` boolean DataFrames with same shape as ``df`` with desired element position as True, the first one being bottom quantile and last one being top quantile
-
     """
     qtls = []
     qs = df.quantile(q=np.linspace(1./n, 1, n), axis=1)
@@ -113,7 +107,6 @@ def industry_neut(df, group, standard='SW2014'):
 
     :param str group: 'level1', 'level2', 'level3'
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX')
-
     """
     return IndustryNeutOperation(standard).operate(df, group)
 

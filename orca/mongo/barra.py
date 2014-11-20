@@ -71,7 +71,6 @@ class BarraExposureFetcher(BarraFetcher):
         one aspect: when the ``dname`` is not given, this will fetch all factors exposure on ``date``.
 
         :returns: Series(if a factor name is given), DataFrame(all factor names are in the columns)
-
         """
         factor, date, offset = None, None, 0
 
@@ -146,9 +145,7 @@ class BarraFactorFetcher(KDayFetcher):
         :param factor: Factor name or a list of factor names. Default: None, all factors will be fetched
         :type factor: None, str, list
         :returns: Series(if ``type(factor)`` is ``str``) or DataFrame
-
         """
-
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
         if factor is None :
             factor = self._factors
@@ -173,7 +170,6 @@ class BarraFactorFetcher(KDayFetcher):
     def fetch(self, dname, *args, **kwargs):
         """
         :param str dname: 'returns' or factor name
-
         """
         if dname == 'returns':
             dname = None
@@ -183,7 +179,6 @@ class BarraFactorFetcher(KDayFetcher):
         """Wrapper for :py:meth:`fetch_returns`.
 
         :param str dname: 'returns' or factor name
-
         """
         if dname == 'returns':
             dname = None
@@ -202,7 +197,6 @@ class BarraFactorFetcher(KDayFetcher):
         """Wrapper for :py:meth:`fetch_returns` and :py:meth:`fetch_covariance`.
 
         :param str dname: 'returns', 'covariance' or any factor name
-
         """
         if dname == 'covariance':
             date_check = kwargs.get('date_check', self.date_check)

@@ -99,7 +99,6 @@ class FetcherBase(object):
         :param list window: List of consecutive trading dates
         :returns: DataFrame
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -113,7 +112,6 @@ class FetcherBase(object):
         :param int backdays: Number of days to look back w.r.t. the base point
         :returns: DataFrame
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -127,7 +125,6 @@ class FetcherBase(object):
         :param int offset: The offset w.r.t. the ``date``. The actual fetched date is calculated from ``date`` and ``offset``. Default: 0
         :returns: Series
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -211,7 +208,6 @@ class KMinFetcher(FetcherBase):
         :param times: Time stamps to indicate which minute-bars should be fetched. This will affect the returned data type
         :type times: str, list
         :returns: DataFrame(if ``type(times)`` is ``str``) or Panel(with ``times`` as the item-axis)
-
         """
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
         reindex = kwargs.get('reindex', self.reindex)
@@ -248,7 +244,6 @@ class KMinFetcher(FetcherBase):
         """Use :py:meth:`fetch_window` behind the scene.
 
         :returns: Series(if ``type(times)`` is ``str``) or DataFrame(with ``times`` as the columns)
-
         """
         res = self.fetch_history(dname, times, date, 1, delay=offset, **kwargs)
         if isinstance(times, str):

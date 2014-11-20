@@ -32,7 +32,6 @@ class IndexQuoteFetcher(KDayFetcher):
         :type dname: str, list
         :param str index: Index name
         :returns: Series if ``dname`` is only a string or DataFrame with ``dname`` in the columns
-
         """
         assert index is not None
         index = IndexQuoteFetcher.index_dname.get(index, index)

@@ -97,7 +97,6 @@ class BarraFactorNeutOperation(BarraOperation):
         :param Series alpha: Row extracted from an alpha DataFrame
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str, list
-
         """
         try:
             date = date.strftime('%Y%m%d')
@@ -128,7 +127,6 @@ class BarraFactorNeutOperation(BarraOperation):
         """
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str, list
-
         """
         res = {}
         for _, row in alpha.iterrows():
@@ -148,7 +146,6 @@ class BarraFactorCorrNeutOperation(BarraOperation):
         :param Series alpha: Row extracted from an alpha DataFrame
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str, list
-
         """
         try:
             date = date.strftime('%Y%m%d')
@@ -189,7 +186,6 @@ class BarraFactorCorrNeutOperation(BarraOperation):
         """
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str, list
-
         """
         res = {}
         for _, row in alpha.iterrows():

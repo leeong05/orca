@@ -9,7 +9,6 @@ class IntervalFetcher(KMinFetcher):
     """Class to fetch TinySoft minute-bar data.
 
     :param str freq: Frequency of minute-bar data, currently only supports: ('5min', '1min')
-
     """
 
     collections = {

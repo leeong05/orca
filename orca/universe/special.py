@@ -25,7 +25,6 @@ class TickerFilter(FilterBase):
     pattern contains information about its listed market.
 
     :param function rule: String manipulation function
-
     """
 
     def __init__(self, rule=None, **kwargs):
@@ -55,7 +54,6 @@ class TradingDaysFilter(SimpleDataFilter):
     this can filter new IPO stocks.
 
     :param function rule: Rule like: :py:func:`orca.universe.rules.count_gt`
-
     """
 
     def __init__(self, window, rule=None, **kwargs):
@@ -82,7 +80,6 @@ class ComponentsFilter(SimpleDataFilter):
     """Class to filter out stocks that are components in an index.
 
     :param str index: Index name, currently only supports: ('HS300', 'CS500', 'CS800', 'SH50')
-
     """
 
     def __init__(self, index, **kwargs):
@@ -101,7 +98,6 @@ class IndustryFilter(SimpleDataFilter):
     :param list industry: Indutries that should be included in the universe
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX'). Default: 'SW2014'
     :param int level: Industry level, i.e. one of (1, 2, 3). Default: 1
-
     """
 
     def __init__(self, industry, standard='SW2014', level=1, **kwargs):

@@ -32,9 +32,7 @@ def parse_date(dates, date, direction=1):
     :param list dates: The pre-defined list, must be sorted in ascending order
     :param date: ``date`` may be already in ``dates``; otherwise, it will be parsed into another item in the list
     :param int direction: 1(default): the desired item >= ``date``;-1: the desired item <= ``date``
-
     :returns: (i, dates[i]), ``i`` is the index of the desired item in ``dates``
-
     """
     if date in dates:
         return dates.index(date), date
@@ -50,7 +48,6 @@ def compliment_datestring(datestr, direction=-1, date_check=False):
     :param str datestr: For example, '2014', '201401' or '20140101'
     :param int direction: -1(default): compliment as the minimal possible; 1: compliment as the maximal possible
     :param boolean date_check: Whether to check if ``datestr`` is a valid date string. Default: False
-
     """
     if len(datestr) == 8:
         if not date_check:
@@ -84,7 +81,6 @@ def cut_window(dates, startdate, enddate=None, backdays=0):
     :param int backdays: This will shift (left/right: >/< 0) the left cut-out point. Default: 0
     :returns: The cut-out portion
     :rtype: list
-
     """
     startindex, startdate = parse_date(dates, startdate, 1)
     if startindex < backdays:
@@ -103,7 +99,6 @@ def generate_timestamps(starttime, endtime, step, end_excluded=True):
     :param int step: Number of **seconds** as step
     :param boolean end_excluded: Whether the ``endtime`` itself should be excluded from the result. Default: True
     :returns: Python generator
-
     """
 
     starttime = time(int(starttime[:2]), int(starttime[2:4]), int(starttime[4:6]))

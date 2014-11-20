@@ -19,7 +19,6 @@ class Performance(object):
     """Class to provide analyser to examine the performance of an alpha from different perspective.
 
     :param alpha: Alpha to be examined, either a well formatted DataFrame or :py:class:`orca.alpha.base.AlphaBase`
-
     """
 
     mongo_lock = Lock()
@@ -137,7 +136,7 @@ class Performance(object):
         return [Analyser(qt, Performance.get_returns(self.startdate)) \
                 for qt in api.quantiles(self.alpha, n)]
 
-    def get_universe(self, univ):
+    def _universe(self, univ):
         """Return a performance object for alpha in this universe."""
         return Performance(api.intersect(self.alpha, univ))
 

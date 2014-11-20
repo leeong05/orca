@@ -12,7 +12,6 @@ class DecayOperation(OperationBase):
 
     :param int days: How many days of decayed alphas to be included in final result
     :param boolean dense: Whether to treat ``NaN`` as 0 in current alpha. Default: False
-
     """
 
     def __init__(self, days, dense=False, **kwargs):

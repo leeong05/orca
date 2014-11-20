@@ -60,7 +60,6 @@ class IOBase(object):
         :param str name: File name of the saved data on disk
         :param data: The data to be saved
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -70,7 +69,6 @@ class IOBase(object):
 
         :param str fname: File name on disk
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -80,7 +78,6 @@ class IOBase(object):
 
         :param str name: File name of the saved data on disk
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -108,7 +105,6 @@ class SaverBase(IOBase):
         """This method should never be called by a data saver.
 
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -129,7 +125,6 @@ class SaverBase(IOBase):
         """Covenient helper special method.
 
         :param val: When it is None, this is equivalent to deleting the data file with name ``key``
-
         """
         if val is None:
             del self[key]
@@ -169,7 +164,6 @@ class LoaderBase(IOBase):
         """This method should never be called by a data loader.
 
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
@@ -177,7 +171,6 @@ class LoaderBase(IOBase):
         """This method should never be called by a data loader.
 
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 

@@ -102,11 +102,10 @@ class Analyser(object):
         """
         :param float cost: Linear amount-proportion trading cost. Default: 0
         :param boolean index: Whether we measure returns against index. Default: False
-
         """
 
         if self.returns is None:
-            self.returns = (self.returns * self.alpha.shift(1)).sum(axis=1).iloc[1:]
+            self.returns = (self.data * self.alpha.shift(1)).sum(axis=1).iloc[1:]
 
         if not cost:
             return self.returns-self.index_data if index else self.returns
@@ -119,7 +118,6 @@ class Analyser(object):
         :param function how: Used in resampling method
         :param by: Caculation frequency. None(default): whole period; 'A': yearly; 'Q': quarterly; 'M': monthly
         :param boolean index: Whether we measure returns against index. Default: False
-
         """
         returns = self.get_returns(cost=cost, index=index)
 
@@ -267,7 +265,6 @@ class Analyser(object):
 
         :param str group: Which aspect to be summarized. 'ir'(default): IR-related metrics; 'turnover': Turnover-related metrics; 'returns': Returns/PNL-related metrics; 'all': All metrics in the above 3 groups
         :param str freq: Which frequency of statistics is of interest? Default: 'daily'
-
         """
 
         if group == 'ir':

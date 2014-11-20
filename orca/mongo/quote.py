@@ -26,7 +26,6 @@ class QuoteFetcher(KDayFetcher):
         """When ``dname`` is 'returnsN', ``args`` should be a tuple ``(N, startdate[, enddate[, backdays]])``
 
         :param int N: Number of days to calculate returns
-
         """
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch(dname, *args, **kwargs)
@@ -49,7 +48,6 @@ class QuoteFetcher(KDayFetcher):
         """When ``dname`` is 'returnsN', ``args`` should be a tuple ``(N, window)``.
 
         :param int N: Number of days to calculate returns
-
         """
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch_window(dname, *args, **kwargs)
@@ -65,7 +63,6 @@ class QuoteFetcher(KDayFetcher):
         """When ``dname`` is 'returnsN', ``args`` should be a tuple ``(N, date, backdays)``.
 
         :param int N: Number of days to calculate returns
-
         """
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch_history(dname, *args, **kwargs)
@@ -80,7 +77,6 @@ class QuoteFetcher(KDayFetcher):
         """When ``dname`` is 'returnsN', ``args`` should be a tuple ``(N, date[, offset])``
 
         :param int N: Number of days to calculate returns
-
         """
         if dname != 'returnsN':
             return super(QuoteFetcher, self).fetch_daily(dname, *args, **kwargs)
