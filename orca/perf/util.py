@@ -8,6 +8,7 @@ import pandas as pd
 from orca import DAYS_IN_YEAR
 
 def drawdown(ser):
+    """``ser`` is a daily returns Series instead of a cumulative returns Series."""
     ser = ser.cumsum()
     end = (pd.expanding_max(ser)-ser).argmax()
     start = ser.ix[:end].argmax()
@@ -15,15 +16,19 @@ def drawdown(ser):
     return start, end, ser[start]-ser[end]
 
 def annualized_returns(ser):
+    """``ser`` is a daily returns Series instead of a cumulative returns Series."""
     return ser.mean() * DAYS_IN_YEAR / ser.count()
 
 def perwin(ser):
+    """``ser`` is a daily returns Series instead of a cumulative returns Series."""
     return (ser > 0).sum() * 100. / ser.count()
 
 def IR(ser):
+    """``ser`` is a daily returns Series instead of a cumulative returns Series."""
     return ser.mean() / ser.std()
 
 def Sharpe(ser):
+    """``ser`` is a daily returns Series instead of a cumulative returns Series."""
     return ser.mean() / ser.std() * np.sqrt(DAYS_IN_YEAR)
 
 def resample(ser, how='mean', by=None):
