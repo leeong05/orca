@@ -7,11 +7,9 @@ import pandas as pd
 from base import UpdaterBase
 import quote_sql
 
-"""
-The updater class for collection 'quote'
-"""
 
 class QuoteUpdater(UpdaterBase):
+    """The updater class for collection 'quote'."""
 
     def __init__(self, timeout=10):
         UpdaterBase.__init__(self, timeout)

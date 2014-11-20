@@ -13,7 +13,6 @@ class BarraUpdater(UpdaterBase):
     """The updater class for collections ``biarra_D/S_exposure', 'barra_D/S_returns', 'barra_D/S_covariance', 'barra_D/S_specifics'.
 
     :param str model: Model version, currently only supports: ('daily', 'short')
-
     """
 
     def __init__(self, model='daily', timeout=600, iterates=3):

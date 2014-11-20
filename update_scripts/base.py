@@ -21,7 +21,6 @@ class UpdaterBase(object):
 
     :param int timeout: Number of seconds to time out the update process. Default: 600, i.e. 10 minutes
     :param int iterates: Number of iterations to try in update method. Default: 1
-
     """
     __metaclass__ = abc.ABCMeta
 
@@ -78,7 +77,6 @@ class UpdaterBase(object):
         """Override(**mandatory**) to update data on date.
 
         :raises: NotImplementedError
-
         """
         raise NotImplementedError
 
