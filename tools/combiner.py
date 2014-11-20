@@ -21,7 +21,6 @@ class AlphaCombiner(object):
 
     :param int periods: How many days of returns as the predicted variable?
     :param float quantile: Only use tailed returnsN as dependent variable and other observations will be discarded. Default: None, no discard
-
     """
     LOGGER_NAME = 'combiner'
 
@@ -54,7 +53,6 @@ class AlphaCombiner(object):
     def add_alpha(self, name, alpha):
         """
         :param DataFrame alpha: Alpha to be added
-
         """
         self.name_alpha[name] = api.format(alpha)
 
@@ -139,7 +137,6 @@ class AlphaCombiner(object):
         """Main interface.
 
         :param str fpath: Valid file path.
-
         """
         self.prepare_XYW()
         self.fit()
