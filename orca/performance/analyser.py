@@ -12,7 +12,7 @@ import util
 
 
 class Analyser(object):
-    """Class for alpha performance analysis.
+    """Class for alpha (as portfolio) performance analysis.
 
     :param DataFrame alpha: Alpha to be analysed. Be sure to properly format the DataFrame as in :py:func:`orca.operation.api.format`
     :param DataFrame data: Daily returns data properly formatted
@@ -106,20 +106,12 @@ class Analyser(object):
         """
 
         if self.returns is None:
-            if self.data is not None:
-                returns = self.data
-            else:
-                returns = self.quote.fetch_window('returns', self.dates)
-                self.data = returns
-            self.returns = (returns * self.alpha.shift(1)).sum(axis=1).iloc[1:]
+            self.returns = (self.returns * self.alpha.shift(1)).sum(axis=1).iloc[1:]
 
-        if index:
-            index_returns = self.index_data
+        if not cost:
+            return self.returns-self.index_data if index else self.returns
 
-        if cost == 0:
-            return self.returns-index_returns if index else self.returns
-
-        return (self.returns-index_returns if index else self.returns) - cost * self.get_turnover()
+        return (self.returns-self.index_data if index else self.returns) - cost * self.get_turnover()
 
     def get_returns_metric(self, how, cost=0, by=None, index=False):
         """Calculated metrics based on the daily returns time-series.
