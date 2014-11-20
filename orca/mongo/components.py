@@ -28,6 +28,7 @@ class ComponentsFetcher(KDayFetcher):
         self.delay = kwargs.get('delay', 0)
 
     def fetch_window(self, dname, *args, **kwargs):
+        """Use ``as_bool`` to control returned DataFrame's data type."""
         dname = self.index_dname.get(dname, dname)
         as_bool = kwargs.pop('as_bool', self.as_bool)
         df = super(ComponentsFetcher, self).fetch_window(dname, *args, **kwargs)

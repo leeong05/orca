@@ -28,6 +28,7 @@ class SYWGQuoteFetcher(KDayFetcher):
         super(SYWGQuoteFetcher, self).__init__(**kwargs)
 
     def fetch_window(self, dname, window, **kwargs):
+        """By supplying ``level`` as a keyword argument, one can override the default setting."""
         level = kwargs.get('level', self.level)
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
 

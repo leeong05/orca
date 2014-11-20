@@ -33,6 +33,7 @@ class BarraFetcher(KDayFetcher):
 
     @property
     def model(self):
+        """Property."""
         return self._model
 
     @model.setter
@@ -124,10 +125,12 @@ class BarraFactorFetcher(KDayFetcher):
 
     @property
     def factors(self):
+        """Property with no setter."""
         return self._factors
 
     @property
     def model(self):
+        """Property."""
         return self._model
 
     @model.setter

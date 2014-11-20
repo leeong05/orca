@@ -137,8 +137,10 @@ class JYFundFetcher(KDayFetcher):
 
     @classmethod
     def set_data(cls, table, df):
-        cls.datas[table] = df
-        cls.startyears[table] = df.year.min()
+        """Use this method to set data so that for future uses, it is not necessary to interact with MongoDB."""
+        with cls.mongo_clock:
+            cls.datas[table] = df
+            cls.startyears[table] = df.year.min()
 
     def __init__(self, table, startyear=2007, **kwargs):
         if table not in JYFundFetcher.tables:
@@ -149,6 +151,7 @@ class JYFundFetcher(KDayFetcher):
 
     @property
     def table(self):
+        """Property."""
         return self._table
 
     @table.setter
@@ -165,6 +168,7 @@ class JYFundFetcher(KDayFetcher):
             self._startyear = int(startyear)
 
     def load(self):
+        """Call this method to instruct data preparation."""
         JYFundFetcher.get_data(self.table, self._startyear)
 
     def prepare_frame(self, dnames=None, date=None, quarter_offset=0, rtype=QUARTER, quarter=None, delay=1, **kwargs):

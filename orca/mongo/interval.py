@@ -26,6 +26,7 @@ class IntervalFetcher(KMinFetcher):
 
     @property
     def freq(self):
+        """Property."""
         return self._freq
 
     @freq.setter

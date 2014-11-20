@@ -1,2 +1,2 @@
-correlation report
+Correlation report
 ==================

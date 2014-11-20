@@ -16,6 +16,10 @@ class CSVSaver(SaverBase):
     """Class for saving data in csv format files."""
 
     def save(self, name, data, **kwargs):
+        """Use ``kwargs`` to pass additional file writing parameters or override the default setting.
+
+        .. seealso:: :py:meth:`orca.data.base.SaverBase.configure`
+        """
         fname = os.path.join(self.cachedir, name)
         if os.path.exists(fname):
             self.warning('Existing file will be overwritten: {0!r}'.format(fname))
@@ -40,6 +44,10 @@ class CSVLoader(LoaderBase):
         self.postfix = kwargs.get('postfix', '')
 
     def load(self, name, **kwargs):
+        """Use ``kwargs`` to pass additional file parse parameters or override the default setting.
+
+        .. seealso:: :py:meth:`orca.data.base.LoaderBase.configure`
+        """
         params = self.params.copy()
         params.update(kwargs)
         return pd.read_csv(os.path.join(self.cachedir, name + self.postfix), **params)

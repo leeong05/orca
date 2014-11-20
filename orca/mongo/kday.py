@@ -17,6 +17,7 @@ class CaxFetcher(KDayFetcher):
         super(CaxFetcher, self).__init__(**kwargs)
 
     def fetch_window(self, *args, **kwargs):
+        """This will fill all missing value as 1."""
         df = super(CaxFetcher, self).fetch_window(*args, **kwargs)
         return df.fillna(method='ffill').fillna(1)
 

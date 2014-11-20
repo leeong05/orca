@@ -99,6 +99,7 @@ class SaverBase(IOBase):
         self.datafiles = {}
 
     def configure(self, **kwargs):
+        """Method to pass parameters to file writing function internally used."""
         self.params.update(kwargs)
 
     def load(self, name, **kwargs):

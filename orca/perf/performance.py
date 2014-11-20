@@ -62,17 +62,20 @@ class Performance(object):
 
     @classmethod
     def set_returns(cls, returns):
+        """Call this method to set returns so that for future uses, there is no need to interact with MongoDB."""
         with cls.mongo_lock:
             cls.returns = api.format(returns)
 
     @classmethod
     def set_index_returns(cls, index, returns):
+        """Call this method to set index returns so that for future uses, there is no need to interact with MongoDB."""
         with cls.mongo_lock:
             returns.index = pd.to_datetime(returns.index)
             cls.index_returns[index] = returns
 
     @classmethod
     def set_index_components(cls, index, components):
+        """Call this method to set index components data so that for future uses, there is no need to interact with MongoDB."""
         with cls.mongo_lock:
             cls.index_components[index] = api.format(components).fillna(False)
 

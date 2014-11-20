@@ -32,6 +32,7 @@ class IndustryFetcher(KDayFetcher):
         super(IndustryFetcher, self).__init__(**kwargs)
 
     def fetch_window(self, dname, window, **kwargs):
+        """By supplying ``standard`` as a keyword argument, one can override the default setting."""
         dname = self.name_dname.get(dname, dname)
         standard = kwargs.get('standard', self.standard)
         datetime_index = kwargs.get('datetime_index', self.datetime_index)

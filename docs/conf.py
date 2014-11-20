@@ -40,7 +40,7 @@ extensions = [
 
 autoclass_content = 'both'
 autodoc_member_order = 'bysource'
-autodoc_default_flags = ['members', 'undoc-members', 'special-members', 'show-inheritance']
+autodoc_default_flags = ['members', 'special-members', 'show-inheritance']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

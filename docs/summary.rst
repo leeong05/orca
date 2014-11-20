@@ -1,2 +1,2 @@
-performance summary
+Performance summary
 ===================

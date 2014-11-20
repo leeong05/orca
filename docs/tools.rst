@@ -9,3 +9,4 @@ Contents:
    summary.rst
    plot.rst
    corr.rst
+   combine.rst

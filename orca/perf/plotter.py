@@ -114,6 +114,9 @@ class Plotter(object):
         return self._plot1(ic, title)
 
     def plot_ac(self, n=1, rank=False, ma=None, startdate=None, enddate=None):
+        """
+        :param int ma: MA periods. Default: None, do not plot MA
+        """
         title = ('rAC(%s)' if rank else 'AC(%s)') % n
         ac = self.cut(self.analyser.get_ac(n=n, rank=rank), startdate, enddate)
 
@@ -124,7 +127,8 @@ class Plotter(object):
         return self._plot1(ac, title)
 
     def plot_pnl(self, cost=None, index=False, plot_index=False, drawdown=False, startdate=None, enddate=None):
-        """
+        """Plot PNL line.
+
         :param boolean plot_index: Whether to add a PNL line for index. Default: False
         :param boolean drawdown: Whether to mark the drawdown on the PNL line. Default: False
         """
@@ -154,7 +158,8 @@ class Plotter(object):
         return self._plot1(pnl, title, [start, end]) if drawdown else self._plot1(pnl, title)
 
     def plot_returns(self, by, index=False, plot_index=False, startdate=None, enddate=None):
-        """
+        """Plot resampled returns using bars.
+
         :param str by: 'A': annually, 'Q': quarterly, 'M': monthly, 'W': weekly
         """
         mapping = {'A': 'Year', 'Q': 'Quarter', 'M': 'Month', 'W': 'Week'}
@@ -227,12 +232,15 @@ class QuantilesPlotter(object):
         return fig
 
     def plot_pnl(self, startdate=None, enddate=None):
+        """Plot PNL lines for quantiles in the same plot.
+        """
         rets = [self.cut(analyser.get_returns(), startdate, enddate) for analyser in self.analysers]
         pnl = pd.concat(rets, axis=1).cumsum()
         return self._plot1(pnl, 'Quantiles')
 
     def plot_returns(self, by=None, startdate=None, enddate=None):
-        """
+        """Plot returns for each quantile, with one subplot for one period.
+
         :param str by: 'A': annually, 'Q': quarterly, 'M': monthly. Default: None
         """
         rets = [self.cut(analyser.get_returns(), startdate, enddate) for analyser in self.analysers]

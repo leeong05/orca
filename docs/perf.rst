@@ -1,5 +1,5 @@
-performance -- Performance analysis
-===================================
+perf -- Performance analysis
+============================
 
 perf.analyser
 --------------------
@@ -19,8 +19,8 @@ perf.plotter
 .. automodule:: orca.perf.plotter
    :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
 
-performance.util
-----------------
+perf.util
+---------
 
 .. automodule:: orca.perf.util
    :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__

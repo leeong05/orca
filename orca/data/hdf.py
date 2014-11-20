@@ -13,7 +13,7 @@ from base import (
 
 
 class HDFSaver(SaverBase):
-    """Class for saving data in HDF5 format files."""
+    """Class for saving data in HDF5 format files. It uses HDFStore from pandas library internally."""
 
     def __init__(self, cachedir, **kwargs):
         kwargs.update({'plain': False})
