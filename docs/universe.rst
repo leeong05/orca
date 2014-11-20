@@ -5,31 +5,31 @@ universe.base
 -------------
 
 .. automodule:: orca.universe.base
-   :exclude-members: __weakref__
+   :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
 
 universe.ops
 ------------
 
 .. automodule:: orca.universe.ops
-   :exclude-members: __weakref__
+   :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
 
 universe.rules
 --------------
 
 .. automodule:: orca.universe.rules
-   :exclude-members: __weakref__
+   :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
 
 universe.special
 ----------------
 
 .. automodule:: orca.universe.special
-   :exclude-members: __weakref__
+   :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
 
 universe.factory
 ----------------
 
 .. automodule:: orca.universe.factory
-   :exclude-members: __weakref__
+   :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
 
 universe.common
 ---------------

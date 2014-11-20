@@ -6,6 +6,11 @@ utils.date
 
 .. automodule:: orca.utils.date
 
+utils.rand
+----------
+
+.. automodule:: orca.utils.rand
+
 utils.testing
 -------------
 
