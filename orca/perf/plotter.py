@@ -204,6 +204,7 @@ class QuantilesPlotter(object):
         ax.format_xdata = Plotter.datefmt
         ax.xaxis.set_major_formatter(QuantilesPlotter.datefmt)
         fig.autofmt_xdate()
+        return fig
 
     @staticmethod
     def _plot2(pdobj, title):
