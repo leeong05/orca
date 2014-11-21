@@ -4,7 +4,9 @@
 
 import os
 
-from pandas import HDFStore
+import pandas as pd
+import warnings
+warnings.simplefilter(action = "ignore", category = pd.io.pytables.PerformanceWarning)
 
 from base import (
         SaverBase,
@@ -13,7 +15,7 @@ from base import (
 
 
 class HDFSaver(SaverBase):
-    """Class for saving data in HDF5 format files. It uses HDFStore from pandas library internally."""
+    """Class for saving data in HDF5 format files. It uses HDFStore from Pandas library internally."""
 
     def __init__(self, cachedir, **kwargs):
         kwargs.update({'plain': False})
@@ -21,7 +23,7 @@ class HDFSaver(SaverBase):
         dirname = os.path.dirname(self.cachedir)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        self.store = HDFStore(self.cachedir)
+        self.store = pd.HDFStore(self.cachedir)
 
     def save(self, name, data):
         self.store[name] = data
@@ -44,7 +46,7 @@ class HDFLoader(LoaderBase):
 
     def __init__(self, cachedir, **kwargs):
         super(HDFLoader, self).__init__(cachedir, **kwargs)
-        self.store = HDFStore(self.cachedir)
+        self.store = pd.HDFStore(self.cachedir)
 
     def load(self, name):
         return self.store[name]
