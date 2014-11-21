@@ -98,7 +98,8 @@ class BacktestingAlpha(AlphaBase):
             self.warning('{0!r} already exists as a key'.format(key))
         self.alphas[key] = value
 
-    def run(self, startdate=None, enddate=None, parallel=False):
+    def run(self, startdate, enddate, parallel=False):
+        startdate, enddate = str(startdate), str(enddate)
         if enddate[:5].lower() == 'today':
             enddate = DATES[-1-int(enddate[6:])]
 
