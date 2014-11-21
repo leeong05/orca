@@ -55,5 +55,5 @@ class IndustryNeutOperation(GroupNeutOperation):
             window = date_util.to_datestr(alpha.index)
         else:
             window = list(alpha.index)
-        group = self.industry(group, window)
+        group = self.industry.fetch_window(group, window)
         return super(IndustryNeutOperation, self).operate(alpha, group)
