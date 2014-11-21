@@ -49,6 +49,7 @@ class IndustryNeutOperation(GroupNeutOperation):
         super(IndustryNeutOperation, self).__init__(**kwargs)
         self.standard = standard
         self.industry = IndustryFetcher(datetime_index=True)
+        self.group = None
 
     def operate(self, alpha, group='sector'):
         if isinstance(alpha.index, DatetimeIndex):
@@ -56,4 +57,5 @@ class IndustryNeutOperation(GroupNeutOperation):
         else:
             window = list(alpha.index)
         group = self.industry.fetch_window(group, window)
+        self.group = group
         return super(IndustryNeutOperation, self).operate(alpha, group)
