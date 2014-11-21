@@ -9,6 +9,7 @@ from orca.mongo.barra import (
         BarraSpecificsFetcher,
         BarraExposureFetcher,
         BarraFactorFetcher,
+        BarraCovarianceFetcher,
         )
 
 from base import OperationBase
@@ -95,8 +96,8 @@ class BarraFactorNeutOperation(BarraOperation):
     def _operate(self, alpha, factor, date):
         """
         :param Series alpha: Row extracted from an alpha DataFrame
-        :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
-        :type factors: str, list
+        :param factor: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
+        :type factor: str, list
         """
         try:
             date = date.strftime('%Y%m%d')
@@ -111,8 +112,12 @@ class BarraFactorNeutOperation(BarraOperation):
             else:
                 factor = self.all_factors
 
-        exposure = self.exposure.fetch_daily(date, offset=1)[factor].dropna()
-        sids = exposure.index.intersection(alpha[alpha.notnull()].columns)
+        finite_alpha = alpha.dropna()
+
+        exposure = self.exposure.fetch_daily(date, offset=1)[factor]
+        exposure = exposure.dropna(axis=0, how='all').fillna(0)
+        sids = exposure.index.intersection(finite_alpha.index)
+
         nalpha, exposure = alpha[sids], exposure.ix[sids]
         a, b = exposure.T.dot(exposure), exposure.T.dot(nalpha)
         try:
@@ -139,38 +144,37 @@ class BarraFactorCorrNeutOperation(BarraOperation):
 
     def __init__(self, model, **kwargs):
         super(BarraFactorCorrNeutOperation, self).__init__(self, model, **kwargs)
+        self.covariance = BarraCovarianceFetcher(model, **self.kwargs)
 
-    def _operate(self, alpha, factors, date):
+    def _operate(self, alpha, factor, date):
         """
         :param Series alpha: Row extracted from an alpha DataFrame
-        :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
-        :type factors: str, list
+        :param factor: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
+        :type factor: str, list
         """
         try:
             date = date.strftime('%Y%m%d')
         except:
             pass
 
-        if isinstance(factors, str):
-            if factors == 'industry':
-                factors = self.industry_factors
-            elif factors == 'style':
-                factors = self.style_factors
+        if isinstance(factor, str):
+            if factor == 'industry':
+                factor = self.industry_factors
+            elif factor == 'style':
+                factor = self.style_factors
             else:
-                factors = self.all_factors
+                factor = self.all_factors
 
-        exposure = self.exposure.fetch_daily(date, offset=1)[factors].dropna()
-        sids = exposure.index.intersection(alpha[alpha.notnull()].index)
+        finite_alpha = alpha.dropna()
 
-        srisk = self.specifics.fetch_daily('specific_risk', offset=1)[sids]
-        sids = sids.intersection(srisk[srisk.notnull()].index)
+        exposure = self.exposure.fetch_daily(date, offset=1)[factor]
+        exposure = exposure.dropna(axis=0, how='all').fillna(0)
+        sids = exposure.index.intersection(finite_alpha.index)
 
-        nalpha, exposure, srisk = alpha[sids], exposure.ix[sids], srisk[sids]
+        covariance = self.covariance.fetch_daily(date, offset=1, sids=sids)
+        sids = sids.intersection(covariance.index)
 
-        faccov = self.factor.fetch_daily('covariance', offset=1)
-        cov1 = exposure.dot(faccov).dot(exposure.T)
-        cov2 = pd.DataFrame(np.diag(srisk ** 2), index=sids, columns=sids)
-        covariance = cov1 + cov2
+        nalpha, exposure, covariance = alpha[sids], exposure.ix[sids], covariance.ix[sids, sids]
 
         a, b = exposure.T.dot(covariance).dot(exposure), exposure.T.dot(covariance).dot(nalpha)
         try:
