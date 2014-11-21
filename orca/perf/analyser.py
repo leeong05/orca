@@ -80,6 +80,9 @@ class Analyser(object):
         self.rIC[n] = ic
         return ic
 
+    def get_ir(self, n=1, rank=False, by=None):
+        return util.resample(self.get_ic(1), how='ir', by=by)
+
     def get_ac(self, n=1, rank=False):
         if rank and n in self.rAC:
             return self.rAC[n]
