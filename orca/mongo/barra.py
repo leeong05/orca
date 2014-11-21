@@ -2,6 +2,7 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import numpy as np
 import pandas as pd
 
 from orca import (
@@ -30,7 +31,6 @@ class BarraFetcher(KDayFetcher):
         if model not in BarraFetcher.models:
             raise ValueError('No such version {0!r} of Barra model exists'.format(model))
         self._model = model
-        self.collection = self.__class__.collections[model]
         super(BarraFetcher, self).__init__(**kwargs)
 
     @property
@@ -72,6 +72,10 @@ class BarraSpecificsFetcher(BarraFetcher):
         }
     dnames = DB.barra_D_specifics.distinct('dname')
 
+    def __init__(self, model, **kwargs):
+        super(BarraSpecificsFetcher, self).__init__(model, **kwargs)
+        self.collection = BarraSpecificsFetcher.collections[model]
+
 
 class BarraExposureFetcher(BarraFetcher):
     """Class to fetch stock to factor exposure."""
@@ -83,6 +87,7 @@ class BarraExposureFetcher(BarraFetcher):
 
     def __init__(self, model, **kwargs):
         super(BarraExposureFetcher, self).__init__(model, **kwargs)
+        self.collection = BarraExposureFetcher.collections[model]
         self.dnames = self.collection.distinct('dname')
 
     def fetch_daily(self, *args, **kwargs):
@@ -115,11 +120,11 @@ class BarraExposureFetcher(BarraFetcher):
 
         reindex = kwargs.get('reindex', self.reindex)
         query = {'date': date}
-        proj = {'_id': 0, 'dname': 1, 'exposure': 1}
+        proj = {'_id': 0, 'dname': 1, 'dvalue': 1}
         cursor = self.collection.find(query, proj)
-        df = pd.DataFrame({row['dname']: row['exposure'] for row in cursor})
+        df = pd.DataFrame({row['dname']: row['dvalue'] for row in cursor})
         if reindex:
-            return df.reindex(columns=SIDS)
+            return df.reindex(index=SIDS)
         return df
 
 
@@ -132,12 +137,9 @@ class BarraFactorFetcher(KDayFetcher):
         }
 
     def __init__(self, model, **kwargs):
-        if model not in BarraFetcher.models:
-            raise ValueError('No such version {0!r} of Barra model exists'.format(model))
-        self._model = model
+        super(BarraFactorFetcher, self).__init__(model, **kwargs)
         self.ret, self.cov = BarraFactorFetcher.collections[model]
         self._factors = self.ret.distinct('factor')
-        super(BarraFactorFetcher, self).__init__(**kwargs)
 
     @property
     def factors(self):
@@ -227,3 +229,53 @@ class BarraFactorFetcher(KDayFetcher):
         if dname == 'returns':
             dname = None
         return super(BarraFactorFetcher, self).fetch_daily(dname, date, offset=offset, **kwargs)
+
+class BarraCovarianceFetcher(KDayFetcher):
+    """Class to fetch factor returns/covariance data."""
+
+    def __init__(self, model, **kwargs):
+        if kwargs.get('reindex', False):
+            kwargs['reindex'] = False
+            self.warning('Force self.reindex to be False')
+        if kwargs.get('datetime_index', False):
+            kwargs['datetime_index'] = False
+            self.warning('Force self.datetime_index to be False')
+        super(BarraFactorFetcher, self).__init__(**kwargs)
+        self.fexp = BarraExposureFetcher(model, **kwargs)
+        self.fcov = BarraFactorFetcher(model, **kwargs)
+        self.specifics = BarraSpecificsFetcher(model, **kwargs)
+
+    def fetch(self, *args, **kwargs):
+        """
+        :raises: NotImplementedError
+        """
+        raise NotImplementedError
+
+    def fetch_window(self, *args, **kwargs):
+        """
+        :raises: NotImplementedError
+        """
+        raise NotImplementedError
+
+    def fetch_history(self, *args, **kwargs):
+        """
+        :raises: NotImplementedError
+        """
+        raise NotImplementedError
+
+    def fetch_daly(self, date, offset=0, sids=[], **kwargs):
+        """Fetch the covariance matrix for a given set of stocks.
+
+        :param list sids: The given set of stock ids
+        """
+        exposure = self.fexp.fetch_daily(date, offset=offset).ix[sids]
+        exposure = exposure.dropna(axis=0, how='all').fillna(0)
+        specific_risk = self.specifics.fetch_daily(date, offset=offset).ix[sids].dropna()
+
+        nsids = specific_risk.index.intersection(exposure.index)
+        exposure, specific_risk = exposure.ix[nsids], specific_risk.ix[nsids]
+
+        if len(nsids) != len(sids):
+            self.warning('Some sids may not be in Barra universe and will be dropped from the result')
+        factor_cov = self.fcov.fetch_daily('covariance', date, offset=offset)
+        return exposure.dot(factor_cov).dot(exposure.T) + pd.DataFrame(np.diag(specific_risk ** 2), index=nsids, columns=nsids)
