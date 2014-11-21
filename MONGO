@@ -37,6 +37,8 @@ db.ts_1min.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: tr
 db.ts_5min.ensureIndex({date: 1, dname: 1, time: 1}, {unique: true, dropDups: true, background: true})
 db.ts_5min.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: true, background: true})
 
+db.barra_idmaps.ensureIndex({date: 1}, {unique: true, dropDups: true, background: true})
+
 db.barra_D_exposure.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.barra_D_exposure.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.barra_S_exposure.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})

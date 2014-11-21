@@ -90,9 +90,9 @@ class BarraFactorNeutOperation(BarraOperation):
     """Class to neutralize alpha along some Barra factors."""
 
     def __init__(self, model, **kwargs):
-        super(BarraFactorNeutOperation, self).__init__(self, model, **kwargs)
+        super(BarraFactorNeutOperation, self).__init__(model, **kwargs)
 
-    def _operate(self, alpha, factors, date):
+    def _operate(self, alpha, factor, date):
         """
         :param Series alpha: Row extracted from an alpha DataFrame
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
@@ -103,16 +103,16 @@ class BarraFactorNeutOperation(BarraOperation):
         except:
             pass
 
-        if isinstance(factors, str):
-            if factors == 'industry':
-                factors = self.industry_factors
-            elif factors == 'style':
-                factors = self.style_factors
+        if isinstance(factor, str):
+            if factor == 'industry':
+                factor = self.industry_factors
+            elif factor == 'style':
+                factor = self.style_factors
             else:
-                factors = self.all_factors
+                factor = self.all_factors
 
-        exposure = self.exposure.fetch_daily(date, offset=1)[factors].dropna()
-        sids = exposure.index.intersection(alpha[alpha.notnull()].index)
+        exposure = self.exposure.fetch_daily(date, offset=1)[factor].dropna()
+        sids = exposure.index.intersection(alpha[alpha.notnull()].columns)
         nalpha, exposure = alpha[sids], exposure.ix[sids]
         a, b = exposure.T.dot(exposure), exposure.T.dot(nalpha)
         try:
@@ -123,15 +123,14 @@ class BarraFactorNeutOperation(BarraOperation):
         nalpha = pd.Series(nalpha.values - exposure.dot(lamb), index=sids)
         return nalpha.reindex(index=alpha.index)
 
-    def operate(self, alpha, factors):
+    def operate(self, alpha, factor):
         """
-        :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
-        :type factors: str, list
+        :param factor: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
+        :type factor: str, list
         """
         res = {}
-        for _, row in alpha.iterrows():
-            date = row.name
-            res[date] = self._operate(row, factors, date)
+        for date, row in alpha.iterrows():
+            res[date] = self._operate(row, factor, date)
         return pd.DataFrame(res).T
 
 

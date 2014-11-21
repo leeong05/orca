@@ -74,22 +74,20 @@ class BarraExposureFetcher(BarraFetcher):
         :returns: Series(if a factor name is given), DataFrame(all factor names are in the columns)
         """
         factor, date, offset = None, None, 0
-
         if 'offset' in kwargs:
             offset = int(kwargs.pop('offset'))
-        else:
-            # is the first argument a date?
-            try:
-                date = util.compliment_datestring(str(args[0]), -1, True)
-                # yes, it is a date
-                if len(args) > 1:
-                    offset = int(args[1])
-            except ValueError:
-            # the first argument is not a date, presumably, it is the factor name!
-                factor, date = args[0], args[1]
-                # offset provided as the 3rd argument?
-                if len(args) > 2:
-                    offset = int(args[2])
+        # is the first argument a date?
+        try:
+            date = util.compliment_datestring(str(args[0]), -1, True)
+            # yes, it is a date
+            if len(args) > 1:
+                offset = int(args[1])
+        except ValueError:
+        # the first argument is not a date, presumably, it is the factor name!
+            factor, date = args[0], args[1]
+            # offset provided as the 3rd argument?
+            if len(args) > 2:
+                offset = int(args[2])
 
         if factor is not None:
             return super(BarraExposureFetcher, self).fetch_daily(*args, **kwargs)

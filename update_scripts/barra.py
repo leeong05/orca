@@ -23,7 +23,7 @@ class BarraUpdater(UpdaterBase):
         self.__dict__.update({'dates': self.db.dates.distinct('date')})
         if self.model == 'daily':
             self.__dict__.update({
-                    'idmaps': None,
+                    'barra_idmaps': self.db.barra_idmaps,
                     'exposure': self.db.barra_D_exposure,
                     'facret': self.db.barra_D_returns,
                     'faccov': self.db.barra_D_covariance,
@@ -31,7 +31,7 @@ class BarraUpdater(UpdaterBase):
                     })
         else:
             self.__dict__.update({
-                    'idmaps': None,
+                    'barra_idmaps': self.db.barra_idmaps,
                     'exposure': self.db.barra_S_exposure,
                     'facret': self.db.barra_S_returns,
                     'faccov': self.db.barra_S_covariance,
@@ -41,6 +41,9 @@ class BarraUpdater(UpdaterBase):
     def pro_update(self):
         return
 
+        self.logger.debug('Ensuring index date_1 on collection %s', self.barra_idmaps.name)
+        self.barra_idmaps.ensure_index([('date', 1)],
+                unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index date_1_dname_1 on collection %s', self.exposure.name)
         self.exposure.ensure_index([('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
@@ -70,6 +73,7 @@ class BarraUpdater(UpdaterBase):
             self.logger.error('Barra model data does not exist on %s', date)
             barra_sql.fetch_and_parse(date)
         self.idmaps = json.load(open(barra_sql.gp_idmaps(date)))
+        self.barra_idmaps.update({'date': date}, {'date': date, 'idmaps': self.idmaps}, upsert=True)
         self.update_exposure(date)
         self.update_facret(date)
         self.update_faccov(date)
