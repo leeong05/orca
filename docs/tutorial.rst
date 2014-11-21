@@ -159,7 +159,7 @@ Analyser
 
 This is better illustrated with an example::
 
-   >>> from orca.performance import Performance
+   >>> from orca.perf import Performance
    >>> perf = Performance(alphadf)
    >>> longshort = Performance.get_longshort()
    >>> long = Performance.get_qtop(0.3, index='HS300')
@@ -186,6 +186,62 @@ The **second** way is actually preferred. Another convenient method is that Perf
    >>> big, mid, sml = perf.get_bms()
    >>> big.get_original().get_ir()
 
+Plotting
+^^^^^^^^
+
+Orca provides basic plotting tools to visually display an alpha's performance metrics. In the same vein, to instantiate a plotter, one needs to provide an analyser. For example::
+
+   >>> from orca.perf import Plotter
+   >>> longshort_plotter = Plotter(longshort)
+   >>> longshort_plotter.plot_turnover()
+   [...]
+   >>> longshort_plotter.plot_ic(n=5, rank=True)
+   [...]
+   >>> qtail_plotter = Plotter(qtail)
+   >>> qtail_plotter.plot_returns(by='M')
+   [...]
+   >>> qtail_plotter.plot_pnl(cost=0.01)
+   [...]
+   >>> long_plotter = Plotter(long)
+   >>> long_plotter.plot_pnl(index=True, drawdown=True)
+   [...]
+
+To compare returns for quantiles, use::
+
+   >>> from orca.perf import QuantilesPlotter
+   >>> quantiles_plotter = QuantilesPlotter(quantiles)
+   >>> quantiles_plotter.plot_pnl()
+   [...]
+   >>> quantiles_plotter.plot_returns(by='A')
+   [...]
+
 
 Parallel
 --------
+
+Parallel processing is very important for any backtesting platform. Orca provides two APIs tailored for slightly different situations:
+
+.. py:function:: run(alpha, params, startdate, enddate, threads=multiprocessing.cpu_count())
+   :noindex:
+
+   This is intended to return alpha's DataFrame for further analysis; recommended when the number of parameter combinations is not very large. (To get a rough idea, a float DataFrame with 5 year's data is approximately 24 MB.)
+
+.. py:function:: run_hdf(store, alpha, params, startdate, enddate, predicate=None, threads=multiprocessing.cpu_count())
+   :noindex:
+
+   When the number of parameter combinations is too large or one just wants to save the generated DataFrames for future use, use this API to save them in HDF5 files(with natural numbering). Better, by supplying a predicate function, one can filter out those *bad* alphas and save some disk space.
+
+An example::
+
+   >>> class MyAlpha(BacktestingAlpha):
+   ...     def __init__(self, n=None):
+   ...         self.n = n
+   ...     def generate(self, date):
+   ...         self.alphas[date] = close.ix[date] * self.n
+   >>> from orca.utils import parallel
+   >>> res = parallel.run(MyAlpha, xrange(100), 20140101, 20140131)
+   >>> for param, df in res:
+   ...     print param
+   ...     print df.head()
+   >>> parallel.run_hdf('temp.h5', MyAlpha, xrange(100), 20140101, 20140131, 
+   ... predicate=lambda x: x.get_original().get_ir() > 0.1)

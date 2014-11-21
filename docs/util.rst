@@ -1,6 +1,11 @@
 utils -- Utilities for parallel&testing
 =======================================
 
+utils.parallel
+--------------
+
+.. automodule:: orca.utils.parallel
+
 utils.date
 ----------
 

@@ -226,9 +226,11 @@ class QuantilesPlotter(object):
             ticks = np.arange(qtls)
             width = .9
             ax.bar(ticks, row, width)
-            ax.set_xticks(ticks + width/2)
-            ax.set_xticklabels(['Q'+str(j) for j in range(1, qtls+1)])
+            ax.set_xticks()
             ax.set_title(dt.strftime('%Y%m%d'))
+            if i == n-1:
+                ax.set_xticks(ticks + width/2)
+                ax.set_xticklabels(['Q'+str(j) for j in range(1, qtls+1)])
 
         return fig
 

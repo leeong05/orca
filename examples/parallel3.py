@@ -22,9 +22,9 @@ def generate_params3():
     for i in xrange(10):
         yield {'n': i}
 
-parallel.run_filter_hdf('temp3.h5',
+parallel.run_hdf('temp3.h5',
         AlphaDummy,
         generate_params3(),
         20140101,
         20140131,
-        lambda x: x.get_original().get_ir() > 0.4)
+        predicate=lambda x: x.get_original().get_ir() > 0.4)
