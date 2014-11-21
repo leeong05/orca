@@ -27,4 +27,4 @@ parallel.run_filter_hdf('temp3.h5',
         generate_params3(),
         20140101,
         20140131,
-        '{}.get_original().get_ir() > 0.5')
+        lambda x: x.get_original().get_ir() > 0.4)

@@ -27,6 +27,3 @@ alphas = parallel.run_hdf('temp2.h5',
         generate_params2(),
         20140101,
         20140131)
-
-for param, alpha in alphas:
-    print param

@@ -30,23 +30,17 @@ def run(alpha, params, startdate, enddate, threads=multiprocessing.cpu_count()):
     return res
 
 import os
-from threading import Lock
-lock = Lock()
 
 import pandas as pd
 import warnings
 warnings.simplefilter(action = "ignore", category = pd.io.pytables.PerformanceWarning)
 
 def worker_hdf(args):
-    store, i, alpha, param, startdate, enddate = args
+    i, alpha, param, startdate, enddate = args
     alpha = alpha(**param)
     alpha.run(startdate, enddate)
     alpha = alpha.get_alphas()
-    with lock:
-        store = pd.HDFStore(store)
-        store['alpha'+str(i)] = alpha
-        store.append('params', pd.DataFrame({i: param}).T)
-        store.flush(fsync=True)
+    return i, param, alpha
 
 def run_hdf(store, alpha, params, startdate, enddate, threads=multiprocessing.cpu_count()):
     """Execute instances of an alpha in parallel and stores DataFrame in HDF5 file. Each item in params should be a ``dict``.
@@ -55,40 +49,51 @@ def run_hdf(store, alpha, params, startdate, enddate, threads=multiprocessing.cp
     """
     if os.path.exists(store):
         os.remove(store)
-    iterobj = ((store, i, alpha, param, startdate, enddate) for i, param in enumerate(params))
+    logger = get_logger(store)
+    store = pd.HDFStore(store)
+
+    iterobj = ((i, alpha, param, startdate, enddate) for i, param in enumerate(params))
     pool = multiprocessing.Pool(threads)
-    pool.imap_unordered(worker_hdf, iterobj)
+    res = pool.imap_unordered(worker_hdf, iterobj)
     pool.close()
     pool.join()
+    for i, param, alpha in res:
+        store['alpha'+str(i)] = alpha
+        store.append('params', pd.DataFrame({i: param}).T)
+        store.flush()
+        logger.info('Saving alpha with parameter: {!r}'.format(param))
+    store.close()
 
 from orca.perf.performance import Performance
 
 def worker_filter_hdf(args):
-    store, i, alpha, param, startdate, enddate, predicate = args
+    i, alpha, param, startdate, enddate = args
     alpha = alpha(**param)
     alpha.run(startdate, enddate)
     alpha = alpha.get_alphas()
     perf = Performance(alpha)
-    perf.__name__ = 'perf'
-    if eval(predicate.format(perf.__name__)):
-        logger.info('Found a passing alpha with parameter: {!r}'.format(param))
-        with lock:
-            store = pd.HDFStore(store)
-            store['alpha'+str(i)] = alpha
-            store.append('params', pd.DataFrame({i: param}).T)
-            store.flush(fsync=True)
+    return i, param, alpha, perf
 
 def run_filter_hdf(store, alpha, params, startdate, enddate, predicate, threads=multiprocessing.cpu_count()):
     """Execute instances of an alpha in parallel and stores DataFrame in HDF5 file. Each item in params should be a ``dict``.
 
     :param store: File path of the to-be-created HDFStore
-    # :param predicate: A string that can be parsed into an expression with :py:class:`orca.perf.performance.Performance` object as the only parameter; for example: '{}.get_original().get_ir() > 0.1'
+    :param function predicate: A function with :py:class:`orca.perf.performance.Performance` object as the only parameter; for example: ``lambda x: x.get_original().get_ir() > 0.1``
     """
     if os.path.exists(store):
         os.remove(store)
-    iterobj = ((store, i, alpha, param, startdate, enddate, predicate) for i, param in enumerate(params))
+    logger = get_logger(store)
+    store = pd.HDFStore(store)
+
+    iterobj = ((i, alpha, param, startdate, enddate) for i, param in enumerate(params))
     pool = multiprocessing.Pool(threads)
-    pool.imap_unordered(worker_filter_hdf, iterobj)
+    res = pool.imap_unordered(worker_filter_hdf, iterobj)
     pool.close()
     pool.join()
-
+    for i, param, alpha, perf in res:
+        if predicate(perf):
+            store['alpha'+str(i)] = alpha
+            store.append('params', pd.DataFrame({i: param}).T)
+            store.flush()
+            logger.info('Saving alpha with parameter: {!r}'.format(param))
+    store.close()
