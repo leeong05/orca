@@ -135,7 +135,9 @@ class UpdaterBase(object):
                 if p.is_alive():
                     self.logger.warning('Timeout on date: %s', date)
                     p.terminate()
-                iterates -= 1
+                    iterates -= 1
+                else:
+                    iterates = 0
             self.logger.info('END\n')
         self.pro_update()
         self.disconnect_mongo()
