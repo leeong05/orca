@@ -32,7 +32,7 @@ class GroupNeutOperation(OperationBase):
         return pd.DataFrame(res).T
 
     def _operate(self, alpha, group):
-        sids = group[group.notnull()].index.intersection(alpha[alpha.notnull()].sids)
+        sids = group[group.notnull()].index.intersection(alpha[alpha.notnull()].index)
 
         nalpha, group = alpha[sids], group[sids]
         nalpha = nalpha.groupby(group).transform(lambda x: x-x.mean())
@@ -58,4 +58,4 @@ class IndustryNeutOperation(GroupNeutOperation):
             window = list(alpha.index)
         group = self.industry.fetch_window(group, window)
         self.group = group
-        return super(IndustryNeutOperation, self).operate(alpha, group)
+        return super(IndustryNeutOperation, self).operate(alpha)
