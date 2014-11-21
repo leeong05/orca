@@ -24,6 +24,8 @@ class BarraFetcher(KDayFetcher):
 
     models = ('daily', 'short')
 
+    idmaps = DB.barra_idmaps
+
     def __init__(self, model, **kwargs):
         if model not in BarraFetcher.models:
             raise ValueError('No such version {0!r} of Barra model exists'.format(model))
@@ -43,6 +45,22 @@ class BarraFetcher(KDayFetcher):
             return
         self._model = model
         self.collection = self.__class__.collections[model]
+
+    @classmethod
+    def fetch_idmaps(cls, date=None, barra_key=True):
+        """Fetch barra id - local stock id correspondance.
+
+        :param boolean barra_key: Whether to use barra ids as keys. Default: True
+        :returns: A ``dict``
+        """
+        if date is None:
+            date = cls.idmaps.distinct('date')[-1]
+        query = {'date': str(date)}
+        proj = {'_id': 0, 'idmaps': 1}
+        dct = cls.idmaps.find_one(query, proj)['idmaps']
+        if barra_key:
+            return dct
+        return {v: k for k, v in dct.iteritems()}
 
 
 class BarraSpecificsFetcher(BarraFetcher):
