@@ -26,7 +26,7 @@ class UpdaterBase(object):
 
     LOGGER_NAME = 'update'
 
-    def __init__(self, timeout=600, iterates=1, debug_on=True):
+    def __init__(self, timeout=600, iterates=1, debug_on=False):
         self.timeout = timeout
         self.iterates = iterates
         self.logger = logger.get_logger(UpdaterBase.LOGGER_NAME)

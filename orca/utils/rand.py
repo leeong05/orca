@@ -11,10 +11,10 @@ from orca import (
         )
 from orca.utils import dateutil
 
-def random_alpha(startdate='20140101', n=None):
+def random_alpha(startdate='20140103', n=None):
     """Generate a random alpha(i.e. a DataFrame of random floats with DatetimeINdex and full sids columns).
 
-    :param startdate: Starting point
+    :param startdate: Starting point. Default: '20140103'
     :type startdate: int, str
     :param int n: Length of the returned DataFrame; when None, it will be a random number between 50 and 100. Default: None
     """
