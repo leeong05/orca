@@ -15,9 +15,10 @@ class BarraUpdater(UpdaterBase):
     :param str model: Model version, currently only supports: ('daily', 'short')
     """
 
-    def __init__(self, model='daily', timeout=600, iterates=3):
+    def __init__(self, model='daily', timeout=600, iterates=3, update_idmaps=True):
         UpdaterBase.__init__(self, timeout, iterates)
         self.model = model
+        self.update_idmaps = update_idmaps
 
     def pre_update(self):
         self.__dict__.update({'dates': self.db.dates.distinct('date')})
@@ -73,7 +74,8 @@ class BarraUpdater(UpdaterBase):
             self.logger.error('Barra model data does not exist on %s', date)
             barra_sql.fetch_and_parse(date)
         self.idmaps = json.load(open(barra_sql.gp_idmaps(date)))
-        self.barra_idmaps.update({'date': date}, {'date': date, 'idmaps': self.idmaps}, upsert=True)
+        if self.update_idmaps:
+            self.barra_idmaps.update({'date': date}, {'date': date, 'idmaps': self.idmaps}, upsert=True)
         self.update_exposure(date)
         self.update_facret(date)
         self.update_faccov(date)
@@ -190,5 +192,5 @@ class BarraUpdater(UpdaterBase):
 if __name__ == '__main__':
     barra_daily = BarraUpdater(model='daily')
     barra_daily.run()
-    barra_short = BarraUpdater(model='short')
+    barra_short = BarraUpdater(model='short', update_idmaps=False)
     barra_short.run()

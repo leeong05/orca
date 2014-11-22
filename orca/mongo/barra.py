@@ -24,9 +24,38 @@ class BarraFetcher(KDayFetcher):
        This is a base class and should not be used directly.
     """
 
-    models = ('daily', 'short')
+    industry_factors = {
+            'daily': ['CNE5D_COUNTRY', 'CNE5D_ENERGY', 'CNE5D_CHEM', 'CNE5D_CONMAT', 'CNE5D_MTLMIN',
+                      'CNE5D_MATERIAL', 'CNE5D_AERODEF', 'CNE5D_BLDPROD', 'CNE5D_CNSTENG', 'CNE5D_ELECEQP',
+                      'CNE5D_INDCONG', 'CNE5D_MACH', 'CNE5D_TRDDIST', 'CNE5D_COMSERV', 'CNE5D_AIRLINE',
+                      'CNE5D_MARINE', 'CNE5D_RDRLTRAN', 'CNE5D_AUTO', 'CNE5D_HOUSEDUR', 'CNE5D_LEISLUX',
+                      'CNE5D_CONSSERV', 'CNE5D_MEDIA', 'CNE5D_RETAIL', 'CNE5D_PERSPRD', 'CNE5D_BEV',
+                      'CNE5D_FOODPROD', 'CNE5D_HEALTH', 'CNE5D_BANKS', 'CNE5D_DVFININS', 'CNE5D_REALEST',
+                      'CNE5D_SOFTWARE', 'CNE5D_HDWRSEMI', 'CNE5D_UTILITIE',
+                      ],
+            'short': ['CNE5S_COUNTRY', 'CNE5S_ENERGY', 'CNE5S_CHEM', 'CNE5S_CONMAT', 'CNE5S_MTLMIN',
+                      'CNE5S_MATERIAL', 'CNE5S_AERODEF', 'CNE5S_BLDPROD', 'CNE5S_CNSTENG', 'CNE5S_ELECEQP',
+                      'CNE5S_INDCONG', 'CNE5S_MACH', 'CNE5S_TRDDIST', 'CNE5S_COMSERV', 'CNE5S_AIRLINE',
+                      'CNE5S_MARINE', 'CNE5S_RDRLTRAN', 'CNE5S_AUTO', 'CNE5S_HOUSEDUR', 'CNE5S_LEISLUX',
+                      'CNE5S_CONSSERV', 'CNE5S_MEDIA', 'CNE5S_RETAIL', 'CNE5S_PERSPRD', 'CNE5S_BEV',
+                      'CNE5S_FOODPROD', 'CNE5S_HEALTH', 'CNE5S_BANKS', 'CNE5S_DVFININS', 'CNE5S_REALEST',
+                      'CNE5S_SOFTWARE', 'CNE5S_HDWRSEMI', 'CNE5S_UTILITIE',
+                      ]
+            }
+    style_factors = {
+            'daily': ['CNE5D_SIZE', 'CNE5D_BETA', 'CNE5D_MOMENTUM', 'CNE5D_RESVOL', 'CNE5D_SIZENL',
+                      'CNE5D_BTOP', 'CNE5D_LIQUIDTY', 'CNE5D_EARNYILD', 'CNE5D_GROWTH', 'CNE5D_LEVERAGE',
+                      ],
+            'short': ['CNE5S_SIZE', 'CNE5S_BETA', 'CNE5S_MOMENTUM', 'CNE5S_RESVOL', 'CNE5S_SIZENL',
+                      'CNE5S_BTOP', 'CNE5S_LIQUIDTY', 'CNE5S_EARNYILD', 'CNE5S_GROWTH', 'CNE5S_LEVERAGE',
+                      ],
+            }
+    all_factors = {
+            'daily': industry_factors['daily'] + style_factors['daily'],
+            'short': industry_factors['short'] + style_factors['short'],
+            }
 
-    idmaps = DB.barra_idmaps
+    models = ('daily', 'short')
 
     def __init__(self, model, **kwargs):
         if model not in BarraFetcher.models:
@@ -54,14 +83,20 @@ class BarraFetcher(KDayFetcher):
         :param boolean barra_key: Whether to use barra ids as keys. Default: True
         :returns: A ``dict``
         """
+        dates = cls.idmaps.distinct('date')
         if date is None:
-            date = cls.idmaps.distinct('date')[-1]
+            date = dates[-1]
+        else:
+            date = dateutil.parse_date(dates, dateutil.compliment_datestring(date, -1, True), -1)
+
         query = {'date': str(date)}
         proj = {'_id': 0, 'idmaps': 1}
         dct = cls.idmaps.find_one(query, proj)['idmaps']
         if barra_key:
             return dct
         return {v: k for k, v in dct.iteritems()}
+
+BarraFetcher.idmaps = DB.barra_idmaps
 
 
 class BarraSpecificsFetcher(BarraFetcher):
@@ -89,13 +124,20 @@ class BarraExposureFetcher(BarraFetcher):
     def __init__(self, model, **kwargs):
         super(BarraExposureFetcher, self).__init__(model, **kwargs)
         self.collection = BarraExposureFetcher.collections[model]
-        self.dnames = self.collection.distinct('dname')
+        self.dnames = self.all_factors[model]
+
+    @property
+    def factors(self):
+        """Property with no setter."""
+        return self.all_factors[self.model]
 
     def fetch_daily(self, *args, **kwargs):
         """This differs from the default :py:meth:`orca.mongo.base.KDayFetcher.fetch_daily` in only
         one aspect: when the ``dname`` is not given, this will fetch all factors exposure on ``date``.
 
-        :returns: Series(if a factor name is given), DataFrame(all factor names are in the columns)
+        Also, you can provide one of ('industry', 'style') to fetch exposures to industry/style factors.
+
+        :returns: Series(if a factor name is given), DataFrame(factor names are in the columns)
         """
         factor, date, offset = None, None, 0
         if 'offset' in kwargs:
@@ -113,23 +155,29 @@ class BarraExposureFetcher(BarraFetcher):
             if len(args) > 2:
                 offset = int(args[2])
 
-        if factor is not None:
+        if factor is not None and factor not in ('industry', 'style'):
             return super(BarraExposureFetcher, self).fetch_daily(*args, **kwargs)
 
         di, date = dateutil.parse_date(DATES, date, -1)
         date = DATES[di-offset]
-
         reindex = kwargs.get('reindex', self.reindex)
+
         query = {'date': date}
         proj = {'_id': 0, 'dname': 1, 'dvalue': 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['dname']: row['dvalue'] for row in cursor})
+
         if reindex:
-            return df.reindex(index=SIDS)
+            df = df.reindex(index=SIDS)
+
+        if factor == 'industry':
+            return df[BarraFetcher.industry_factors[self.model]]
+        elif factor == 'style':
+            return df[BarraFetcher.style_factors[self.model]]
         return df
 
 
-class BarraFactorFetcher(KDayFetcher):
+class BarraFactorFetcher(BarraFetcher):
     """Class to fetch factor returns/covariance data."""
 
     collections = {
@@ -140,12 +188,11 @@ class BarraFactorFetcher(KDayFetcher):
     def __init__(self, model, **kwargs):
         super(BarraFactorFetcher, self).__init__(model, **kwargs)
         self.ret, self.cov = BarraFactorFetcher.collections[model]
-        self._factors = self.ret.distinct('factor')
 
     @property
     def factors(self):
         """Property with no setter."""
-        return self._factors
+        return self.all_factors[self.model]
 
     @property
     def model(self):
@@ -158,19 +205,22 @@ class BarraFactorFetcher(KDayFetcher):
             self.warning('No such version {0!r} of Barra model exists. Nothing has changed'.format(model))
             return
         self._model = model
-        self.ret, self.cov = self.__class__.collections[model]
-        self._factors = self.ret.distinct('factor')
+        self.ret, self.cov = BarraFactorFetcher.collections[model]
 
     def fetch_returns(self, factor, window, **kwargs):
         """Fetch returns for factors.
 
-        :param factor: Factor name or a list of factor names. Default: None, all factors will be fetched
+        :param factor: Factor name or a list of factor names or one of ('industry', 'style'). Default: None, all factors will be fetched
         :type factor: None, str, list
         :returns: Series(if ``type(factor)`` is ``str``) or DataFrame
         """
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
-        if factor is None :
-            factor = self._factors
+        if factor is None:
+            factor = self.factors
+        elif factor == 'industry':
+            factor = self.industry_factors[self.model]
+        elif factor == 'style':
+            factor = self.style_factors[self.model]
 
         query = {'factor': {'$in': [factor] if isinstance(factor, str) else factor},
                 'date': {'$gte': window[0], '$lte': window[-1]}}
@@ -189,50 +239,53 @@ class BarraFactorFetcher(KDayFetcher):
         df = pd.DataFrame({row['factor']: row['covariance'] for row in cursor})
         return df
 
-    def fetch(self, dname, *args, **kwargs):
-        """
-        :param str dname: 'returns' or factor name
-        """
-        if dname == 'returns':
-            dname = None
-        return super(BarraFactorFetcher, self).fetch(dname, *args, **kwargs)
+    def fetch(self, *args, **kwargs):
+        """Use this method **only** if one wants to fetch returns."""
+        try:
+            dateutil.compliment_datestring(str(args[0]), -1, True)
+            return super(BarraFactorFetcher, self).fetch(None, *args, **kwargs)
+        except ValueError:
+            return super(BarraFactorFetcher, self).fetch(*args, **kwargs)
 
-    def fetch_window(self, dname, window, **kwargs):
+    def fetch_window(self, *args, **kwargs):
         """Wrapper for :py:meth:`fetch_returns`.
 
         :param str dname: 'returns' or factor name
         """
-        if dname == 'returns':
-            dname = None
-        return self.fetch_returns(dname, window, **kwargs)
+        if isinstance(args[0], list):
+            try:
+                dateutil.compliment_datestring(args[0][0], -1, True)
+                return self.fetch_returns(None, *args, **kwargs)
+            except ValueError:
+                pass
+        return self.fetch_returns(*args, **kwargs)
 
-    def fetch_history(self, dname, *args, **kwargs):
-        """
-        :param str dname: 'returns' or factor name
-
-        """
-        if dname == 'returns':
-            dname = None
-        return super(BarraFactorFetcher, self).fetch_history(dname, *args, **kwargs)
+    def fetch_history(self, *args, **kwargs):
+        """Use this method **only** if one wants to fetch returns."""
+        try:
+            dateutil.compliment_datestring(str(args[0]), -1, True)
+            return super(BarraFactorFetcher, self).fetch_history(None, *args, **kwargs)
+        except ValueError:
+            return super(BarraFactorFetcher, self).fetch_history(*args, **kwargs)
 
     def fetch_daily(self, dname, date, offset=0, **kwargs):
         """Wrapper for :py:meth:`fetch_returns` and :py:meth:`fetch_covariance`.
 
-        :param str dname: 'returns', 'covariance' or any factor name
+        :param str dname: 'returns', 'covariance'
         """
+        date_check = kwargs.get('date_check', self.date_check)
+        date = dateutil.compliment_datestring(date, -1, date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
+        date = DATES[di-offset]
+
         if dname == 'covariance':
-            date_check = kwargs.get('date_check', self.date_check)
-            date = dateutil.compliment_datestring(date, -1, date_check)
-            di, date = dateutil.parse_date(DATES, date, -1)
-            date = DATES[di-offset]
             return self.fetch_covariance(date)
 
-        if dname == 'returns':
-            dname = None
-        return super(BarraFactorFetcher, self).fetch_daily(dname, date, offset=offset, **kwargs)
+        factor = kwargs.get('factor', None)
+        return self.fetch_returns(factor, [date], **kwargs).iloc[0]
 
 
-class BarraCovarianceFetcher(KDayFetcher):
+class BarraCovarianceFetcher(BarraFetcher):
     """Class to fetch factor returns/covariance data."""
 
     def __init__(self, model, **kwargs):
@@ -242,10 +295,22 @@ class BarraCovarianceFetcher(KDayFetcher):
         if kwargs.get('datetime_index', False):
             kwargs['datetime_index'] = False
             self.warning('Force self.datetime_index to be False')
-        super(BarraFactorFetcher, self).__init__(**kwargs)
+        super(BarraCovarianceFetcher, self).__init__(model, **kwargs)
         self.fexp = BarraExposureFetcher(model, **kwargs)
         self.fcov = BarraFactorFetcher(model, **kwargs)
         self.specifics = BarraSpecificsFetcher(model, **kwargs)
+        self.suppress_warning = False
+
+    @property
+    def model(self):
+        """Property."""
+        return self._model
+
+    @model.setter
+    def model(self, model):
+        self.fexp.model = model
+        self.fcov.model = model
+        self.specifics.model = model
 
     def fetch(self, *args, **kwargs):
         """
@@ -265,19 +330,24 @@ class BarraCovarianceFetcher(KDayFetcher):
         """
         raise NotImplementedError
 
-    def fetch_daly(self, date, offset=0, sids=[], **kwargs):
+    def fetch_daily(self, date, offset=0, sids=[], **kwargs):
         """Fetch the covariance matrix for a given set of stocks.
 
         :param list sids: The given set of stock ids
         """
+        suppress_warning = kwargs.get('suppress_warning', self.suppress_warning)
+
+        if sids is None or len(sids) == 0:
+            sids = SIDS
+
         exposure = self.fexp.fetch_daily(date, offset=offset).ix[sids]
         exposure = exposure.dropna(axis=0, how='all').fillna(0)
-        specific_risk = self.specifics.fetch_daily(date, offset=offset).ix[sids].dropna()
+        specific_risk = self.specifics.fetch_daily('specific_risk', date, offset=offset).ix[sids].dropna()
 
         nsids = specific_risk.index.intersection(exposure.index)
         exposure, specific_risk = exposure.ix[nsids], specific_risk.ix[nsids]
 
-        if len(nsids) != len(sids):
+        if len(nsids) != len(sids) and not suppress_warning:
             self.warning('Some sids may not be in Barra universe and will be dropped from the result')
         factor_cov = self.fcov.fetch_daily('covariance', date, offset=offset)
         return exposure.dot(factor_cov).dot(exposure.T) + pd.DataFrame(np.diag(specific_risk ** 2), index=nsids, columns=nsids)
