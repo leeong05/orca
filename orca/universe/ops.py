@@ -8,7 +8,7 @@ from orca import (
         DATES,
         SIDS,
         )
-from orca.mongo import util as mongo_util
+from orca.utils import dateutil
 
 from base import FilterBase
 
@@ -38,10 +38,10 @@ class ChainFilter(FilterBase):
             kwargs.update({'date_check': self.date_check})
         date_check = kwargs.get('date_check', self.date_check)
 
-        univ_window = mongo_util.cut_window(
+        univ_window = dateutil.cut_window(
                 DATES,
-                mongo_util.compliment_datestring(str(startdate), -1, date_check),
-                mongo_util.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
         startdate, enddate = univ_window[0], univ_window[-1]
         # at first, the universe is full, i.e. all sids are included
         parent = pd.DataFrame(True,
@@ -102,10 +102,10 @@ class UnionFilter(FilterBase):
             kwargs.update({'date_check': self.date_check})
         date_check = kwargs.get('date_check', self.date_check)
 
-        univ_window = mongo_util.cut_window(
+        univ_window = dateutil.cut_window(
                 DATES,
-                mongo_util.compliment_datestring(str(startdate), -1, date_check),
-                mongo_util.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
         startdate, enddate = univ_window[0], univ_window[-1]
         res = [elem.filter(startdate, enddate=enddate, parent=parent, **kwargs) for elem in self._filters]
         seed = res.pop()

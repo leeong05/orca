@@ -13,9 +13,9 @@ from orca import (
         DATES,
         SIDS,
         )
+from orca.utils import dateutil
 
 from base import KDayFetcher
-import util
 
 YEAR, SEMI, QUARTER = 4, 2, 1
 
@@ -47,12 +47,12 @@ def myfunc2(args):
         df = df.groupby('qtrno').apply(myapply)
         df.sort(['date', 'qtrno'], inplace=True)
         df.index = range(0, len(df))
-        if not util.is_sorted(df.qtrno):
+        if not dateutil.is_sorted(df.qtrno):
             return {sid: None}
     elif use_adjust == False:
         df = df.drop_duplicates('qtrno', take_last=False)
         df.index = range(0, len(df))
-        if not util.is_sorted(df.qtrno):
+        if not dateutil.is_sorted(df.qtrno):
             return {sid: None}
 
     if table == 'balancesheet':
@@ -190,7 +190,7 @@ class JYFundFetcher(KDayFetcher):
         date_check = kwargs.get('date_check', self.date_check)
         reindex = kwargs.get('reindex', self.reindex)
 
-        di, date = util.parse_date(DATES, util.compliment_datestring(date, -1, date_check))
+        di, date = dateutil.parse_date(DATES, dateutil.compliment_datestring(date, -1, date_check))
         date = DATES[di-delay]
 
         qtrno = (int(date[:4]) - 2000) * 4 + np.floor((int(date[4:6])-1)/3) - quarter_offset - rtype
@@ -240,7 +240,7 @@ class JYFundFetcher(KDayFetcher):
         if enddate is None:
             enddate = DATES[-1]
         else:
-            enddate = util.parse_date(DATES, util.compliment_string(str(enddate), 1, date_check), -1)
+            enddate = dateutil.parse_date(DATES, dateutil.compliment_string(str(enddate), 1, date_check), -1)
         query = 'quarter % {0} == 0 & date <= {1!r}'.format(rtype, enddate)
         columns = ['sid', 'date', 'qtrno']
         for dname in dnames:
@@ -262,7 +262,7 @@ class JYFundFetcher(KDayFetcher):
         if startdate is None:
             startdate = panel.major_axis[0]
         else:
-            startdate = util.parse_date(DATES, util.compliment_string(str(enddate), -1, date_check), 1)
+            startdate = dateutil.parse_date(DATES, dateutil.compliment_string(str(enddate), -1, date_check), 1)
         si, ei = map(DATES.index, [startdate, enddate])
         panel = panel.reindex(major_axis=DATES[si: ei+1])
 

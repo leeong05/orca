@@ -67,9 +67,3 @@ mongo.barra
 
 .. automodule:: orca.mongo.barra
    :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
-  
-mongo.util
-----------
-
-.. automodule:: orca.mongo.util
-   :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__

@@ -6,10 +6,10 @@ utils.parallel
 
 .. automodule:: orca.utils.parallel
 
-utils.date
-----------
+utils.dateutil
+--------------
 
-.. automodule:: orca.utils.date
+.. automodule:: orca.utils.dateutil
 
 utils.rand
 ----------

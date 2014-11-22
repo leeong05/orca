@@ -12,7 +12,7 @@ from orca import (
         DATES,
         SIDS,
         )
-import util
+from orca.utils import dateutil
 
 class FetcherBase(object):
     """Base class for mongo fetchers.
@@ -87,7 +87,7 @@ class FetcherBase(object):
         :returns: DataFrame
         :raises: NotImplementedError
 
-        .. seealso:: :py:func:`orca.mongo.util.cut_window`
+        .. seealso:: :py:func:`orca.mongo.dateutil.cut_window`
         """
         raise NotImplementedError
 
@@ -144,10 +144,10 @@ class KDayFetcher(FetcherBase):
         """Use :py:meth:`fetch_window` behind the scene."""
         date_check = kwargs.get('date_check', self.date_check)
 
-        window = util.cut_window(
+        window = dateutil.cut_window(
                 DATES,
-                util.compliment_datestring(str(startdate), -1, date_check),
-                util.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None,
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None,
                 backdays=backdays)
         return self.fetch_window(dname, window, **kwargs)
 
@@ -169,8 +169,8 @@ class KDayFetcher(FetcherBase):
         date_check = kwargs.get('date_check', self.date_check)
         delay = kwargs.get('delay', self.delay)
 
-        date = util.compliment_datestring(date, -1, date_check)
-        di, date = util.parse_date(DATES, date, -1)
+        date = dateutil.compliment_datestring(date, -1, date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
         di -= delay
         window = DATES[di-backdays+1: di+1]
         return self.fetch_window(dname, window, **kwargs)
@@ -195,10 +195,10 @@ class KMinFetcher(FetcherBase):
         """Use :py:meth:`fetch_window` behind the scene."""
         date_check = kwargs.get('date_check', self.date_check)
 
-        window = util.cut_window(
+        window = dateutil.cut_window(
                 DATES,
-                util.compliment_datestring(str(startdate), -1, date_check),
-                util.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None,
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None,
                 backdays=backdays)
         return self.fetch_window(dname, times, window, **kwargs)
 
@@ -234,8 +234,8 @@ class KMinFetcher(FetcherBase):
         date_check = kwargs.get('date_check', self.date_check)
         delay = kwargs.get('delay', self.delay)
 
-        date = util.compliment_datestring(date, -1, date_check)
-        di, date = util.parse_date(DATES, date, -1)
+        date = dateutil.compliment_datestring(date, -1, date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
         di -= delay
         window = DATES[di-backdays+1: di+1]
         return self.fetch_window(dname, times, window, **kwargs)

@@ -3,11 +3,11 @@
 """
 
 from orca import DATES
+from orca.utils import dateutil
 
 from base import KDayFetcher
 from quote import QuoteFetcher
 from kday import CaxFetcher
-import util
 
 BACKWARD, FORWARD = 1, -1
 
@@ -49,10 +49,10 @@ class AdjQuoteFetcher(KDayFetcher):
             basedate = window[0] if self.mode == FORWARD else window[-1]
             adj_window = window
         else:
-            sdi, startdate = util.parse_date(DATES, window[0], 1)
-            edi, enddate = util.parse_date(DATES, window[-1], -1)
-            basedate = util.compliment_datestring(str(basedate), self.mode, date_check)
-            bdi, basedate = util.parse_date(DATES, basedate, self.mode)
+            sdi, startdate = dateutil.parse_date(DATES, window[0], 1)
+            edi, enddate = dateutil.parse_date(DATES, window[-1], -1)
+            basedate = dateutil.compliment_datestring(str(basedate), self.mode, date_check)
+            bdi, basedate = dateutil.parse_date(DATES, basedate, self.mode)
             if self.mode == FORWARD:
                 if bdi > sdi:
                     raise ValueError('With FORWARD mode, basedate %s cannot be larger than startdate %s' % (repr(basedate), repr(startdate)))
@@ -73,10 +73,10 @@ class AdjQuoteFetcher(KDayFetcher):
             return self.quote.fetch(dname, startdate, enddate)
 
         date_check = kwargs.get('date_check', self.date_check)
-        window = util.cut_window(
+        window = dateutil.cut_window(
                 DATES,
-                util.compliment_datestring(str(startdate), -1, date_check),
-                util.compliment_datestring(str(enddate), -1, date_check) if enddate is not None else None,
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), -1, date_check) if enddate is not None else None,
                 backdays=backdays)
         return self.fetch_window(dname, window, basedate, **kwargs)
 
@@ -106,8 +106,8 @@ class AdjQuoteFetcher(KDayFetcher):
 
         date_check = kwargs.get('date_check', self.date_check)
         delay = kwargs.get('date_check', self.delay)
-        date = util.compliment_datestring(str(date), -1, date_check)
-        di, date = util.parse_date(DATES, date, -1)
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
         di -= delay
         window = DATES[di-backdays+1: di+1]
         df = self.fetch_window(dname, window, date, **kwargs)

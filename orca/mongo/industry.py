@@ -8,9 +8,9 @@ from orca import (
         DB,
         DATES,
         )
+from orca.utils import dateutil
 
 from base import KDayFetcher
-import util
 
 
 class IndustryFetcher(KDayFetcher):
@@ -55,7 +55,7 @@ class IndustryFetcher(KDayFetcher):
         date_check = kwargs.get('date_check', self.date_check)
 
         if date is not None:
-            date = util.parse_date(DATES, util.compliment_datestring(date, -1, date_check), -1)[1]
+            date = dateutil.parse_date(DATES, dateutil.compliment_datestring(date, -1, date_check), -1)[1]
         else:
             date = DATES[-1]
 

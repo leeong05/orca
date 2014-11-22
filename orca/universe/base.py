@@ -13,8 +13,8 @@ from orca import (
         DATES,
         SIDS,
         )
-from orca.mongo import util as mongo_util
-from orca.utils import date as date_util
+from orca.utils import dateutil
+
 
 class FilterBase(object):
     """Base class for filters.
@@ -71,7 +71,7 @@ class FilterBase(object):
         if reindex:
             df = df.reindex(columns=SIDS).fillna(False)
         if datetime_index:
-            df.index = date_util.to_datetime(df.index)
+            df.index = dateutil.to_datetime(df.index)
             return df.astype(bool)
         return df
 
@@ -83,9 +83,9 @@ class FilterBase(object):
         if type(df.index) != type(parent.index):
             parent = parent.copy()
             if isinstance(df.index, DatetimeIndex):
-                parent.index = date_util.to_datetime(parent.index)
+                parent.index = dateutil.to_datetime(parent.index)
             else:
-                parent.index = date_util.to_datestr(parent.index)
+                parent.index = dateutil.to_datestr(parent.index)
         parent = parent.ix[df.index].fillna(method='bfill').fillna(False)
         df[~parent] = value
         return parent
@@ -114,8 +114,8 @@ class FilterBase(object):
         :param DataFrame parent: The super- or parent-universe to be filtered. Default: None
         :returns: Series
         """
-        date = mongo_util.compliment_datestring(str(date), -1, self.date_check)
-        di, date = mongo_util.parse_date(DATES, date, -1)
+        date = dateutil.compliment_datestring(str(date), -1, self.date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
         date = DATES[di-offset]
 
         if isinstance(parent, pd.Series):
@@ -155,10 +155,10 @@ class DataFilter(FilterBase):
         reindex = kwargs.get('reindex', self.reindex)
         date_check = kwargs.get('date_check', self.date_check)
 
-        univ_window = mongo_util.cut_window(
+        univ_window = dateutil.cut_window(
                 DATES,
-                mongo_util.compliment_datestring(str(startdate), -1, date_check),
-                mongo_util.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
         si, ei = map(DATES.index, [univ_window[0], univ_window[-1]])
         data_window = DATES[si-self.delay-(self.window-1): ei-self.delay+1]
 

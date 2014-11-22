@@ -11,7 +11,7 @@ from orca import (
 from orca.mongo.quote import QuoteFetcher
 from orca.mongo.components import ComponentsFetcher
 from orca.mongo.industry import IndustryFetcher
-from orca.mongo import util as mongo_util
+from orca.utils import dateutil
 
 from base import (
         FilterBase,
@@ -37,10 +37,10 @@ class TickerFilter(FilterBase):
         reindex = kwargs.get('reindex', self.reindex)
         date_check = kwargs.get('date_check', self.date_check)
 
-        univ_window = mongo_util.cut_window(
+        univ_window = dateutil.cut_window(
                 DATES,
-                mongo_util.compliment_datestring(str(startdate), -1, date_check),
-                mongo_util.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None)
         index, columns = univ_window, SIDS
         df = pd.DataFrame(0, index, columns)
         df = df.add(self.series.astype(int), axis=1)

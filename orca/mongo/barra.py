@@ -10,8 +10,9 @@ from orca import (
         DATES,
         SIDS,
         )
+from orca.utils import dateutil
+
 from base import KDayFetcher
-import util
 
 class BarraFetcher(KDayFetcher):
     """Base class for Barra model data fetchers.
@@ -101,7 +102,7 @@ class BarraExposureFetcher(BarraFetcher):
             offset = int(kwargs.pop('offset'))
         # is the first argument a date?
         try:
-            date = util.compliment_datestring(str(args[0]), -1, True)
+            date = dateutil.compliment_datestring(str(args[0]), -1, True)
             # yes, it is a date
             if len(args) > 1:
                 offset = int(args[1])
@@ -115,7 +116,7 @@ class BarraExposureFetcher(BarraFetcher):
         if factor is not None:
             return super(BarraExposureFetcher, self).fetch_daily(*args, **kwargs)
 
-        di, date = util.parse_date(DATES, date, -1)
+        di, date = dateutil.parse_date(DATES, date, -1)
         date = DATES[di-offset]
 
         reindex = kwargs.get('reindex', self.reindex)
@@ -221,14 +222,15 @@ class BarraFactorFetcher(KDayFetcher):
         """
         if dname == 'covariance':
             date_check = kwargs.get('date_check', self.date_check)
-            date = util.compliment_datestring(date, -1, date_check)
-            di, date = util.parse_date(DATES, date, -1)
+            date = dateutil.compliment_datestring(date, -1, date_check)
+            di, date = dateutil.parse_date(DATES, date, -1)
             date = DATES[di-offset]
             return self.fetch_covariance(date)
 
         if dname == 'returns':
             dname = None
         return super(BarraFactorFetcher, self).fetch_daily(dname, date, offset=offset, **kwargs)
+
 
 class BarraCovarianceFetcher(KDayFetcher):
     """Class to fetch factor returns/covariance data."""
