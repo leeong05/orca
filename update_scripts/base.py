@@ -89,9 +89,14 @@ class UpdaterBase(object):
         pass
 
     def connect_jydb(self):
-        import pymssql
-        connection = pymssql.connect('192.168.1.181', 'sa', 'Nm,.hjkl', 'jydb')
-        cursor = connection.cursor()
+        if self.source == 'mssql':
+            import pymssql
+            connection = pymssql.connect('192.168.1.181', 'sa', 'Nm,.hjkl', 'jydb')
+            cursor = connection.cursor()
+        elif self.source == 'oracle':
+            import cx_Oracle
+            connection = cx_Oracle.connect('jydb/jydb@jydb')
+            cursor = connection.cursor()
         self.logger.debug('Connected to MSSQL Database jydb on 192.168.1.181')
         self.__dict__.update({'connection': connection, 'cursor': cursor})
 
@@ -153,6 +158,7 @@ class UpdaterBase(object):
         parser.add_argument('-e', '--end', help='end date(included); default: today', default=today, nargs='?')
         parser.add_argument('date', help='the date to be updated', default=today, nargs='?')
         parser.add_argument('-f', '--logfile', help='the log file name', type=str)
+        parser.add_argument('--source', choices=('mssql', 'oracle'), help='type of source database')
         args = parser.parse_args()
 
         if args.logfile:
@@ -177,6 +183,8 @@ class UpdaterBase(object):
             'today': today,
             '_dates': _dates,
             })
+        if args.source:
+            self.source = args.source,
 
         if not args.logoff:
             log_str = StringIO()

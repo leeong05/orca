@@ -8,9 +8,12 @@ from decimal import Decimal
 import pandas as pd
 
 from base import UpdaterBase
-import jybs_sql
-import jycs_sql
-import jyis_sql
+import jybs_mssql
+import jycs_mssql
+import jyis_mssql
+import jybs_oracle
+import jycs_oracle
+import jyis_oracle
 
 def quarter(dstr):
     md = dstr[4:8]
@@ -27,11 +30,12 @@ def quarter(dstr):
 class JYFundUpdater(UpdaterBase):
     """The updater class for collections 'jybs', 'jycs', 'jyis'."""
 
-    def __init__(self, timeout=30, table='balancesheet'):
-        UpdaterBase.__init__(self, timeout)
+    def __init__(self, source=None, timeout=30, table='balancesheet'):
+        self.source = source
         self.table = table
         self.cutoff = '03:00'
         self.basedate = datetime(2000, 1, 1)
+        UpdaterBase.__init__(self, timeout)
 
     def get_milliseconds(self, date):
         date = datetime(int(date[:4]), int(date[4:6]), int(date[6:8]),
@@ -41,13 +45,25 @@ class JYFundUpdater(UpdaterBase):
 
     def pre_update(self):
         self.connect_jydb()
-        self.__dict__.update({'dates': self.db.dates.distinct('date')})
+        self.dates = self.db.dates.distinct('date')
         if self.table == 'balancesheet':
-            self.__dict__.update({'sql': jybs_sql, 'collection': self.db.jybs})
+            self.collection = self.db.jybs
+            if self.source == 'mssql':
+                self.sql = jybs_mssql
+            elif self.source == 'oracle':
+                self.sql = jybs_oracle
         elif self.table == 'cashflow':
-            self.__dict__.update({'sql': jycs_sql, 'collection': self.db.jycs})
+            self.collection = self.db.jycs
+            if self.source == 'mssql':
+                self.sql = jycs_mssql
+            elif self.source == 'oracle':
+                self.sql = jycs_oracle
         else:
-            self.__dict__.update({'sql': jyis_sql, 'collection': self.db.jyis})
+            self.collection = self.db.jyis
+            if self.source == 'mssql':
+                self.sql = jyis_mssql
+            elif self.source == 'oracle':
+                self.sql = jyis_oracle
 
         self.cursor.execute(self.sql.CMD0)
         self.__dict__.update({'company_sid': {company: sid for company, sid in list(self.cursor)}})

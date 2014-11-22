@@ -6,7 +6,8 @@ from multiprocessing import Pool
 import pandas as pd
 
 from base import UpdaterBase
-import components_sql
+import components_mssql
+import components_oracle
 
 
 def worker(args):
@@ -20,16 +21,22 @@ def worker(args):
             dvalue[sid] = -1
     COLLECTION.update({'date': date, 'dname': dname}, {'$set': {'dvalue': dvalue}}, upsert=True)
 
+
 class ComponentsUpdater(UpdaterBase):
     """The updater class for collection 'index_components'."""
 
-    def __init__(self, timeout=600, threads=16):
+    def __init__(self, source=None, timeout=600, threads=16):
+        self.source = source
         UpdaterBase.__init__(self, timeout)
         self.threads = threads
 
     def pre_update(self):
         self.connect_jydb()
-        self.__dict__.update({'dates': self.db.dates.distinct('date')})
+        self.dates = self.db.dates.distinct('date')
+        if self.source == 'mssql':
+            self.components_sql = components_mssql
+        elif self.source == 'oracle':
+            self.components_sql = components_oracle
 
     def pro_update(self):
         return
@@ -40,7 +47,7 @@ class ComponentsUpdater(UpdaterBase):
 
     def update(self, date):
         """Update index components (and weight) for the **same** day before market open."""
-        CMD = components_sql.CMD1.format(date=date)
+        CMD = self.components_sql.CMD1.format(date=date)
         self.logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
         df1 = pd.DataFrame(list(self.cursor))
@@ -52,7 +59,7 @@ class ComponentsUpdater(UpdaterBase):
         df1.dname = ['SH'+dname if mkt == 83 else 'SZ'+dname for mkt, dname in zip(df1.market, df1.dname)]
         df1.index = df1.sid
 
-        CMD = components_sql.CMD2.format(date=date)
+        CMD = self.components_sql.CMD2.format(date=date)
         self.logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
         try:

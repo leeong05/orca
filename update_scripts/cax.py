@@ -5,17 +5,23 @@
 import pandas as pd
 
 from base import UpdaterBase
-import cax_sql
+import cax_mssql
+import cax_oracle
 
 
 class CaxUpdater(UpdaterBase):
     """The updater class for collections 'cax', 'shares'"""
 
-    def __init__(self, timeout=10):
+    def __init__(self, source=None, timeout=10):
+        self.source = source
         UpdaterBase.__init__(self, timeout)
 
     def pre_update(self):
         self.connect_jydb()
+        if self.source == 'mssql':
+            self.cax_sql = cax_mssql
+        elif self.source == 'oracle':
+            self.cax_sql = cax_oracle
 
     def pro_update(self):
         return
@@ -38,15 +44,15 @@ class CaxUpdater(UpdaterBase):
 
     def update(self, date):
         """Update adjusting factors and shares structures for the **same** day before market open."""
-        CMD = cax_sql.CMD0.format(date=date)
+        CMD = self.cax_sql.CMD0.format(date=date)
         self.logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
         if date != list(self.cursor)[0][0]:
             self.logger.warning('%s is not a trading day?', date)
             return
         self.db.dates.update({'date': date}, {'date': date}, upsert=True)
-        self._update(date, cax_sql.CMD1, cax_sql.dnames1, self.db.cax, float)
-        self._update(date, cax_sql.CMD2, cax_sql.dnames2, self.db.shares, int)
+        self._update(date, self.cax_sql.CMD1, self.cax_sql.dnames1, self.db.cax, float)
+        self._update(date, self.cax_sql.CMD2, self.cax_sql.dnames2, self.db.shares, int)
 
     def _update(self, date, CMD, dnames, col, dtype):
         CMD = CMD.format(date=date)

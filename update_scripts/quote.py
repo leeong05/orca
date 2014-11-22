@@ -5,18 +5,24 @@ logger = logging.getLogger('updater')
 import pandas as pd
 
 from base import UpdaterBase
-import quote_sql
+import quote_mssql
+import quote_oracle
 
 
 class QuoteUpdater(UpdaterBase):
     """The updater class for collection 'quote'."""
 
-    def __init__(self, timeout=10):
+    def __init__(self, source=None, timeout=10):
+        self.source = source
         UpdaterBase.__init__(self, timeout)
 
     def pre_update(self):
         self.connect_jydb()
-        self.__dict__.update({'dates': self.db.dates.distinct('date')})
+        self.dates = self.db.dates.distinct('date')
+        if self.source == 'mssql':
+            self.quote_sql = quote_mssql
+        elif self.source == 'oracle':
+            self.quote_sql = quote_oracle
 
     def pro_update(self):
         return
@@ -32,7 +38,7 @@ class QuoteUpdater(UpdaterBase):
                 unique=True, dropDups=True, background=True)
 
     def update(self, date):
-        CMD = quote_sql.CMD.format(date=date)
+        CMD = self.quote_sql.CMD.format(date=date)
         logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
@@ -40,7 +46,7 @@ class QuoteUpdater(UpdaterBase):
             logger.error('No records found for %s on %s', self.db.sywgindex_quote.name, date)
             return
 
-        df.columns = ['sid'] + quote_sql.dnames
+        df.columns = ['sid'] + self.quote_sql.dnames
         df.index = df.sid
 
         new_sids = set(df.sid) - set(self.db.sids.distinct('sid'))
@@ -49,7 +55,7 @@ class QuoteUpdater(UpdaterBase):
             for sid in new_sids:
                 self.db.sids.update({'sid': sid}, {'sid': sid}, upsert=True)
 
-        for dname in quote_sql.dnames:
+        for dname in self.quote_sql.dnames:
             key = {'dname': dname, 'date': date}
             self.db.quote.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
         logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s',
