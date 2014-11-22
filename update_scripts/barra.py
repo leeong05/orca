@@ -69,7 +69,7 @@ class BarraUpdater(UpdaterBase):
     def update(self, date):
         """Update factor exposure, factor returns, factor covariance and stocks specifics for **previous** day before market open."""
         date = self.dates[self.dates.index(date)-1]
-        if not os.path.exists(barra_sql.gp_idfile(date)):
+        if not os.path.exists(barra_sql.gp_idmaps(date)):
             self.logger.error('Barra model data does not exist on %s', date)
             barra_sql.fetch_and_parse(date)
         self.idmaps = json.load(open(barra_sql.gp_idmaps(date)))
