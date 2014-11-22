@@ -30,13 +30,16 @@ class AdjQuoteFetcher(KDayFetcher):
         self.cax = CaxFetcher(**kwargs)
         super(AdjQuoteFetcher, self).__init__(**kwargs)
 
+    @staticmethod
     def _adjust_price(price, adj_factor, date):
-        adj_price = adj_factor.ix[price.index] * price
+        adj_factor = adj_factor.ix[price.index][price.columns]
+        adj_price = adj_factor * price
         adj_price = adj_price.div(adj_factor.ix[date], axis=1)
         return adj_price
 
     @staticmethod
     def _adjust_volume(volume, adj_factor, date):
+        adj_factor = adj_factor.ix[volume.index][volume.columns]
         adj_factor = 1. / adj_factor
         adj_volume = adj_factor.ix[volume.index] * volume
         adj_volume = adj_volume.div(adj_factor.ix[date], axis=1)
