@@ -4,10 +4,11 @@
 
 import unittest
 
-from orca.mongo import QuoteFetcher
+from orca.mongo.quote import QuoteFetcher
 from orca.utils.testing import (
         series_equal,
         frames_equal)
+from orca.utils.dateutil import get_startfrom
 from orca import DATES
 
 
@@ -15,7 +16,7 @@ class QuoteFetcherTestCase(unittest.TestCase):
 
     def setUp(self):
         self.fetcher = QuoteFetcher()
-        self.dates = DATES[2000:2050]
+        self.dates = get_startfrom(DATES, '2014010', 50)
 
     def tearDown(self):
         self.fetcher = None

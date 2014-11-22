@@ -18,10 +18,10 @@ def random_alpha(startdate='20140103', n=None):
     :type startdate: int, str
     :param int n: Length of the returned DataFrame; when None, it will be a random number between 50 and 100. Default: None
     """
-    date = dateutil.compliment_datestring(startdate, -1, True)
-    di = dateutil.parse_date(DATES, date, 1)[0]
     if not n >= 0:
         n = np.random.randint(50, 100)
-    dates = pd.to_datetime(DATES[di: di+n])
+    dates = dateutil.get_startfrom(DATES,
+                                   dateutil.compliment_datestring(startdate, -1, True),
+                                   n)
     df = pd.DataFrame(np.random.randn(n, len(SIDS)), index=dates, columns=SIDS)
     return df

@@ -138,3 +138,13 @@ def generate_timestamps(starttime, endtime, step, end_excluded=True):
             dt += step
         else:
             break
+
+def get_startfrom(l, x, n):
+    """Get a sub-list with length ``n`` and the first element >= ``x``."""
+    i, x = parse_date(l, x, 1)
+    return l[i: i+n]
+
+def get_endwith(l, x, n):
+    """Get a sub-list with length ``n`` and the last element <= ``x``."""
+    i, x = parse_date(l, x, -1)
+    return l[i-n+1: i+1]
