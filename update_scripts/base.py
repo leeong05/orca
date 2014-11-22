@@ -184,7 +184,7 @@ class UpdaterBase(object):
             '_dates': _dates,
             })
         if args.source:
-            self.source = args.source,
+            self.source = args.source
 
         if not args.logoff:
             log_str = StringIO()
