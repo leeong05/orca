@@ -54,7 +54,7 @@ class IndexQuoteUpdater(UpdaterBase):
                 except:
                     res[dname] = np.nan
             self.db.index_quote.update(key, {'$set': res}, upsert=True)
-        self.logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s',
+        self.logger.info('UPSERT documents for %d indice into (c: [%s]) of (d: [%s]) on %s',
                 len(df), self.db.index_quote.name, self.db.name, date)
 
 if __name__ == '__main__':
