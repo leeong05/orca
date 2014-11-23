@@ -29,13 +29,15 @@ class IndexQuoteFetcher(KDayFetcher):
     def fetch_window(self, dname, window, index=None, **kwargs):
         """
         :param dname: Data name or a list of data names
-        :type dname: str, list
+        :type dname: str, list, None(to fetch all daily quote items)
         :param str index: Index name
         :returns: Series if ``dname`` is only a string or DataFrame with ``dname`` in the columns
         """
         assert index is not None
         index = IndexQuoteFetcher.index_dname.get(index, index)
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
+        if dname is None:
+            dname = IndexQuoteFetcher.dnames
 
         query = {'index': index, 'date': {'$gte': window[0], '$lte': window[-1]}}
         proj = {'_id': 0}
@@ -44,5 +46,6 @@ class IndexQuoteFetcher(KDayFetcher):
             proj.update({d: 1})
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame(list(cursor))
-        df.index = pd.to_datetime(df.date) if datetime_index else df.date
+        if datetime_index:
+            df.index = pd.to_datetime(df.index)
         return df[dname]
