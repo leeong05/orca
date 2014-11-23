@@ -72,7 +72,9 @@ class ComponentsUpdater(UpdaterBase):
 
         grouped = df1.groupby('dname')
         pool = Pool(self.threads)
-        pool.imap(worker, [(date, dname, _df1, df2) for dname, _df1 in grouped], self.threads)
+        pool.imap_unordered(worker, [(date, dname, _df1, df2) for dname, _df1 in grouped], self.threads)
+        pool.close()
+        pool.join()
 
         self.logger.info('UPSERT documents for %d indice into (c: [%s]) of (d: [%s]) on %s', len(grouped), self.db.index_components.name, self.db.name, date)
 

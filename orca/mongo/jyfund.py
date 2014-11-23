@@ -210,7 +210,7 @@ class JYFundFetcher(KDayFetcher):
 
         res = {}
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
-        tmp = pool.map(myfunc1, [(sid, sdf, quarter_offset) for sid, sdf in df.groupby('sid')])
+        tmp = pool.imap_unordered(myfunc1, [(sid, sdf, quarter_offset) for sid, sdf in df.groupby('sid')])
         pool.close()
         pool.join()
         for x in tmp:

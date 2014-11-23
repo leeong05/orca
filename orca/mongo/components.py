@@ -33,5 +33,5 @@ class ComponentsFetcher(KDayFetcher):
         as_bool = kwargs.pop('as_bool', self.as_bool)
         df = super(ComponentsFetcher, self).fetch_window(dname, *args, **kwargs)
         if as_bool:
-            return ~df.isnull()
+            return df.notnull()
         return df

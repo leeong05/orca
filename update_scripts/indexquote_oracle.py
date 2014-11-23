@@ -18,7 +18,7 @@ WHERE
   AND
   LENGTH(sm.SecuCode) = 6
   AND
-  SUBSTR(sm.SecuCode, 1, 1) IN ('3', '0')
+  (SUBSTR(sm.SecuCode, 1, 1) IN ('3', '0') OR SUBSTR(sm.SecuCode, 1, 2) = 'CN')
 """
 
 dnames = ['prev_close', 'open', 'high', 'low', 'close', 'volume', 'amount', 'vwap', 'returns']

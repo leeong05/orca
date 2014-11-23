@@ -66,7 +66,9 @@ class TSMinUpdater(UpdaterBase):
 
         grouped = df.groupby('time')
         pool = Pool(self.threads)
-        pool.imap(worker, ((date, time, df) for time, df in grouped), self.threads)
+        pool.imap_unordered(worker, ((date, time, df) for time, df in grouped), self.threads)
+        pool.close()
+        pool.join()
         self.logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
 
 if __name__ == '__main__':
