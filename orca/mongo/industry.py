@@ -57,7 +57,7 @@ class IndustryFetcher(KDayFetcher):
         if date is not None:
             date = dateutil.parse_date(DATES, dateutil.compliment_datestring(date, -1, date_check), -1)[1]
         else:
-            date = DATES[-1]
+            date = self.info.distinct('date')[-1]
 
         query = {'standard': standard, 'date': date}
         if level == 0:

@@ -7,18 +7,22 @@ import unittest
 
 import pandas as pd
 
-from orca.mongo import (
-        FetcherBase,
-        KDayFetcher,
-        KMinFetcher)
 from orca import (
         DB,
         DATES,
-        SIDS)
-from orca.mongo import util
+        SIDS
+        )
+from orca.mongo.base import (
+        FetcherBase,
+        KDayFetcher,
+        KMinFetcher
+        )
 from orca.utils.testing import (
         frames_equal,
-        panels_equal)
+        panels_equal
+        )
+from orca.utils import dateutil
+
 
 class FetcherBaseDummy(FetcherBase):
 
@@ -82,7 +86,7 @@ class KDayFetcherDummyTestCase(unittest.TestCase):
 
     def setUp(self):
         self.fetcher = KDayFetcherDummy()
-        self.dates_str = DATES[500:550]
+        self.dates_str = dateutil.get_startfrom(DATES, '20140101', 50)
         self.dates_pddt = pd.to_datetime(self.dates_str)
 
     def tearDown(self):
@@ -126,8 +130,8 @@ class KMinFetcherDummyTestCase(unittest.TestCase):
 
     def setUp(self):
         self.fetcher = KMinFetcherDummy()
-        self.dates_str = DATES[2000:2050]
-        self.times = list(util.generate_timestamps('100000', '113000', 30*60))
+        self.dates_str = dateutil.get_startfrom(DATES, '20140101', 50)
+        self.times = list(dateutil.generate_timestamps('100000', '113000', 30*60))
         self.dates_pddt = pd.to_datetime(self.dates_str)
 
     def tearDown(self):

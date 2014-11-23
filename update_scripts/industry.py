@@ -96,7 +96,7 @@ class IndustryUpdater(UpdaterBase):
 
         f = lambda dname, dvalue: \
                 self.db.industry_info.update(
-                        {'standard': standard, 'dname': dname, 'date': date},
+                        {'standard': sname, 'dname': dname, 'date': date},
                         {'$set': {'dvalue': dvalue}},
                         upsert=True)
         f('industry_name', ind_name)
