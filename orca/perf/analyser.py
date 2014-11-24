@@ -256,7 +256,6 @@ class Analyser(object):
                 'ddstart': ddstart,
                 'ddend': ddend,
                 }
-        print res['perwin']
         res = pd.Series(res) if by is None else pd.DataFrame(res).T
         index = ['annualized_returns_0', 'annualized_returns', 'SR_0', 'SR',
                 'drawdown', 'ddstart', 'ddend', 'perwin']

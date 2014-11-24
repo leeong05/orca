@@ -108,7 +108,7 @@ class BacktestingAlpha(AlphaBase):
 
     def dump(self, fpath):
         with open(fpath, 'w') as file:
-            self.get_alphas.to_csv(file)
+            self.get_alphas().to_csv(file)
 
     def run(self, startdate=None, enddate=None, parallel=False, dates=None):
         """Main interface to an alpha.

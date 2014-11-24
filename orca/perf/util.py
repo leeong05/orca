@@ -13,7 +13,7 @@ def drawdown(ser):
     end = (pd.expanding_max(ser)-ser).argmax()
     start = ser.ix[:end].argmax()
 
-    return start, end, ser[start]-ser[end]
+    return start, end, (ser[start]-ser[end]) * 100
 
 def annualized_returns(ser):
     """``ser`` is a daily returns Series instead of a cumulative returns Series."""
