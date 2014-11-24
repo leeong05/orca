@@ -2,6 +2,7 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import json
 from collections import OrderedDict
 from datetime import datetime
 import logging
@@ -24,7 +25,7 @@ class AlphaCombiner(object):
     """
     LOGGER_NAME = 'combiner'
 
-    def __init__(self, periods, quantile=None, debug_on=True):
+    def __init__(self, periods, quantile=None, debug_on=False):
         self.logger = logger.get_logger(AlphaCombiner.LOGGER_NAME)
         self.set_debug_mode(debug_on)
         self.periods = periods
@@ -38,6 +39,10 @@ class AlphaCombiner(object):
         self.oX, self.oY = None, None
         self.result = None
 
+    @staticmethod
+    def read_csv(fname):
+        return pd.read_csv(fname, parse_dates=[0], header=0, index_col=0)
+
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level message in data fetchers.
         This is enabled by default."""
@@ -49,11 +54,16 @@ class AlphaCombiner(object):
         with open(fpath, 'w') as file:
             self.oY.to_csv(file)
         self.logger.info('Predicted alphas is saved in %s', fpath)
+        with open(fpath+'.json', 'w') as file:
+            json.dump(self.result.params.to_dict(), file)
+        self.logger.info('Parameters is saved in %s', fpath+'.json')
 
     def add_alpha(self, name, alpha):
         """
         :param DataFrame alpha: Alpha to be added
         """
+        if isinstance(alpha, str):
+            alpha = self.read_csv(alpha)
         self.name_alpha[name] = api.format(alpha)
 
     def __setitem__(self, name, alpha):
@@ -61,14 +71,22 @@ class AlphaCombiner(object):
         self.add_alpha(name, alpha)
 
     def set_weight(self, weight):
+        if isinstance(weight, str):
+            weight = self.read_csv(weight)
         W = api.format(weight)
         self.weight = W[np.isfinite(W) & (W > 0)]
 
     def set_isdates(self, start=None, end=None):
-        self.is_start, self.is_end = start, end
+        if start:
+            self.is_start = start
+        if end:
+            self.is_end = end
 
     def set_osdates(self, start=None, end=None):
-        self.os_start, self.os_end = start, end
+        if start:
+            self.os_start = start
+        if end:
+            self.os_end = end
 
     def prepare_XYW(self):
         """Prepare inputs for regression."""
@@ -143,3 +161,47 @@ class AlphaCombiner(object):
         self.logger.info('\nR^2: %f\n%s', self.result.rsquared, self.result.summary())
         self.predict()
         self.dump(fpath)
+
+if __name__ == '__main__':
+    import os
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--periods', help='Days of returns', type=int, default=20)
+    parser.add_argument('--quantile', help='Return quantiles used as dependent variables in regression', type=float)
+    parser.add_argument('--debug_on', help='Whether display debug log message', action='store_true')
+    parser.add_argument('--is_start', help='IS startdate', type=str)
+    parser.add_argument('--is_end', help='IS enddate', type=str)
+    parser.add_argument('--os_start', help='OS startdate', type=str)
+    parser.add_argument('--os_end', help='OS enddate', type=str)
+    parser.add_argument('--dir', help='Input directory, each file contained is assumed to be an alpha file', type=str)
+    parser.add_argument('--file', help='Input file, each row in the format: name, path_to_a_csv_file', type=str)
+    parser.add_argument('--dump', help='The output file name', type=str, default='combo')
+    args = parser.parse_args()
+
+    combiner = AlphaCombiner(args.periods, quantile=args.quantile, debug_on=args.debug_on)
+
+    if args.file:
+        with open(args.file) as file:
+            for line in file:
+                name, fpath = line.split('\s+')
+                if name.upper() == 'WEIGHT':
+                    combiner.set_weight(fpath)
+                else:
+                    combiner.add_alpha(name, fpath)
+
+    if args.dir:
+        assert os.path.exists(args.dir)
+        for name in os.listdir(args.dir):
+            if name.upper() == 'WEIGHT':
+                combiner.set_weight(os.path.join(args.dir, name))
+            else:
+                combiner.add_alpha(name, os.path.join(args.dir, name))
+
+    if args.is_end and args.os_start is None:
+        args.os_start = args.is_end
+
+    combiner.set_isdates(start=args.is_start, end=args.is_end)
+    combiner.set_osdates(start=args.os_start, end=args.os_end)
+
+    combiner.run()

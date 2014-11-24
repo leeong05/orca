@@ -38,7 +38,7 @@ class CSVLoader(LoaderBase):
         super(CSVLoader, self).__init__(cachedir, **kwargs)
         self.params = {
                 'header': 0,
-                'parse_dates': False,
+                'parse_dates': [0],
                 'index_col': 0,
                 }
         self.postfix = kwargs.get('postfix', '')

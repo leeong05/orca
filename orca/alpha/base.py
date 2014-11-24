@@ -40,6 +40,14 @@ class AlphaBase(object):
         """
         raise NotImplementedError
 
+    @staticmethod
+    def get_date(date, offset=0):
+        """Convenient method to get date with offset."""
+        di = dateutil.parse_date(DATES, str(date))[0]
+        if di >= offset and len(DATES)-1 >= di+offset:
+            return DATES[di-offset]
+        raise ValueError('Can\'t get date with the specified offset')
+
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level messages in the alpha.
         This is enabled by default."""
@@ -97,6 +105,10 @@ class BacktestingAlpha(AlphaBase):
         if key in self.alphas:
             self.warning('{0!r} already exists as a key'.format(key))
         self.alphas[key] = value
+
+    def dump(self, fpath):
+        with open(fpath, 'w') as file:
+            self.get_alphas.to_csv(file)
 
     def run(self, startdate=None, enddate=None, parallel=False, dates=None):
         """Main interface to an alpha.
