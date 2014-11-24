@@ -6,7 +6,7 @@ import pandas as pd
 from pandas.tseries.index import DatetimeIndex
 
 from orca.mongo.industry import IndustryFetcher
-from orca.utils import date as date_util
+from orca.utils import dateutil
 
 from base import OperationBase
 
@@ -53,7 +53,7 @@ class IndustryNeutOperation(GroupNeutOperation):
 
     def operate(self, alpha, group='sector'):
         if isinstance(alpha.index, DatetimeIndex):
-            window = date_util.to_datestr(alpha.index)
+            window = dateutil.to_datestr(alpha.index)
         else:
             window = list(alpha.index)
         group = self.industry.fetch_window(group, window)

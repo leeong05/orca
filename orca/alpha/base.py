@@ -9,7 +9,7 @@ import pandas as pd
 
 from orca import DATES
 from orca import logger
-from orca.mongo import util
+from orca.utils import dateutil
 from orca.operation.api import format
 
 
@@ -98,17 +98,23 @@ class BacktestingAlpha(AlphaBase):
             self.warning('{0!r} already exists as a key'.format(key))
         self.alphas[key] = value
 
-    def run(self, startdate, enddate, parallel=False):
-        startdate, enddate = str(startdate), str(enddate)
-        if enddate[:5].lower() == 'today':
-            enddate = DATES[-1-int(enddate[6:])]
+    def run(self, startdate=None, enddate=None, parallel=False, dates=None):
+        """Main interface to an alpha.
 
-        self.dates = util.cut_window(
-                DATES,
-                util.compliment_datestring(str(startdate), -1, True),
-                util.compliment_datestring(str(enddate), 1, True))
+        :param dates list: One can supply this keyword argument with a list to omit ``startdate`` and ``enddate``
+        """
+        if dates is None:
+            startdate, enddate = str(startdate), str(enddate)
+            if enddate[:5].lower() == 'today':
+                enddate = DATES[-1-int(enddate[6:])]
+
+            dates = dateutil.cut_window(
+                        DATES,
+                        dateutil.compliment_datestring(str(startdate), -1, True),
+                        dateutil.compliment_datestring(str(enddate), 1, True))
+
         if not parallel:
-            for date in self.dates:
+            for date in dates:
                 self.generate(date)
             return
         #TODO
