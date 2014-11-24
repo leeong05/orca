@@ -12,6 +12,7 @@ from orca.utils.testing import (
         series_equal,
         frames_equal,
         )
+from orca.utils import dateutil
 from orca.universe.special import (
         TickerFilter,
         TradingDaysFilter,
@@ -24,10 +25,10 @@ from orca.universe.rules import (
         count_gt,
         )
 
-window = DATES[2000: 2050]
-close = QuoteFetcher.fetch_window('close', window, datetime_index=True, reindex=True)
-hs300 = ComponentsFetcher.fetch_window('HS300', window, datetime_index=True, reindex=True)
-sector = IndustryFetcher.fetch_window('sector', window, datetime_index=True, reindex=True)
+window = dateutil.get_startfrom(DATES, '20140104', 50)
+close = QuoteFetcher(datetime_index=True, reindex=True).fetch_window('close', window)
+hs300 = ComponentsFetcher(datetime_index=True, reindex=True).fetch_window('HS300', window)
+sector = IndustryFetcher(datetime_index=True, reindex=True).fetch_window('sector', window)
 
 
 class SpecialTestCase(unittest.TestCase):
