@@ -94,30 +94,32 @@ class APITestCase(unittest.TestCase):
                  [8, 3, np.nan, 4]])
         self.assertTrue(np.allclose(decay.fillna(0), answer.fillna(0)))
 
-    def test_barra_neut(self):
-        df = random_alpha(20)
-        neut_df = api.barra_neut(df, 'short', 'industry')
-        self.assertEqual(len(neut_df), 20)
-
-    def test_barra_corr_neut(self):
-        df = random_alpha(20)
-        neut_df = api.barra_corr_neut(df, 'short', 'industry')
-        self.assertEqual(len(neut_df), 20)
-
     def test_industry_neut(self):
-        df = random_alpha(20)
+        df = random_alpha(n=20)
         neut_df = api.industry_neut(df, 'level1')
         neut_neut_df = api.industry_neut(neut_df, 'level1')
         self.assertTrue(frames_equal(neut_df, neut_neut_df))
 
     def test_industry_neut1(self):
-        df = random_alpha(20)
+        df = random_alpha(n=20)
         neut1_df = api.industry_neut(df, 'level2')
         neut2_df = api.industry_neut(neut1_df, 'level1')
         self.assertTrue(frames_equal(neut1_df, neut2_df))
 
     def test_industry_neut2(self):
-        df = random_alpha(20)
+        df = random_alpha(n=20)
         neut1_df = api.industry_neut(df, 'level3')
         neut2_df = api.industry_neut(neut1_df, 'level2')
         self.assertTrue(frames_equal(neut1_df, neut2_df))
+
+    def test_barra_neut(self):
+        df = random_alpha(n=20)
+        neut_df1 = api.barra_neut(df, 'short', 'industry')
+        neut_df2 = api.barra_neut(neut_df1, 'short', 'industry')
+        self.assertTrue(frames_equal(neut_df1, neut_df2))
+
+    def test_barra_corr_neut(self):
+        df = random_alpha(n=20)
+        neut_df1 = api.barra_corr_neut(df, 'short', 'industry')
+        neut_df2 = api.barra_corr_neut(neut_df1, 'short', 'industry')
+        self.assertTrue(frames_equal(neut_df1, neut_df2))

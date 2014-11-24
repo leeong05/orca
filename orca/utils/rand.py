@@ -21,7 +21,7 @@ def random_alpha(startdate='20140103', n=None):
     if not n >= 0:
         n = np.random.randint(50, 100)
     dates = dateutil.get_startfrom(DATES,
-                                   dateutil.compliment_datestring(startdate, -1, True),
+                                   dateutil.compliment_datestring(str(startdate), -1, True),
                                    n)
     df = pd.DataFrame(np.random.randn(n, len(SIDS)), index=dates, columns=SIDS)
     return df

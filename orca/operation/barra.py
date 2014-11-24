@@ -143,7 +143,7 @@ class BarraFactorCorrNeutOperation(BarraOperation):
     """Class to neutralize alpha along some Barra factors."""
 
     def __init__(self, model, **kwargs):
-        super(BarraFactorCorrNeutOperation, self).__init__(self, model, **kwargs)
+        super(BarraFactorCorrNeutOperation, self).__init__(model, **kwargs)
         self.covariance = BarraCovarianceFetcher(model, **self.kwargs)
 
     def _operate(self, alpha, factor, date):
