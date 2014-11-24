@@ -3,7 +3,6 @@
 """
 
 import logging
-from functools import partial
 import unittest
 
 import pandas as pd
@@ -12,9 +11,12 @@ from orca import DATES
 from orca.universe import (
         FilterBase,
         SimpleDataFilter)
-from orca.universe.rules import mean_gt
-from orca.mongo import QuoteFetcher
+from orca.universe.rules import avg_gt
+from orca.mongo.base import FetcherBase
+from orca.mongo.quote import QuoteFetcher
 from orca.utils.testing import frames_equal
+from orca.utils import dateutil
+
 
 class FilterBaseDummy(FilterBase):
 
@@ -45,7 +47,7 @@ class FilterBaseDummyTestCase(unittest.TestCase):
 
 data = ('close', QuoteFetcher)
 window = 120
-rule = mean_gt(2)   # filter out those with average price > 2 within a period
+rule = avg_gt(2)   # filter out those with average price > 2 within a period
 
 class SimpleDataFilterDummy(SimpleDataFilter):
 
@@ -57,7 +59,10 @@ class SimpleDataFilterDummyTestCase(unittest.TestCase):
 
     def setUp(self):
         self.filter = SimpleDataFilterDummy()
-        self.startdate, self.enddate = DATES[2000], DATES[2049]
+        self.fetcher = QuoteFetcher(datetime_index=True, reindex=True)
+        self.dates = dateutil.get_startfrom(DATES, '20140801', 20)
+        self.startdate, self.enddate = self.dates[0], self.dates[-1]
+        self.si, self.ei = map(DATES.index, [self.startdate, self.enddate])
 
     def tearDown(self):
         self.filter = None
@@ -71,20 +76,22 @@ class SimpleDataFilterDummyTestCase(unittest.TestCase):
         self.assertEqual(len(self.filter.datas), 1)
 
     def test_datas_2(self):
-        self.assertIsInstance(self.filter.datas[0], partial)
+        self.assertIsInstance(self.filter.datas[0][0], FetcherBase)
 
     def test_filter_1(self):
-        df = QuoteFetcher.fetch_window('close', DATES[2000-window: 2050])
-        df = (pd.rolling_mean(df, window) > 2).shift(1)
-        df = df.iloc[window:].astype(bool)
-        self.assertTrue(frames_equal(df, self.filter.filter(self.startdate, self.enddate)))
+        df = self.fetcher.fetch_window('close', DATES[self.si-window: self.ei+1])
+        df = pd.rolling_sum(df.fillna(0), window) > 2 * pd.rolling_count(df, window)
+        df1 = df.shift(1).iloc[window:].astype(bool)
+        df2 = self.filter.filter(self.startdate, self.enddate)
+        print 'bm', df1.sum(axis=1)
+        self.assertTrue(frames_equal(df1, df2))
 
     def test_filter_2(self):
-        df = QuoteFetcher.fetch_window('close', DATES[2000-window: 2050])
-        parent = ~df.isnull()
+        df = self.fetcher.fetch_window('close', DATES[self.si-window: self.ei+1])
+        parent = df.notnull()
         df = df.shift(1)
         df[~parent] = None
-        df = (pd.rolling_mean(df, window) > 2)
+        df = pd.rolling_sum(df.fillna(0), window) > 2 * pd.rolling_count(df, window)
         df[~parent] = False
         df = df.iloc[window:]
         self.assertTrue(frames_equal(df, self.filter.filter(self.startdate, self.enddate, parent)))

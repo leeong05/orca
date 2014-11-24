@@ -71,7 +71,7 @@ class FilterBase(object):
         if reindex:
             df = df.reindex(columns=SIDS).fillna(False)
         if datetime_index:
-            df.index = dateutil.to_datetime(df.index)
+            df.index = pd.to_datetime(df.index)
             return df.astype(bool)
         return df
 
