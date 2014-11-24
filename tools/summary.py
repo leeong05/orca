@@ -27,9 +27,15 @@ if __name__ == '__main__':
     perf = Performance(alpha)
     if args.longonly:
         if args.quantile:
-            analyser = perf.get_qtop(args.quantile, index=args.index)
+            if args.quantile > 0:
+                analyser = perf.get_qtop(args.quantile, index=args.index)
+            else:
+                analyser = perf.get_qbottom(-args.quantile, index=args.index)
         elif args.number:
-            analyser = perf.get_ntop(args.number, index=args.index)
+            if args.number > 0:
+                analyser = perf.get_ntop(args.number, index=args.index)
+            else:
+                analyser = perf.get_nbottom(-args.number, index=args.index)
     else:
         if args.quantile:
             analyser = perf.get_qtail(args.quantile)
