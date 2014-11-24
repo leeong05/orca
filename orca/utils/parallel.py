@@ -30,6 +30,8 @@ def run(alpha, params, startdate, enddate, threads=multiprocessing.cpu_count()):
     return res
 
 import os
+import shutil
+import json
 
 import pandas as pd
 import warnings
@@ -68,3 +70,36 @@ def run_hdf(store, alpha, params, startdate, enddate, predicate=None, threads=mu
         store.flush()
         logger.debug('Saving alpha with parameter: {!r}'.format(param))
     store.close()
+
+def worker_csv(args):
+    i, alpha, param, startdate, enddate = args
+    alpha = alpha(**param)
+    alpha.run(startdate, enddate)
+    alpha = alpha.get_alphas()
+    return i, param, alpha
+
+def run_csv(csvdir, alpha, params, startdate, enddate, predicate=None, threads=multiprocessing.cpu_count()):
+    """Execute instances of an alpha in parallel and stores DataFrame in CSV file. Each item in params should be a ``dict``.
+
+    :param csvdir: Diretory to store csv files
+    :param function predicate: A function with :py:class:`orca.perf.performance.Performance` object as the only parameter; for example: ``lambda x: x.get_original().get_ir() > 0.1``. Default: None
+    """
+    if os.path.exists(csvdir) and os.path.isdir(csvdir):
+        shutil.rmtree(csvdir)
+    logger = get_logger(csvdir)
+    os.makedirs(csvdir)
+
+    iterobj = ((i, alpha, param, startdate, enddate) for i, param in enumerate(params))
+    pool = multiprocessing.Pool(threads)
+    res = pool.imap_unordered(worker_hdf, iterobj)
+    pool.close()
+    pool.join()
+    params = {}
+    for i, param, alpha in res:
+        if predicate is not None and not predicate(Performance(alpha)):
+            continue
+        alpha.to_csv(os.path.join(csvdir, 'alpha'+str(i)))
+        params[i] = param
+        logger.debug('Saving alpha with parameter: {!r}'.format(param))
+    with open(os.path.join(csvdir, 'params.json'), 'w') as file:
+        json.dump(params, file)

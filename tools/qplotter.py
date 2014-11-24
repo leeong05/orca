@@ -2,6 +2,8 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import os
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -11,7 +13,6 @@ from orca.perf.plotter import QuantilesPlotter
 from orca.operation.api import format
 
 if __name__ == '__main__':
-    import os
     import argparse
 
     parser = argparse.ArgumentParser()

@@ -2,6 +2,8 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import os
+
 import pandas as pd
 pd.set_option('display.precision', 3)
 
@@ -26,7 +28,6 @@ def get_pairwise_corr(name_series, days):
     return df.corr()
 
 if __name__ == '__main__':
-    import os
     import argparse
 
     parser = argparse.ArgumentParser()
