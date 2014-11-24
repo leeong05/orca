@@ -2,7 +2,7 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count()
 import pandas as pd
 
 from base import UpdaterBase
@@ -25,7 +25,7 @@ def worker(args):
 class ComponentsUpdater(UpdaterBase):
     """The updater class for collection 'index_components'."""
 
-    def __init__(self, source=None, timeout=600, threads=16):
+    def __init__(self, source=None, timeout=600, threads=cpu_count()):
         self.source = source
         UpdaterBase.__init__(self, timeout)
         self.threads = threads

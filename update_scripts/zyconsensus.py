@@ -3,7 +3,7 @@
 """
 
 import itertools
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ def worker(args):
 class ZYConsensusUpdater(UpdaterBase):
     """The updater class for collection 'zyconsensus'."""
 
-    def __init__(self, threads=16, cutoff='08:30:00', timeout=60):
+    def __init__(self, threads=cpu_count(), cutoff='08:30:00', timeout=60):
         UpdaterBase.__init__(self, timeout)
         self.threads = threads
         self.cutoff = cutoff

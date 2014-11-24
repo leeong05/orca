@@ -4,7 +4,7 @@
 
 import os
 
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 
 import numpy as np
 import pandas as pd
@@ -23,7 +23,7 @@ def worker(args):
 class TSMinUpdater(UpdaterBase):
     """The updater class for collections 'ts_1min', 'ts_5min'."""
 
-    def __init__(self, bar='1min', timeout=300, threads=16):
+    def __init__(self, bar='1min', timeout=300, threads=cpu_count()):
         UpdaterBase.__init__(self, timeout)
         self.bar = bar
         self.srcdir = os.path.join(tsmin_sql.srcdir, self.bar)
