@@ -17,10 +17,6 @@ from orca.mongo.base import (
         KDayFetcher,
         KMinFetcher
         )
-from orca.utils.testing import (
-        frames_equal,
-        panels_equal
-        )
 from orca.utils import dateutil
 
 
@@ -92,30 +88,25 @@ class KDayFetcherDummyTestCase(unittest.TestCase):
     def tearDown(self):
         self.fetcher = None
 
-    def test_fetch_window_classmethod(self):
-        df1 = self.fetcher.fetch_window('close', self.dates_str)
-        df2 = KDayFetcherDummy.fetch_window('close', self.dates_str)
-        self.assertTrue(frames_equal(df1, df2))
-
     def test_fetch_window_datetime_index_true(self):
-        df = KDayFetcherDummy.fetch_window('close', self.dates_str, datetime_index=True)
+        df = self.fetcher.fetch_window('close', self.dates_str, datetime_index=True)
         self.assertTrue((df.index == self.dates_pddt).all())
 
     def test_fetch_window_reindex(self):
-        df1 = KDayFetcherDummy.fetch_window('close', self.dates_str, reindex=False)
-        df2 = KDayFetcherDummy.fetch_window('close', self.dates_str, reindex=True)
+        df1 = self.fetcher.fetch_window('close', self.dates_str, reindex=False)
+        df2 = self.fetcher.fetch_window('close', self.dates_str, reindex=True)
         self.assertTrue((len(df1.columns) < len(SIDS)) and (list(df2.columns) == SIDS))
 
     def test_fetch_backdays(self):
-        df = KDayFetcherDummy.fetch('close', self.dates_str[5], self.dates_str[-1], backdays=5)
+        df = self.fetcher.fetch('close', self.dates_str[5], self.dates_str[-1], backdays=5)
         self.assertListEqual(self.dates_str, list(df.index))
 
     def test_fetch_history_delay(self):
-        df = KDayFetcherDummy.fetch_history('close', self.dates_str[-1], 45, delay=5)
+        df = self.fetcher.fetch_history('close', self.dates_str[-1], 45, delay=5)
         self.assertListEqual(self.dates_str[:-5], list(df.index))
 
     def test_fetch_daily_offset(self):
-        ser = KDayFetcherDummy.fetch_daily('close', self.dates_str[-1], offset=49)
+        ser = self.fetcher.fetch_daily('close', self.dates_str[-1], offset=49)
         self.assertEqual(ser.name, self.dates_str[0])
 
 
@@ -137,36 +128,32 @@ class KMinFetcherDummyTestCase(unittest.TestCase):
     def tearDown(self):
         self.fetcher = None
 
-    def test_fetch_window_classmethod(self):
-        df1 = self.fetcher.fetch_window('close', self.times, self.dates_str)
-        df2 = KMinFetcherDummy.fetch_window('close', self.times, self.dates_str)
-        self.assertTrue(panels_equal(df1, df2))
-
     def test_fetch_window_datetime_index_true(self):
-        pl = KMinFetcherDummy.fetch_window('close', self.times, self.dates_str, datetime_index=True)
+        pl = self.fetcher.fetch_window('close', self.times, self.dates_str, datetime_index=True)
+        print pl
         self.assertTrue((pl.major_axis == self.dates_pddt).all())
 
     def test_fetch_window_reindex(self):
-        pl1 = KMinFetcherDummy.fetch_window('close', self.times, self.dates_str, reindex=False)
-        pl2 = KMinFetcherDummy.fetch_window('close', self.times, self.dates_str, reindex=True)
+        pl1 = self.fetcher.fetch_window('close', self.times, self.dates_str, reindex=False)
+        pl2 = self.fetcher.fetch_window('close', self.times, self.dates_str, reindex=True)
         self.assertTrue((len(pl1.minor_axis) < len(SIDS)) and (list(pl2.minor_axis) == SIDS))
 
     def test_fetch_window_times_notlist(self):
-        df = KMinFetcherDummy.fetch_window('close', self.times[0], self.dates_str)
+        df = self.fetcher.fetch_window('close', self.times[0], self.dates_str)
         self.assertIsInstance(df, pd.DataFrame)
 
     def test_fetch_window_times_list(self):
-        pl = KMinFetcherDummy.fetch_window('close', [self.times[0]], self.dates_str)
+        pl = self.fetcher.fetch_window('close', [self.times[0]], self.dates_str)
         self.assertIsInstance(pl, pd.Panel)
 
     def test_fetch_backdays(self):
-        pl = KMinFetcherDummy.fetch('close', self.times, self.dates_str[5], self.dates_str[-1], backdays=5)
+        pl = self.fetcher.fetch('close', self.times, self.dates_str[5], self.dates_str[-1], backdays=5)
         self.assertListEqual(self.dates_str, list(pl.major_axis))
 
     def test_fetch_history_delay(self):
-        pl = KMinFetcherDummy.fetch_history('close', self.times, self.dates_str[-1], 45, delay=5)
+        pl = self.fetcher.fetch_history('close', self.times, self.dates_str[-1], 45, delay=5)
         self.assertListEqual(self.dates_str[:-5], list(pl.major_axis))
 
     def test_fetch_daily_offset(self):
-        ser = KMinFetcherDummy.fetch_daily('close', self.times[0], self.dates_str[-1], offset=49)
+        ser = self.fetcher.fetch_daily('close', self.times[0], self.dates_str[-1], offset=49)
         self.assertEqual(ser.name, self.dates_str[0])
