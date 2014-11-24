@@ -47,14 +47,14 @@ class Performance(object):
     @classmethod
     def get_index_returns(cls, startdate, index='HS300'):
         if index not in cls.index_returns or cls.index_returns[index] is None or startdate < cls.index_returns[index].index[0]:
-            with cls.lock:
+            with cls.mongo_lock:
                 cls.index_returns[index] = cls.quote.fetch('returns', startdate=startdate.strftime('%Y%m%d'))
         return cls.index_returns[index]
 
     @classmethod
     def get_index_components(cls, startdate, index):
         if cls.index_components[index] is None or startdate < cls.index_components[index].index[0]:
-            with cls.lock:
+            with cls.mongo_lock:
                 cls.index_components['HS300'] = cls.components.fetch('HS300', startdate=startdate.strftime('%Y%m%d'))
                 cls.index_components['CS500'] = cls.components.fetch('CS500', startdate=startdate.strftime('%Y%m%d'))
                 cls.index_components['other'] = ~(cls.index_components['HS300'] | cls.index_components['CS500'])
@@ -94,35 +94,47 @@ class Performance(object):
         """Pretend the alpha can be made into a long/short portfolio."""
         return Analyser(api.neutralize(self.alpha), Performance.get_returns(self.startdate))
 
-    def get_long(self, index='HS300'):
+    def get_long(self, index=None):
         """Only analyse the long part."""
         return Analyser(self.alpha[self.alpha>0], Performance.get_returns(self.startdate),
-                Performance.get_index_returns(self.startdate, index=index))
+                Performance.get_index_returns(self.startdate, index=index)) \
+               if index is not None else \
+               Analyser(self.alpha[self.alpha>0], Performance.get_returns(self.startdate))
 
-    def get_short(self, index='HS300'):
+    def get_short(self, index=None):
         """Only analyse the short part."""
         return Analyser(-self.alpha[self.alpha<0], Performance.get_returns(self.startdate),
-                Performance.get_index_returns(self.startdate, index=index))
+                Performance.get_index_returns(self.startdate, index=index)) \
+               if index is not None else \
+               Analyser(-self.alpha[self.alpha<0], Performance.get_returns(self.startdate))
 
-    def get_qtop(self, q, index='HS300'):
+    def get_qtop(self, q, index=None):
         """Only analyse the top quantile as long holding."""
         return Analyser(api.qtop(self.alpha, q), Performance.get_returns(self.startdate),
-                Performance.get_index_returns(self.startdate, index=index))
+                Performance.get_index_returns(self.startdate, index=index)) \
+               if index is not None else \
+               Analyser(api.qtop(self.alpha, q), Performance.get_returns(self.startdate))
 
-    def get_qbottom(self, q, index='HS300'):
+    def get_qbottom(self, q, index=None):
         """Only analyse the bottom quantile as long holding."""
         return Analyser(api.qbottom(self.alpha, q), Performance.get_returns(self.startdate),
-                Performance.get_index_returns(self.startdate, index=index))
+                Performance.get_index_returns(self.startdate, index=index)) \
+               if index is not None else \
+               Analyser(api.qbottom(self.alpha, q), Performance.get_returns(self.startdate))
 
-    def get_ntop(self, n, index='HS300'):
+    def get_ntop(self, n, index=None):
         """Only analyse the top n stocks as long holding."""
         return Analyser(api.top(self.alpha, n), Performance.get_returns(self.startdate),
-                Performance.get_index_returns(self.startdate, index=index))
+                Performance.get_index_returns(self.startdate, index=index)) \
+               if index is not None else \
+               Analyser(api.top(self.alpha, n), Performance.get_returns(self.startdate))
 
-    def get_nbottom(self, n, index='HS300'):
+    def get_nbottom(self, n, index=None):
         """Only analyse the bottom n stocks as long holding."""
         return Analyser(api.bottom(self.alpha, n), Performance.get_returns(self.startdate),
-                Performance.get_index_returns(self.startdate, index=index))
+                Performance.get_index_returns(self.startdate, index=index)) \
+               if index is not None else \
+               Analyser(api.bottom(self.alpha, n), Performance.get_returns(self.startdate))
 
     def get_qtail(self, q):
         """Long the top quantile and at the same time short the bottom quantile."""
@@ -139,7 +151,7 @@ class Performance(object):
         return [Analyser(qt, Performance.get_returns(self.startdate)) \
                 for qt in api.quantiles(self.alpha, n)]
 
-    def _universe(self, univ):
+    def get_universe(self, univ):
         """Return a performance object for alpha in this universe."""
         return Performance(api.intersect(self.alpha, univ))
 

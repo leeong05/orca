@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 
-from orca.utils import date as date_util
+from orca.utils import dateutil
 from orca.operation import api
 
 import util
@@ -45,7 +45,7 @@ class Analyser(object):
 
     def __init__(self, alpha, data, index_data=None):
         self.alpha = api.scale(alpha)
-        self.dates = date_util.to_datestr(self.alpha.index)
+        self.dates = dateutil.to_datestr(self.alpha.index)
 
         self.IC, self.rIC = {}, {}
         self.AC, self.rAC = {}, {}

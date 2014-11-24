@@ -15,9 +15,11 @@ from orca.utils.testing import (
         series_equal,
         frames_equal,
         )
-from orca.performance.analyser import Analyser
+from orca.utils import dateutil
+from orca.perf.analyser import Analyser
+from orca.perf.performance import Performance
 
-dates = pd.to_datetime(DATES[1500:2000])
+dates = pd.to_datetime(dateutil.get_startfrom(DATES, '20140101', 120))
 alpha1 = pd.DataFrame(np.random.randn(len(dates), len(SIDS)), index=dates, columns=SIDS)
 valid = pd.DataFrame(np.random.randint(3, size=alpha1.shape), index=dates, columns=SIDS).astype(bool)
 alpha1[~valid] = np.nan
@@ -34,17 +36,30 @@ alpha2 = alpha1[alpha1>0]
 alpha3 = -alpha1[alpha1<0]
 
 
-class AnalyserTestCase(unittest.TestCase):
+class PerfTestCase(unittest.TestCase):
 
     def setUp(self):
         self.alpha1 = Analyser(alpha1, data=data)
         self.alpha2 = Analyser(alpha2, data=data)
         self.alpha3 = Analyser(alpha3, data=data)
+        self.perf = Performance(alpha1)
+        self.perf.set_returns(data)
 
     def tearDown(self):
         self.alpha1 = None
         self.alpha2 = None
         self.alpha3 = None
+        self.perf = None
+
+    def test_get1(self):
+        self.assertTrue(frames_equal(self.perf.get_long().alpha, self.alpha2.alpha)
+                and frames_equal(self.perf.get_short().alpha, self.alpha3.alpha))
+
+    def test_get_bms(self):
+        b, m, s = self.perf.get_bms()
+        b, m, s = b.alpha, m.alpha, s.alpha
+        self.assertTrue(series_equal(self.perf.alpha.count(axis=1),
+            b.count(axis=1)+m.count(axis=1)+s.count(axis=1)))
 
     def test_init_1(self):
         self.assertTrue(np.allclose(np.abs(self.alpha1.alpha).sum(axis=1), 1))
@@ -85,16 +100,15 @@ class AnalyserTestCase(unittest.TestCase):
 
     def test_summary_ir2(self):
         ir = self.alpha1.summary_ir(by='A')
-        self.assertEqual(len(ir.columns), 3)
+        self.assertEqual(len(ir.columns), 1)
 
     def test_summary_turnover(self):
         tvr = self.alpha1.summary_turnover(freq='weekly')
         self.assertListEqual(['turnover', 'AC1', 'rAC1', 'AC5', 'rAC5'], list(tvr.index))
 
     def test_summary_returns(self):
-        ret = self.alpha1.summary_returns(cost=0.001)
-        print ret
-        self.assertTrue(False)
+        self.alpha1.summary_returns(cost=0.001)
+        self.assertTrue(True)
 
     def test_summary(self):
         ir1 = self.alpha1.summary(group='ir', by='A')

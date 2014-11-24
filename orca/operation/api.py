@@ -19,7 +19,7 @@ def format(df, value=np.nan):
 def intersect(df, univ):
     """Intersect DataFrame with a universe."""
     df = df.copy()
-    df[~univ.ix[df.index]] = np.nan
+    df[~(univ.ix[df.index].fillna(False))] = np.nan
     return df
 
 def neutralize(df):
