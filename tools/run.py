@@ -28,33 +28,46 @@ if __name__ == '__main__':
     alphaname, ext = os.path.splitext(os.path.basename(alpha))
     assert ext in ('.py', '.pyc')
 
-    module = imp.load_source(alphaname, alpha)
+    module = imp.load_source(alphaname, alpha) if ext == '.py' else imp.load_compiled(alphaname, alpha)
     for name, cls in inspect.getmembers(module):
-        if inspect.isclass(cls) and issubclass(cls, BacktestingAlpha):
+        if inspect.isclass(cls) and cls is not BacktestingAlpha and issubclass(cls, BacktestingAlpha):
             alpha = cls
             break
 
     params = {}
-    for k_vs in re.split('[#;]', args.param):
-        k, vs = re.split('[=:]', k_vs)
-        params[k] = vs.split(',')
+    if args.param:
+        for k_vs in re.split('[#;]', args.param):
+            k, vs = re.split('[=:]', k_vs)
+            params[k] = vs.split(',')
     if args.file:
-        with open(args.file) as file:
-            for line in file:
-                k, vs = line.strip().split('\s+')
-                if k.lower() == 'startdate':
-                    args.startdate = vs
-                elif k.lower() == 'enddate':
-                    args.enddate = vs
-                elif k.lower() == 'param':
-                    k, v = vs.split('=')
-                    params[k] = v.split(',')
+        filename, ext = os.path.splittext(os.path.basename(args.file))[1]
+        if ext in ('.py', '.pyc'):
+            param = imp.load_source(filename, args.file) if ext == '.py' else imp.load_compiled(filename, args.file)
+            content = dir(param)
+            if 'startdate' in content:
+                args.startdate = param.startdate
+            if 'enddate' in content:
+                args.enddate = param.enddate
+            if 'params' in content:
+                params.update(param.params)
+        else:
+            with open(args.file) as file:
+                for line in file:
+                    k, vs = line.strip().split('\s+')
+                    if k.lower() == 'startdate':
+                        args.startdate = vs
+                    elif k.lower() == 'enddate':
+                        args.enddate = vs
+                    elif k.lower() == 'param':
+                        k, v = vs.split('=')
+                        params[k] = v.split(',')
 
     if params:
         gen = (dict(izip(params, x)) for x in product(*params.itervalues()))
         if args.hdf:
             parallel.run_hdf(args.hdf, alpha, gen, args.start, args.end)
         else:
+            assert args.csvdir is not None
             parallel.run_csv(args.csvdir, alpha, gen, args.start, args.end)
     else:
         alpha = alpha()
