@@ -43,7 +43,7 @@ dnames = [
 'borrowing_from_central_bank', 'deposit_of_interbank', 'borrowing_capital', 'derivative_liability', 'sold_buyback_proceed', 'deposit', 'proxy_security_proceed', 'subissue_security_proceed', 'deposit_received', 'advance_insurance', 'commission_payable', 'reinsurance_payable', 'compensation_payable', 'policy_dividend_payable', 'insurer_deposit_investment', 'unearned_premium_reserve', 'outstanding_claims_reserve', 'life_insurance_reserve', 'longterm_health_insurance_reserve', 'indpendence_liability',
 'other_liability', 'liability_exceptional_items', 'liability_adjustment_items', 'total_liability',
 # equity
-'paidin_capital', 'capital_reserve_fund', 'surplus_reserve_fund', 'retained_earnings', 'treasury_stock', 'ordinary_risk_reserve_fund', 'currency_conversion_difference', 'uncertain_investment_loss', 'other_reserve', 'specific_reserve', 'se_exceptional_items', 'se_adjustment_items', 'se_without_minority_interest', 'minority_interest', 'se_other_items', 'total_shareholder_equity',
+'paidin_capital', 'capital_reserve_fund', 'surplus_reserve_fund', 'retained_earnings', 'treasury_stock', 'ordinary_risk_reserve_fund', 'currency_conversion_difference', 'uncertained_investment_loss', 'other_reserve', 'specific_reserve', 'se_exceptional_items', 'se_adjustment_items', 'se_without_mi', 'minority_interest', 'se_other_items', 'total_shareholder_equity',
 # total liability and equity
 'le_exceptional_items', 'le_adjustment_items', 'total_liability_and_equity']
 cols = [4, 5] + range(10, 145)

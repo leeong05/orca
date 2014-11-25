@@ -55,7 +55,7 @@ def myfunc2(args):
         if not dateutil.is_sorted(df.qtrno):
             return {sid: None}
 
-    if table == 'balancesheet':
+    if table in ('balancesheet', 'index'):
         df = df.sort(['date', 'qtrno'])
         qtrno, res = None, {}
         for _, row in df.iterrows():
@@ -101,16 +101,17 @@ def myfunc2(args):
 class JYFundFetcher(KDayFetcher):
     """Class to fetch JYDB fundamental data.
 
-    :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow')
+    :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow', 'index')
     :param startyear: Fetch data starting from this year in advance, must be in the format 'YYYY'. Default: 2007
     :type startyear: str, int
     """
 
-    tables = ('balancesheet', 'income', 'cashflow')
+    tables = ('balancesheet', 'income', 'cashflow', 'index')
     collections = {
             'balancesheet': DB.jybs,
             'income': DB.jyis,
             'cashflow': DB.jycs,
+            'index': DB.jyindex,
             }
 
     datas, startyears = {}, {}

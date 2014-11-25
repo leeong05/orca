@@ -11,9 +11,13 @@ from base import UpdaterBase
 import jybs_mssql
 import jycs_mssql
 import jyis_mssql
+import jyindex_mssql
+import jydata_mssql
 import jybs_oracle
 import jycs_oracle
 import jyis_oracle
+import jyindex_oracle
+import jydata_oracle
 
 def quarter(dstr):
     md = dstr[4:8]
@@ -28,7 +32,7 @@ def quarter(dstr):
 
 
 class JYFundUpdater(UpdaterBase):
-    """The updater class for collections 'jybs', 'jycs', 'jyis'."""
+    """The updater class for collections 'jybs', 'jycs', 'jyis', 'jyindex', 'jydata'."""
 
     def __init__(self, source=None, timeout=30, table='balancesheet'):
         self.source = source
@@ -58,15 +62,27 @@ class JYFundUpdater(UpdaterBase):
                 self.sql = jycs_mssql
             elif self.source == 'oracle':
                 self.sql = jycs_oracle
-        else:
+        elif self.table == 'income':
             self.collection = self.db.jyis
             if self.source == 'mssql':
                 self.sql = jyis_mssql
             elif self.source == 'oracle':
                 self.sql = jyis_oracle
+        elif self.table == 'index':
+            self.collection = self.db.jyindex
+            if self.source == 'mssql':
+                self.sql = jyindex_mssql
+            elif self.source == 'oracle':
+                self.sql = jyindex_oracle
+        else:
+            self.collection = self.db.jydata
+            if self.source == 'mssql':
+                self.sql = jydata_mssql
+            elif self.source == 'oracle':
+                self.sql = jydata_oracle
 
         self.cursor.execute(self.sql.CMD0)
-        self.__dict__.update({'company_sid': {company: sid for company, sid in list(self.cursor)}})
+        self.company_sid = {company: sid for company, sid in list(self.cursor)}
 
     def pro_update(self):
         return
@@ -90,8 +106,11 @@ class JYFundUpdater(UpdaterBase):
             self.logger.warning('No records found for %s on %s', self.collection.name, prev_date)
             return
 
-        df = df[self.sql.cols]
-        df.columns = ['sid', 'enddate'] + self.sql.dnames
+        try:
+            df = df[self.sql.cols]
+            df.columns = ['sid', 'enddate'] + self.sql.dnames
+        except:
+            df.columns = [desc[0].lower() for desc in self.cursor.description]
         df = df.ix[[x in self.company_sid for x in df.sid]]
         df.enddate = df.enddate.apply(lambda x: x.strftime('%Y%m%d'))
         year = df.enddate.apply(lambda x: int(x[:4]))
@@ -135,11 +154,27 @@ class JYIncomeUpdater(JYFundUpdater):
         JYFundUpdater.__init__(self, table=table, **kwargs)
 
 
+class JYIndexUpdater(JYFundUpdater):
+
+    def __init__(self, table='index', **kwargs):
+        JYFundUpdater.__init__(self, table=table, **kwargs)
+
+
+class JYDataUpdater(JYFundUpdater):
+
+    def __init__(self, table='data', **kwargs):
+        JYFundUpdater.__init__(self, table=table, **kwargs)
+
+
 if __name__ == '__main__':
     jybs = JYBalancesheetUpdater()
     jycs = JYCashflowUpdater()
     jyis = JYIncomeUpdater()
+    jyix = JYIndexUpdater()
+    #jydt = JYDataUpdater()
 
     jybs.run()
     jycs.run()
     jyis.run()
+    jyix.run()
+    #jydt.run()
