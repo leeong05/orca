@@ -17,13 +17,13 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
-    parser.add_argument('-q', '--quantile', type=int, required=True)
+    parser.add_argument('-q', '--quantile', help='Number of quantiles', type=int, required=True)
     parser.add_argument('-p', '--plot', default=['pnl'], nargs='+',
             help='What to plot? Could by any combination of ("pnl", "returns")')
-    parser.add_argument('-b', '--by', choices=('A', 'Q', 'M', 'W'))
-    parser.add_argument('--pdf', action='store_true')
-    parser.add_argument('-s', '--start', type=str)
-    parser.add_argument('-e', '--end', type=str)
+    parser.add_argument('-b', '--by', choices=('A', 'Q', 'M', 'W'), help='Summary period')
+    parser.add_argument('--pdf', action='store_true', help='Whether to save plots in a PDF file')
+    parser.add_argument('-s', '--start', type=str, help='Starting date')
+    parser.add_argument('-e', '--end', type=str, help='Ending date')
     args = parser.parse_args()
 
     alpha = format(pd.read_csv(args.alpha, parse_dates=[0], header=0, index_col=0))

@@ -15,13 +15,13 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('alpha')
-    parser.add_argument('-s', '--start', type=str)
-    parser.add_argument('-e', '--end', type=str)
-    parser.add_argument('--param', type=str)
-    parser.add_argument('--file', type=str)
-    parser.add_argument('--csvdir', type=str)
-    parser.add_argument('--hdf', type=str)
+    parser.add_argument('alpha', help='Alpha .py file')
+    parser.add_argument('-s', '--start', type=str, help='Simulation starting date')
+    parser.add_argument('-e', '--end', type=str, help='Simulation ending date')
+    parser.add_argument('--param', type=str, help='A quoted string to supply keyword parameters; for example: --param=\'p1=p1v1,p1v2;p2=p2v1,p2v2.p3v3\'')
+    parser.add_argument('--file', type=str, help='A file containing configuration parameters(A .py file is recommended)')
+    parser.add_argument('--csvdir', type=str, help='Diretory to dump generated DataFrames')
+    parser.add_argument('--hdf', type=str, help='HDF5 file name to save generated DataFrames')
     args = parser.parse_args()
 
     alpha = args.alpha

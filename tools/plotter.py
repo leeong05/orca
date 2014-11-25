@@ -17,21 +17,25 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
-    parser.add_argument('-i', '--index', help='Name of the index, for example: HS300', type=str)
-    parser.add_argument('-q', '--quantile', type=float)
-    parser.add_argument('-l', '--longonly', action='store_true')
-    parser.add_argument('-n', '--number', type=int)
+    parser.add_argument('-i', '--index', type=str,
+        help='Name of the index, for example: HS300. Set this only when --longonly is turned on')
+    parser.add_argument('-q', '--quantile', type=float,
+        help='When --longonly is turned on, this can be negative to choose the bottom quantile; when not, this sets a threshold to choose tail quantiles')
+    parser.add_argument('-n', '--number', type=int,
+        help='When --longonly is turned on, this can be negative to choose the bottom; when not, this sets a threshold to choose tail')
+    parser.add_argument('-l', '--longonly', action='store_true',
+        help='Whether to test this alpha as a longonly holding')
     parser.add_argument('-p', '--plot', default=['pnl'], nargs='+',
-            help='What to plot? Could by any combination of ("pnl", "returns", "ic", "turnover", "ac")')
-    parser.add_argument('-b', '--by', choices=('A', 'Q', 'M', 'W'), default='A')
-    parser.add_argument('-c', '--cost', type=float, default=0.001)
+        help='What to plot? Could by any combination of ("pnl", "returns", "ic", "turnover", "ac")')
+    parser.add_argument('-b', '--by', choices=('A', 'Q', 'M', 'W'), help='Summary period', default='A')
+    parser.add_argument('-c', '--cost', type=float, default=0.001, help='Linear trading cost')
     parser.add_argument('--plot_index', help='Add index data for "pnl"/"returns" plot', action='store_true')
-    parser.add_argument('--ma', help='For "ic"/"ac"/"turnover" plot, use simple moving average to smooth',
-            type=int)
+    parser.add_argument('--ma', type=int,
+        help='For "ic"/"ac"/"turnover" plot, use simple moving average to smooth')
     parser.add_argument('--periods', help='Periods used in calculation of IC and AC', type=int, default=1)
-    parser.add_argument('--pdf', action='store_true')
-    parser.add_argument('-s', '--start', type=str)
-    parser.add_argument('-e', '--end', type=str)
+    parser.add_argument('--pdf', action='store_true', help='Whether to save plots in a PDF file')
+    parser.add_argument('-s', '--start', type=str, help='Starting date')
+    parser.add_argument('-e', '--end', type=str, help='Ending date')
     args = parser.parse_args()
 
     alpha = format(pd.read_csv(args.alpha, parse_dates=[0], header=0, index_col=0))

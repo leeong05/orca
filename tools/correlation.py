@@ -32,16 +32,16 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file', nargs='*')
-    parser.add_argument('-q', '--quantile', type=float)
-    #parser.add_argument('--db', help='Check correlation with alphas in alphadb', action='store_true')
-    parser.add_argument('-m', '--method', choices=('ic', 'returns', 'both'), default='both')
-    parser.add_argument('--dir', type=str)
-    parser.add_argument('--file', type=str)
-    parser.add_argument('--days', type=int, default=2*DAYS_IN_YEAR)
+    parser.add_argument('-q', '--quantile', help='Sets threshold for tail quantiles to calculate returns', type=float)
+    parser.add_argument('--db', help='Check correlation with alphas in alphadb', action='store_true')
+    parser.add_argument('-m', '--method', choices=('ic', 'returns', 'both'), default='both', help='What type of correlations is of interest?')
+    parser.add_argument('--dir', help='Input directory, each file contained is assumed to be an alpha file', type=str)
+    parser.add_argument('--file', help='Input file, each row in the format: name path_to_a_csv_file', type=str)
+    parser.add_argument('--days', type=int, default=2*DAYS_IN_YEAR, help='How many points to be included in correlation calculation')
     args = parser.parse_args()
 
     ext_alphas = {}
-    if args.dir:
+    if args.file:
         with open(args.file) as file:
             for line in file:
                 name, fpath = line.split('\s+')

@@ -175,7 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--os_start', help='OS startdate', type=str)
     parser.add_argument('--os_end', help='OS enddate', type=str)
     parser.add_argument('--dir', help='Input directory, each file contained is assumed to be an alpha file', type=str)
-    parser.add_argument('--file', help='Input file, each row in the format: name, path_to_a_csv_file', type=str)
+    parser.add_argument('--file', help='Input file, each row in the format: name path_to_a_csv_file', type=str)
     parser.add_argument('--dump', help='The output file name', type=str, default='combo')
     args = parser.parse_args()
 
