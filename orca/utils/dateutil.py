@@ -117,7 +117,7 @@ def cut_window(dates, startdate, enddate=None, backdays=0):
     return dates[startindex-backdays: endindex+1]
 
 _dummy_date = datetime(1900, 1, 1)
-def generate_timestamps(starttime, endtime, step, end_excluded=True):
+def generate_timestamps(starttime, endtime, step, exclud_end=True):
     """Generate consecutive time stamps.
 
     :param str starttime, endtime: Must be 6-length time string in the format 'hhmmss'
@@ -132,8 +132,8 @@ def generate_timestamps(starttime, endtime, step, end_excluded=True):
 
     while True:
         timestamp = dt.strftime('%H%M%S')
-        if (end_excluded and timestamp < endtime) or \
-                (not end_excluded and timestamp <= endtime):
+        if (exclud_end and timestamp < endtime) or \
+                (not exclud_end and timestamp <= endtime):
             yield timestamp
             dt += step
         else:

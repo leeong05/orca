@@ -1,5 +1,5 @@
-utils -- Utilities for parallel&testing
-=======================================
+utils -- Utilities for parallel & testing
+=========================================
 
 utils.parallel
 --------------

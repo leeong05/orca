@@ -32,7 +32,7 @@ dnames = [
 # expense
 'total_operating_expense', 'operating_payout', 'refunded_premium', 'compensation_expense', 'amortization_expense', 'premium_reserve', 'amortization_premium_reserve', 'policy_dividend_payout', 'reinsurance_expense', 'operating_and_administration_expense', 'amortization_reinsurance_expense', 'insurance_commission_expense', 'other_operating_expense', 'operating_expense', 'operating_tax_surcharge', 'selling_expense', 'administration_expense', 'financial_expense', 'assets_impairment_loss', 'oe_exceptional_items', 'oe_adjustment_items',
 # other
-'net_other_income', 'fair_value_change_income', 'investment_income', 'associate_investment_income', 'currency_conversion_income', 'net_oi_exceptional_items', 'net_oi_adjustment_items',
+'nonrecurring_pnl', 'fair_value_change_income', 'investment_income', 'associate_investment_income', 'currency_conversion_income', 'nonrecurring_exceptional_items', 'nonrecurring_adjustment_items',
 # profit
 'operating_profit', 'nonoperating_income', 'nonoperating_expense', 'noncurrent_assets_deal_loss', 'tp_exceptional_items', 'tp_adjustment_items',
 # total profit

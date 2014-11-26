@@ -16,6 +16,7 @@ Contents:
    documentation.rst
    tools.rst
    submit.rst
+   fetchers.rst
 
 
 Indices and tables

@@ -170,11 +170,11 @@ if __name__ == '__main__':
     jybs = JYBalancesheetUpdater()
     jycs = JYCashflowUpdater()
     jyis = JYIncomeUpdater()
-    jyix = JYIndexUpdater()
+    #jyix = JYIndexUpdater()
     #jydt = JYDataUpdater()
 
     jybs.run()
     jycs.run()
     jyis.run()
-    jyix.run()
+    #jyix.run()
     #jydt.run()
