@@ -55,7 +55,7 @@ def myfunc2(args):
         if not dateutil.is_sorted(df.qtrno):
             return {sid: None}
 
-    if table in ('balancesheet', 'index'):
+    if table == 'balancesheet':
         df = df.sort(['date', 'qtrno'])
         qtrno, res = None, {}
         for _, row in df.iterrows():
@@ -97,21 +97,47 @@ def myfunc2(args):
         res[row['date']] = row
     return {sid: pd.DataFrame(res)}
 
+def myfunc3(args):
+    sid, df, records, rtype, dname, table = args
+    df = df.drop_duplicates('qtrno', take_last=True)
+    df.index = df.qtrno
+    max_qtr = df.qtrno.iloc[-1]
+    qtrs = [max_qtr - i*rtype for i in range(records)]
+    try:
+        res = df[dname].ix[qtrs]
+    except:
+        res = None
+    if res is None:
+        return {sid: res}
+    if table == 'balancesheet':
+        res.index = range(records)
+        return {sid: res}
+
+    if rtype != YEAR:
+        for qtr in qtrs:
+            if qtr % 4 != rtype:
+                pqtr = qtr - rtype
+                try:
+                    res.ix[qtr] -= df[dname].ix[pqtr]
+                except:
+                    res.ix[qtr] = None
+    res.index = range(records)
+    return {sid: res}
+
 
 class JYFundFetcher(KDayFetcher):
     """Class to fetch JYDB fundamental data.
 
-    :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow', 'index')
+    :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow')
     :param startyear: Fetch data starting from this year in advance, must be in the format 'YYYY'. Default: 2007
     :type startyear: str, int
     """
 
-    tables = ('balancesheet', 'income', 'cashflow', 'index')
+    tables = ('balancesheet', 'income', 'cashflow')
     collections = {
             'balancesheet': DB.jybs,
             'income': DB.jyis,
             'cashflow': DB.jycs,
-            'index': DB.jyindex,
             }
 
     datas, startyears = {}, {}
@@ -190,6 +216,7 @@ class JYFundFetcher(KDayFetcher):
 
         date_check = kwargs.get('date_check', self.date_check)
         reindex = kwargs.get('reindex', self.reindex)
+        delay = kwargs.get('delay', self.delay)
 
         di, date = dateutil.parse_date(DATES, dateutil.compliment_datestring(date, -1, date_check))
         date = DATES[di-delay]
@@ -270,7 +297,8 @@ class JYFundFetcher(KDayFetcher):
         if fillna is not None:
             panel = panel.fillna(axis=0, method='ffill')
 
-        qtrno = pd.Series({date: (int(date[:4]) - 2000) * 4 + np.floor((int(date[4:6])-1.)/3) - rtype for date in panel.major_axis})
+        qtrno = pd.Series({date:
+            (int(date[:4]) - 2000) * 4 + np.floor((int(date[4:6])-1.)/3) - rtype for date in panel.major_axis})
         valid = panel['qtrno'].ge(qtrno, axis=0)
         res = {}
         for dname in dnames:
@@ -302,12 +330,52 @@ class JYFundFetcher(KDayFetcher):
         """
         raise NotImplementedError
 
-    def fetch_history(self, *args, **kwargs):
-        """Disabled.
+    def fetch_history(self, dname, date, delay=1, records=1, rtype=QUARTER, quarter=None, **kwargs):
+        """Prepare cross-sectional data historic records into a DataFrame, using data with timestamps less than ``date`` minus ``delay``.
 
-        :raises: NotImplementedError
+        :param int quarter_offset: Offset in quarter numbers. Default: 0
+        :param enum rtype: What type of reports to be considered? QUARTER(1, default): all reports; SEMI(2): only semi-annual reports and annual reports; YEAR(4): only annual reports
+        :param int quarter: It will only fetch data for this particular quarter(the 4 quarters in a year is 1, 2, 3, 4), thus should be compatible with the use of ``rtype``. Default: None, fetch whatever data is available
+
+        .. seealso:: :py:meth:`JYFundFetcher.prepare_frame`
         """
-        raise NotImplementedError
+        if quarter is not None:
+            try:
+                assert quarter % rtype == 0
+            except AssertionError:
+                raise ValueError('rtype {0!r} and quarter {1!r} are not compatible')
+
+        date_check = kwargs.get('date_check', self.date_check)
+        reindex = kwargs.get('reindex', self.reindex)
+        delay = kwargs.get('delay', self.delay)
+
+        di, date = dateutil.parse_date(DATES, dateutil.compliment_datestring(date, -1, date_check))
+        date = DATES[di-delay]
+
+        qtrno = (int(date[:4]) - 2000) * 4 + np.floor((int(date[4:6])-1)/3) - rtype * (records+1)
+        if quarter is not None:
+            query = 'date <= {0!r} & quarter == {1} & qtrno >= {2}'.format(date, quarter, qtrno)
+        else:
+            query = 'date <= {0!r} & quarter % {1} == 0 & qtrno >= {2}'.format(date, rtype, qtrno)
+
+        columns = ['sid', 'qtrno', 'date', 'quarter', dname]
+        df = JYFundFetcher.get_data(self.table, self._startyear)[columns].query(query)
+        df.sort(['sid', 'qtrno', 'date'], inplace=True)
+
+        res = {}
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        tmp = pool.imap_unordered(myfunc3, [(sid, sdf, records, rtype, dname, self.table) for sid, sdf in df.groupby('sid')])
+        pool.close()
+        pool.join()
+        for x in tmp:
+            res.update(x)
+        df = pd.DataFrame(res)
+
+        if reindex:
+            df = df.reindex(columns=SIDS)
+        if records == 1:
+            return df.iloc[0]
+        return df
 
     def fetch_daily(self, dname, date, offset=0, quarter_offset=0, rtype=QUARTER, quarter=None, **kwargs):
         """Return a series of cross-sectional data.
