@@ -68,8 +68,6 @@ a_shares                A股
 a_float                 流通A股
 a_float_restricted      流通A股中有限售条件的A股
 a_float_nonrestricted   流通A股中无限售条件的A股
-float_shares            流通股份（股改前）
-a_float_listed          已上市流通A股
 ======================= =================================================
 
 

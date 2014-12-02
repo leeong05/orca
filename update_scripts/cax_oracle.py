@@ -49,10 +49,10 @@ WITH summary AS (
     AND
     SUBSTR(sm.SecuCode, 1, 2) IN ('60', '00', '30'))
 SELECT
-  s.SecuCode, s.Ashares, s.AFloats, s.RestrictedAShares, s.NonRestrictedShares, s.FloatShare, s.AFloatListed
+  s.SecuCode, s.Ashares, s.AFloats, s.RestrictedAShares, s.NonRestrictedShares
 FROM summary s
 WHERE s.rk = 1
 """
 
 dnames1 = ['adjfactor', 'volfactor']
-dnames2 = ['a_shares', 'a_float', 'a_float_restricted', 'a_float_nonrestricted', 'float_shares', 'a_float_listed']
+dnames2 = ['a_shares', 'a_float', 'a_float_restricted', 'a_float_nonrestricted']
