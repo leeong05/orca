@@ -53,11 +53,11 @@ class IndustryUpdater(UpdaterBase):
             CMD = self.industry_sql.CMD1.format(date='20140101', standard=standard)
         else:
             CMD = self.industry_sql.CMD1.format(date=date, standard=standard)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(self.industry_sql.CMD1.format(date='20140101', standard=standard))
         DF = pd.DataFrame(list(self.cursor))
         if len(DF) == 0:
-            self.logger.warning('No records found for %s[standard=%s] on %s', self.db.industry.name, sname, date)
+            self.logger.warning('No records found for {}[standard={}] on {}', self.db.industry.name, sname, date)
             return
 
         DF[[0, 1, 3, 5]] = DF[[0, 1, 3, 5]].astype(str)
@@ -75,10 +75,10 @@ class IndustryUpdater(UpdaterBase):
         for dname in self.industry_sql.dnames_industry:
             key = {'standard': sname, 'dname': dname, 'date': date}
             self.db.industry.update(key, {'$set': {'dvalue': df[dname].to_dict()}}, upsert=True)
-        self.logger.info('UPSERT documents for %d sids into (c: [%s@standard=%s]) of (d: [%s]) on %s', len(df), self.db.industry.name, sname, self.db.name, date)
+        self.logger.info('UPSERT documents for {} sids into (c: [{}@standard={}]) of (d: [{}]) on {}', len(df), self.db.industry.name, sname, self.db.name, date)
 
         CMD = self.industry_sql.CMD2.format(date=date, standard=standard)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         l1_index, l2_index, l3_index, ind_index = {}, {}, {}, {}
         for row in self.cursor:
@@ -103,13 +103,13 @@ class IndustryUpdater(UpdaterBase):
         f('level1_name',   l1_name)
         f('level2_name',   l2_name)
         f('level3_name',   l3_name)
-        self.logger.info('UPSERT documents for %d industries into (c: [%s@standard=%s]) of (d: [%s]) on %s', len(ind_name), self.db.industry_info.name, sname, self.db.name, date)
+        self.logger.info('UPSERT documents for {} industries into (c: [{}@standard={}]) of (d: [{}]) on {}', len(ind_name), self.db.industry_info.name, sname, self.db.name, date)
 
         f('industry_index', ind_index)
         f('level1_index',   l1_index)
         f('level2_index',   l2_index)
         f('level3_index',   l3_index)
-        self.logger.info('UPSERT documents for %d industry-indice into (c: [%s@standard=%s]) of (d: [%s]) on %s', len(ind_index), self.db.industry_info.name, sname, self.db.name, date)
+        self.logger.info('UPSERT documents for {} industry-indice into (c: [{}@standard={}]) of (d: [{}]) on {}', len(ind_index), self.db.industry_info.name, sname, self.db.name, date)
 
 if __name__ == '__main__':
     ind = IndustryUpdater()

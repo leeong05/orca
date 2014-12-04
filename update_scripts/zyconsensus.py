@@ -43,10 +43,10 @@ class ZYConsensusUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        self.logger.debug('Ensuring index date_1_dname_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index date_1_dname_1 on collection {}', self.collection.name)
         self.collection.ensure_index([('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.collection.name)
         self.collection.ensure_index([('dname', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
 
@@ -58,11 +58,11 @@ class ZYConsensusUpdater(UpdaterBase):
 
     def update_target_price(self, date, prev_date):
         CMD = zysql.CMD1.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            self.logger.warning('No records found for %s@dname=target_price on %s', self.collection.name, prev_date)
+            self.logger.warning('No records found for {}@dname=target_price on {}', self.collection.name, prev_date)
             return
 
         df.columns = ['sid'] + zysql.dnames1
@@ -71,15 +71,15 @@ class ZYConsensusUpdater(UpdaterBase):
         for dname in zysql.dnames1:
             key = {'dname': dname, 'date': prev_date}
             self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().to_dict()}}, upsert=True)
-        self.logger.info('UPSERT documents for %d sids into (c: [%s@dname=target_price]) of (d: [%s]) on %s', len(df), self.collection.name, self.db.name, prev_date)
+        self.logger.info('UPSERT documents for {} sids into (c: [{}@dname=target_price]) of (d: [{}]) on {}', len(df), self.collection.name, self.db.name, prev_date)
 
     def update_consensus(self, date, prev_date):
         CMD = zysql.CMD2.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            self.logger.warning('No records found for %s@dname=consensus on %s', self.collection.name, prev_date)
+            self.logger.warning('No records found for {}@dname=consensus on {}', self.collection.name, prev_date)
             return
 
         df.columns = ['sid', 'consensus_type', 'forecast_year', 'growth'] + zysql._dnames2
@@ -92,7 +92,7 @@ class ZYConsensusUpdater(UpdaterBase):
         for dname in zysql.dnames2:
             key = {'dname': dname, 'date': prev_date}
             self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().to_dict()}}, upsert=True)
-        self.logger.info('UPSERT documents for %d sids into (c: [%s@dname=consensus]) of (d: [%s]) on %s', len(df), self.collection.name, self.db.name, prev_date)
+        self.logger.info('UPSERT documents for {} sids into (c: [{}@dname=consensus]) of (d: [{}]) on {}', len(df), self.collection.name, self.db.name, prev_date)
 
 
 if __name__ == '__main__':

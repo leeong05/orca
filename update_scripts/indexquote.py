@@ -35,11 +35,11 @@ class IndexQuoteUpdater(UpdaterBase):
     def update(self, date):
         """Update index quote for the **same** day after market close."""
         CMD = self.indexquote_sql.CMD.format(date=date)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            self.logger.error('No records found for %s on %s', self.db.index_quote.name, date)
+            self.logger.error('No records found for {} on {}', self.db.index_quote.name, date)
             return
 
         df.columns = ['sid', 'market'] + self.indexquote_sql.dnames
@@ -54,7 +54,7 @@ class IndexQuoteUpdater(UpdaterBase):
                 except:
                     res[dname] = np.nan
             self.db.index_quote.update(key, {'$set': res}, upsert=True)
-        self.logger.info('UPSERT documents for %d indice into (c: [%s]) of (d: [%s]) on %s',
+        self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}',
                 len(df), self.db.index_quote.name, self.db.name, date)
 
 if __name__ == '__main__':

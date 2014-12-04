@@ -37,11 +37,11 @@ class SYWGQuoteUpdater(UpdaterBase):
     def update(self, date):
         """Update SYWG index quote for the **same** day after market close."""
         CMD = self.sywgquote_sql.CMD.format(date=date)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            self.logger.error('No records found for %s on %s', self.db.sywgindex_quote.name, date)
+            self.logger.error('No records found for {} on {}', self.db.sywgindex_quote.name, date)
             return
 
         df.columns = ['sid'] + self.sywgquote_sql.dnames
@@ -50,7 +50,7 @@ class SYWGQuoteUpdater(UpdaterBase):
         for dname in self.sywgquote_sql.dnames:
             key = {'dname': dname, 'date': date}
             self.db.sywgindex_quote.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
-        self.logger.info('UPSERT documents for %d indice into (c: [%s]) of (d: [%s]) on %s',
+        self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}',
                 len(df), self.db.sywgindex_quote.name, self.db.name, date)
 
 if __name__ == '__main__':

@@ -1,9 +1,9 @@
 import os
 import json
 import glob
-import logging
+import logbook
 
-logger = logging.getLogger('updater')
+logger = logbook.Logger('barra')
 
 from zipfile import ZipFile
 from ftplib import FTP
@@ -31,13 +31,13 @@ def fetch_files(date):
         _file = _file.strip().split()[-1]
         if _file.find(date[2:8]) != -1:
             files.append(_file)
-            logger.info('Found file %s', _file)
+            logger.info('Found file {}', _file)
     _idfile = idfile % date[2:8]
     if _idfile not in files:
-        logger.warning('%s not found', _idfile)
+        logger.warning('{} not found', _idfile)
     for file in map(lambda x: x % date[2:8], [Dfile1, Dfile2, Sfile1, Sfile2]):
         if file not in files:
-            logger.warning('%s not found', file)
+            logger.warning('{} not found', file)
 
     zips = set()
     for file in files:
@@ -45,9 +45,9 @@ def fetch_files(date):
             zip = os.path.join(zipdir, file)
             with open(zip, 'w') as fh:
                 ftp.retrbinary("RETR " + file, fh.write)
-            logger.info('%s fetched and stored as %s', file, zip)
+            logger.info('{} fetched and stored as {}', file, zip)
         except:
-            logger.error('Failed to fetch file %s', file)
+            logger.error('Failed to fetch file {}', file)
         zips.add(zip)
     return zips
 
@@ -57,7 +57,7 @@ def unzip_files(date, zips):
         zips.discard(_idfile)
         for oldfile in glob.glob(os.path.join(dirdir, 'CHN_X_Asset_ID*')):
             os.remove(oldfile)
-            logger.debug('Removed file %s', oldfile)
+            logger.debug('Removed file {}', oldfile)
         zipfile = ZipFile(_idfile)
         zipfile.extract('CHN_X_Asset_ID.%s' % date, dirdir)
     while zips:
@@ -66,7 +66,7 @@ def unzip_files(date, zips):
         dstdir = os.path.join(dirdir, model, date[:4], date[4:6], date[6:8])
         if not os.path.exists(dstdir):
             os.makedirs(dstdir)
-            logger.debug('Created directory %s', dstdir)
+            logger.debug('Created directory {}', dstdir)
         zipfile = ZipFile(zip)
         logger.info('Extracting files from %s:\n%s', zip, '\n\t'.join(zipfile.namelist()))
         zipfile.extractall(dstdir)

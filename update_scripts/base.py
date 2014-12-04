@@ -3,15 +3,14 @@
 """
 
 import abc
-import logging
 import os
+import sys
 from datetime import datetime
 import argparse
 from multiprocessing import Process
 
 import pandas as pd
-
-from orca import logger
+import logbook
 
 
 class UpdaterBase(object):
@@ -24,18 +23,17 @@ class UpdaterBase(object):
 
     LOGGER_NAME = 'update'
 
-    def __init__(self, timeout=600, iterates=1, debug_on=False):
+    def __init__(self, timeout=600, iterates=1, debug_on=True):
         self.timeout = timeout
         self.iterates = iterates
-        self.logger = logger.get_logger(UpdaterBase.LOGGER_NAME)
+        self.logger = logbook.Logger(UpdaterBase.LOGGER_NAME)
         self.set_debug_mode(debug_on)
         self.connected = False
 
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level message in data fetchers.
         This is enabled by default."""
-        level = logging.DEBUG if debug_on else logging.INFO
-        self.logger.setLevel(level)
+        self.level = 'DEBUG' if debug_on else 'INFO'
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the update logger."""
@@ -65,7 +63,7 @@ class UpdaterBase(object):
         db.authenticate(user, password)
         self.__dict__.update({'client': client, 'db': db})
         self.connected = True
-        self.logger.debug('Connected to %s using database %s', host, db)
+        self.logger.debug('Connected to {} using database {}', host, db)
 
     def disconnect_mongo(self):
         self.client.close()
@@ -123,27 +121,28 @@ class UpdaterBase(object):
         * save logs if any
         """
         self.parse_args()
-        if not self.connected:
-            self.connect_mongo()
-        self.pre_update()
-        for date in self._dates:
-            if hasattr(self, 'dates') and date not in self.dates:
-                continue
-            self.logger.info('START')
-            iterates = self.iterates
-            while iterates:
-                p = Process(target=self.update, args=(date,))
-                p.start()
-                p.join(self.timeout)
-                if p.is_alive():
-                    self.logger.warning('Timeout on date: %s', date)
-                    p.terminate()
-                    iterates -= 1
-                else:
-                    iterates = 0
-            self.logger.info('END\n')
-        self.pro_update()
-        self.disconnect_mongo()
+        with self.setup:
+            if not self.connected:
+                self.connect_mongo()
+            self.pre_update()
+            for date in self._dates:
+                if hasattr(self, 'dates') and date not in self.dates:
+                    continue
+                self.logger.info('START')
+                iterates = self.iterates
+                while iterates:
+                    p = Process(target=self.update, args=(date,))
+                    p.start()
+                    p.join(self.timeout)
+                    if p.is_alive():
+                        self.logger.warning('Timeout on date: {}', date)
+                        p.terminate()
+                        iterates -= 1
+                    else:
+                        iterates = 0
+                self.logger.info('END\n')
+            self.pro_update()
+            self.disconnect_mongo()
 
     def parse_args(self):
         """This method makes any updater file can be turned into a script."""
@@ -154,29 +153,39 @@ class UpdaterBase(object):
         parser.add_argument('-e', '--end', help='end date(included); default: today', default=today, nargs='?')
         parser.add_argument('date', help='the date to be updated', default=today, nargs='?')
         parser.add_argument('--source', choices=('mssql', 'oracle'), help='type of source database', default='oracle')
+        parser.add_argument('--debug_on', action='store_true')
+        parser.add_argument('-f', '--logfile', type=str)
+        parser.add_argument('-o', '--logoff', action='store_true')
         args = parser.parse_args()
 
-        if args.logfile:
-            args.logoff = False
+        self.set_debug_mode(args.debug_on)
 
-        if not args.logoff and not args.logfile:
-            self.logger.debug('@logfile not explicitly provided')
-            logdir = 'logs/%s/%s' % (today[:4], today[4:6])
-            if not os.path.exists(logdir):
-                os.makedirs(logdir)
-                self.logger.debug('Created directory %s', logdir)
-            args.logfile = os.path.join(logdir, 'log.'+today)
-            self.logger.debug('@logfile set to: %s', args.logfile)
         if args.start and args.end:
             _dates = [dt.strftime('%Y%m%d') for dt in pd.date_range(args.start, args.end)]
         else:
             _dates = [args.date]
+        self._dates = _dates
 
-        self.__dict__.update({
-            'logoff': args.logoff,
-            'logfile': args.logfile,
-            'today': today,
-            '_dates': _dates,
-            })
         if args.source:
             self.source = args.source
+
+        if args.logfile:
+            args.logoff = False
+
+        if not args.logoff:
+            if not args.logfile:
+                self.logger.debug('@logfile not explicitly provided')
+                logdir = os.path.join('logs', today[:4], today[4:6])
+                if not os.path.exists(logdir):
+                    os.makedirs(logdir)
+                    self.logger.debug('Created directory {}', logdir)
+                args.logfile = os.path.join(logdir, 'log.'+today)
+                self.logger.debug('@logfile set to: {}', args.logfile)
+            self.setup = logbook.NestedSetup([
+                logbook.NullHandler(),
+                logbook.FileHandler(args.logfile, level='INFO'),
+                logbook.StreamHandler(sys.stdout, level=self.level, bubble=True)])
+        else:
+            self.setup = logbook.NestedSetup([
+                logbook.NullHandler(),
+                logbook.StreamHandler(sys.stdout, level=self.level, bubble=True)])

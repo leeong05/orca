@@ -45,10 +45,10 @@ class CaxUpdater(UpdaterBase):
     def update(self, date):
         """Update adjusting factors and shares structures for the **same** day before market open."""
         CMD = self.cax_sql.CMD0.format(date=date)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         if date != list(self.cursor)[0][0]:
-            self.logger.warning('%s is not a trading day?', date)
+            self.logger.warning('{} is not a trading day?', date)
             return
         self.db.dates.update({'date': date}, {'date': date}, upsert=True)
         self._update(date, self.cax_sql.CMD1, self.cax_sql.dnames1, self.db.cax, float)
@@ -56,11 +56,11 @@ class CaxUpdater(UpdaterBase):
 
     def _update(self, date, CMD, dnames, col, dtype):
         CMD = CMD.format(date=date)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            self.logger.warning('No records found for %s on %s', col.name, date)
+            self.logger.warning('No records found for {} on {}', col.name, date)
             return
 
         df.columns = ['sid'] + dnames
@@ -69,7 +69,7 @@ class CaxUpdater(UpdaterBase):
         for dname in dnames:
             key = {'dname': dname, 'date': date}
             col.update(key, {'$set': {'dvalue': df[dname].dropna().astype(dtype).to_dict()}}, upsert=True)
-        self.logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s',
+        self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}',
                 len(df), col.name, self.db.name, date)
 
 if __name__ == '__main__':

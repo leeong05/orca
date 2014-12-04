@@ -42,28 +42,28 @@ class BarraUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        self.logger.debug('Ensuring index date_1 on collection %s', self.barra_idmaps.name)
+        self.logger.debug('Ensuring index date_1 on collection {}', self.barra_idmaps.name)
         self.barra_idmaps.ensure_index([('date', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_dname_1 on collection %s', self.exposure.name)
+        self.logger.debug('Ensuring index date_1_dname_1 on collection {}', self.exposure.name)
         self.exposure.ensure_index([('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1 on collection %s', self.exposure.name)
+        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.exposure.name)
         self.exposure.ensure_index([('dname', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_factor_1 on collection %s', self.facret.name)
+        self.logger.debug('Ensuring index date_1_factor_1 on collection {}', self.facret.name)
         self.facret.ensure_index([('date', 1), ('factor', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index factor_1_date_1 on collection %s', self.facret.name)
+        self.logger.debug('Ensuring index factor_1_date_1 on collection {}', self.facret.name)
         self.facret.ensure_index([('factor', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_factor_1 on collection %s', self.faccov.name)
+        self.logger.debug('Ensuring index date_1_factor_1 on collection {}', self.faccov.name)
         self.faccov.ensure_index([('date', 1), ('factor', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_dname_1 on collection %s', self.specifics.name)
+        self.logger.debug('Ensuring index date_1_dname_1 on collection {}', self.specifics.name)
         self.specifics.ensure_index([('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1 on collection %s', self.specifics.name)
+        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.specifics.name)
         self.specifics.ensure_index([('dname', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
 
@@ -71,7 +71,7 @@ class BarraUpdater(UpdaterBase):
         """Update factor exposure, factor returns, factor covariance and stocks specifics for **previous** day before market open."""
         date = self.dates[self.dates.index(date)-1]
         if not os.path.exists(barra_sql.gp_idmaps(date)):
-            self.logger.error('Barra model data does not exist on %s', date)
+            self.logger.error('Barra model data does not exist on {}', date)
             barra_sql.fetch_and_parse(date)
         self.idmaps = json.load(open(barra_sql.gp_idmaps(date)))
         if self.update_idmaps:
@@ -84,19 +84,19 @@ class BarraUpdater(UpdaterBase):
     def update_exposure(self, date):
         expjson = barra_sql.gp_expjson(date, self.model)
         if not os.path.exists(expjson):
-            self.logger.error('No record found for %s on %s', self.exposure.name, date)
+            self.logger.error('No record found for {} on {}', self.exposure.name, date)
             return
         expjson = json.load(open(expjson))
 
         for dname, dvalue in expjson.iteritems():
             key = {'date': date, 'dname': dname}
             self.exposure.update(key, {'$set': {'dvalue': dvalue}}, upsert=True)
-        self.logger.info('UPSERT documents for %d factors into (c: [%s]) of (d: [%s]) on %s', len(expjson), self.exposure.name, self.db.name, date)
+        self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', len(expjson), self.exposure.name, self.db.name, date)
 
     def update_facret(self, date):
         facret = barra_sql.gp_facret(date, self.model)
         if not os.path.exists(facret):
-            self.logger.error('No record found for %s on %s', self.facret.name, date)
+            self.logger.error('No record found for {} on {}', self.facret.name, date)
             return
 
         cnt = 0
@@ -110,12 +110,12 @@ class BarraUpdater(UpdaterBase):
                     cnt += 1
                 except:
                     pass
-        self.logger.info('UPSERT documents for %d factors into (c: [%s]) of (d: [%s]) on %s', cnt, self.facret.name, self.db.name, date)
+        self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', cnt, self.facret.name, self.db.name, date)
 
     def update_faccov(self, date):
         faccov = barra_sql.gp_faccov(date, self.model)
         if not os.path.exists(faccov):
-            self.logger.error('No record found for %s on %s', self.faccov.name, date)
+            self.logger.error('No record found for {} on {}', self.faccov.name, date)
             return
 
         from collections import defaultdict
@@ -133,13 +133,13 @@ class BarraUpdater(UpdaterBase):
         for factor, cov in res.iteritems():
             key = {'date': date, 'factor': factor}
             self.faccov.update(key, {'$set': {'covariance': cov}}, upsert=True)
-        self.logger.info('UPSERT documents for %d factors into (c: [%s]) of (d: [%s]) on %s', len(res), self.faccov.name, self.db.name, date)
+        self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', len(res), self.faccov.name, self.db.name, date)
 
     def update_specifics(self, date):
         specret = barra_sql.gp_specret(date, self.model)
         specs = barra_sql.gp_specs(date, self.model)
         if not os.path.exists(specs) or not os.path.exists(specret):
-            self.logger.error('No record found for %s on %s', self.specifics.name, date)
+            self.logger.error('No record found for {} on {}', self.specifics.name, date)
             return
 
         specific_returns = {}
@@ -186,7 +186,7 @@ class BarraUpdater(UpdaterBase):
         self.specifics.update({'dname': 'specific_risk', 'date': date}, {'$set': {'dvalue': specific_risk}}, upsert=True)
         self.specifics.update({'dname': 'historical_beta', 'date': date}, {'$set': {'dvalue': historical_beta}}, upsert=True)
         self.specifics.update({'dname': 'predicted_beta', 'date': date}, {'$set': {'dvalue': predicted_beta}}, upsert=True)
-        self.logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s', len(specific_returns), self.specifics.name, self.db.name, date)
+        self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', len(specific_returns), self.specifics.name, self.db.name, date)
 
 
 if __name__ == '__main__':

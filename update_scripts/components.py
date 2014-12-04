@@ -48,11 +48,11 @@ class ComponentsUpdater(UpdaterBase):
     def update(self, date):
         """Update index components (and weight) for the **same** day before market open."""
         CMD = self.components_sql.CMD1.format(date=date)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df1 = pd.DataFrame(list(self.cursor))
         if len(df1) == 0:
-            self.logger.warning('No records found for %s on %s', self.db.index_components.name, date)
+            self.logger.warning('No records found for {} on {}', self.db.index_components.name, date)
             return
 
         df1.columns = ['dname', 'market', 'sid']
@@ -60,7 +60,7 @@ class ComponentsUpdater(UpdaterBase):
         df1.index = df1.sid
 
         CMD = self.components_sql.CMD2.format(date=date)
-        self.logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         try:
             df2 = pd.DataFrame(list(self.cursor))
@@ -76,7 +76,7 @@ class ComponentsUpdater(UpdaterBase):
         pool.close()
         pool.join()
 
-        self.logger.info('UPSERT documents for %d indice into (c: [%s]) of (d: [%s]) on %s', len(grouped), self.db.index_components.name, self.db.name, date)
+        self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}', len(grouped), self.db.index_components.name, self.db.name, date)
 
 if __name__ == '__main__':
     comp = ComponentsUpdater()

@@ -38,10 +38,10 @@ class TSMinUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        self.logger.debug('Ensuring index date_1_dname_1_time_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index date_1_dname_1_time_1 on collection {}', self.collection.name)
         self.collection.ensure_index([('date', 1), ('dname', 1), ('time', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1_time_1 on collection %s', self.collection.name)
+        self.logger.debug('Ensuring index dname_1_date_1_time_1 on collection {}', self.collection.name)
         self.collection.ensure_index([('dname', 1), ('date', 1), ('time', 1)],
                 unique=True, dropDups=True, background=True)
 
@@ -50,7 +50,7 @@ class TSMinUpdater(UpdaterBase):
         fname = '%s-%s-%s.csv' % (date[:4], date[4:6], date[6:8])
         srcfile = os.path.join(self.srcdir, fname)
         if not os.path.exists(srcfile):
-            self.logger.error('No records found for %s on %s', self.collection.name, date)
+            self.logger.error('No records found for {} on {}', self.collection.name, date)
             return
 
         df = pd.read_csv(srcfile, header=0, usecols=tsmin_sql.col_index, names=tsmin_sql.col_names, dtype={0: np.str})
@@ -69,7 +69,7 @@ class TSMinUpdater(UpdaterBase):
         pool.imap_unordered(worker, ((date, time, df) for time, df in grouped), self.threads)
         pool.close()
         pool.join()
-        self.logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
+        self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
 
 if __name__ == '__main__':
     ts_5min = TSMinUpdater(bar='5min')
