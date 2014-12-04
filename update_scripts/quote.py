@@ -1,6 +1,6 @@
-import logging
-
-logger = logging.getLogger('updater')
+"""
+.. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
+"""
 
 import pandas as pd
 
@@ -27,23 +27,23 @@ class QuoteUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        logger.debug('Ensuring index sid_1 on collection sids')
+        self.logger.debug('Ensuring index sid_1 on collection sids')
         self.db.sids.ensure_index([('sid', 1)],
                 unique=True, dropDups=True, background=True)
-        logger.debug('Ensuring index date_1_dname_1 on collection quote')
+        self.logger.debug('Ensuring index date_1_dname_1 on collection quote')
         self.db.quote.ensure_index([('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
-        logger.debug('Ensuring index dname_1_date_1 on collection quote')
+        self.logger.debug('Ensuring index dname_1_date_1 on collection quote')
         self.db.quote.ensure_index([('dname', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
 
     def update(self, date):
         CMD = self.quote_sql.CMD.format(date=date)
-        logger.debug('Executing command:\n%s', CMD)
+        self.logger.debug('Executing command:\n%s', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            logger.error('No records found for %s on %s', self.db.sywgindex_quote.name, date)
+            self.logger.error('No records found for %s on %s', self.db.sywgindex_quote.name, date)
             return
 
         df.columns = ['sid'] + self.quote_sql.dnames
@@ -51,14 +51,14 @@ class QuoteUpdater(UpdaterBase):
 
         new_sids = set(df.sid) - set(self.db.sids.distinct('sid'))
         if len(new_sids):
-            logger.info('Found %d new sids', len(new_sids))
+            self.logger.info('Found %d new sids', len(new_sids))
             for sid in new_sids:
                 self.db.sids.update({'sid': sid}, {'sid': sid}, upsert=True)
 
         for dname in self.quote_sql.dnames:
             key = {'dname': dname, 'date': date}
             self.db.quote.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
-        logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s',
+        self.logger.info('UPSERT documents for %d sids into (c: [%s]) of (d: [%s]) on %s',
                 len(df), self.db.quote.name, self.db.name, date)
 
 

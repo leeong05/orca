@@ -5,13 +5,11 @@
 import abc
 import logging
 import os
-from StringIO import StringIO
 from datetime import datetime
 import argparse
 from multiprocessing import Process
 
 import pandas as pd
-import lockfile
 
 from orca import logger
 
@@ -146,18 +144,15 @@ class UpdaterBase(object):
             self.logger.info('END\n')
         self.pro_update()
         self.disconnect_mongo()
-        self.save_logfile()
 
     def parse_args(self):
         """This method makes any updater file can be turned into a script."""
         today = datetime.now().strftime('%Y%m%d')
 
         parser = argparse.ArgumentParser()
-        parser.add_argument('-o', '--logoff', help='turnoff logfile', action='store_true')
         parser.add_argument('-s', '--start', help='start date(included)', type=str)
         parser.add_argument('-e', '--end', help='end date(included); default: today', default=today, nargs='?')
         parser.add_argument('date', help='the date to be updated', default=today, nargs='?')
-        parser.add_argument('-f', '--logfile', help='the log file name', type=str)
         parser.add_argument('--source', choices=('mssql', 'oracle'), help='type of source database', default='oracle')
         args = parser.parse_args()
 
@@ -185,20 +180,3 @@ class UpdaterBase(object):
             })
         if args.source:
             self.source = args.source
-
-        if not args.logoff:
-            log_str = StringIO()
-            str_hdl = logging.StreamHandler(log_str)
-            str_hdl.setLevel(logging.INFO)
-            str_fmt = logging.Formatter(fmt='%(filename)s: %(levelname)s@%(asctime)s]: %(message)s')
-            str_hdl.setFormatter(str_fmt)
-            self.logger.addHandler(str_hdl)
-            self.logger.debug('Added a StringIO channel to logging')
-            self.__dict__.update({'log_str': log_str})
-
-    def save_logfile(self):
-        """Use a file lock to ensure only one updater write its log to a common log file."""
-        if not self.logoff:
-            with lockfile.LockFile(self.logfile):
-                with open(self.logfile, 'a') as file:
-                    file.write(self.log_str.getvalue())
