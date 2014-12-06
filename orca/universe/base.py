@@ -7,8 +7,9 @@ import logging
 
 import pandas as pd
 from pandas.tseries.index import DatetimeIndex
+import logbook
+logbook.set_datetime_format('local')
 
-from orca import logger
 from orca import (
         DATES,
         SIDS,
@@ -34,7 +35,7 @@ class FilterBase(object):
     LOGGER_NAME = 'universe'
 
     def __init__(self, debug_on=True, datetime_index=True, reindex=True, date_check=False):
-        self.logger = logger.get_logger(FilterBase.LOGGER_NAME)
+        self.logger = logbook.Logger(FilterBase.LOGGER_NAME)
         self.set_debug_mode(debug_on)
         self.datetime_index = datetime_index
         self.reindex = reindex

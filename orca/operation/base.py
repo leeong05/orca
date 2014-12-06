@@ -5,7 +5,8 @@
 import abc
 import logging
 
-from orca import logger
+import logbook
+logbook.set_datetime_format('local')
 
 
 class OperationBase(object):
@@ -21,7 +22,7 @@ class OperationBase(object):
     LOGGER_NAME = 'operation'
 
     def __init__(self, debug_on=True):
-        self.logger = logger.get_logger(OperationBase.LOGGER_NAME)
+        self.logger = logbook.Logger(OperationBase.LOGGER_NAME)
         self.set_debug_mode(debug_on)
 
     @abc.abstractmethod

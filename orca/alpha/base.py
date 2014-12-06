@@ -6,9 +6,10 @@ import abc
 import logging
 
 import pandas as pd
+import logbook
+logbook.set_datetime_format('local')
 
 from orca import DATES
-from orca import logger
 from orca.utils import dateutil
 from orca.operation.api import format
 
@@ -26,7 +27,7 @@ class AlphaBase(object):
     LOGGER_NAME = 'alpha'
 
     def __init__(self, debug_on=True):
-        self.logger = logger.get_logger(AlphaBase.LOGGER_NAME)
+        self.logger = logbook.Logger(AlphaBase.LOGGER_NAME)
         self.set_debug_mode(debug_on)
 
     @abc.abstractmethod

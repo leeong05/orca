@@ -11,6 +11,7 @@ from multiprocessing import Process
 
 import pandas as pd
 import logbook
+logbook.set_datetime_format('local')
 
 
 class UpdaterBase(object):
@@ -89,11 +90,12 @@ class UpdaterBase(object):
             import pymssql
             connection = pymssql.connect('192.168.1.181', 'sa', 'Nm,.hjkl', 'jydb')
             cursor = connection.cursor()
+            self.logger.debug('Connected to MSSQL Database jydb on 192.168.1.181')
         elif self.source == 'oracle':
             import cx_Oracle
             connection = cx_Oracle.connect('jydb/jydb@jydb')
             cursor = connection.cursor()
-        self.logger.debug('Connected to MSSQL Database jydb on 192.168.1.181')
+            self.logger.debug('Connected to Oracle Database jydb on 192.168.1.181')
         self.__dict__.update({'connection': connection, 'cursor': cursor})
 
     def connect_wind(self):

@@ -6,8 +6,9 @@ import abc
 import logging
 
 import pandas as pd
+import logbook
+logbook.set_datetime_format('local')
 
-from orca import logger
 from orca import (
         DATES,
         SIDS,
@@ -33,7 +34,7 @@ class FetcherBase(object):
     LOGGER_NAME = 'mongo'
 
     def __init__(self, debug_on=True, datetime_index=False, reindex=False, date_check=False, delay=1):
-        self.logger = logger.get_logger(FetcherBase.LOGGER_NAME)
+        self.logger = logbook.Logger(FetcherBase.LOGGER_NAME)
         self.set_debug_mode(debug_on)
         self.datetime_index = datetime_index
         self.reindex = reindex

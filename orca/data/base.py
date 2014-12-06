@@ -6,7 +6,9 @@ import os
 import abc
 import logging
 
-from orca import logger
+import logbook
+logbook.set_datetime_format('local')
+
 
 class IOBase(object):
     """Base class for data savers/loaders.
@@ -24,7 +26,7 @@ class IOBase(object):
 
     def __init__(self, cachedir, debug_on=True):
         self.cachedir = cachedir
-        self.logger = logger.get_logger(IOBase.LOGGER_NAME)
+        self.logger = logbook.Logger(IOBase.LOGGER_NAME)
         self.set_debug_mode(debug_on)
 
     def set_debug_mode(self, debug_on):
