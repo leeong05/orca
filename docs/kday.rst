@@ -16,6 +16,7 @@ amount
 vwap                    ``amount / volume``
 returns                 ``close / prev_close - 1.``
 returnsN                see :ref:`Example<quote_example>`
+fclose                  Front-filled close including suspended stocks
 ======================= =================================================
 
 .. _quote_example: 
