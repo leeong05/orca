@@ -55,9 +55,23 @@ class QuoteUpdater(UpdaterBase):
             for sid in new_sids:
                 self.db.sids.update({'sid': sid}, {'sid': sid}, upsert=True)
 
+        di = self.dates.index(date)
+        if di >= 1:
+            prev_date = self.dates[di-1]
+            prev_fclose = self.db.quote.find_one(
+                    {'dname': 'fclose', 'date': prev_date},
+                    {'_id': 0, 'dvalue': 1})['dvalue']
+            nsids = set(prev_fclose.keys()) - set(df.index)
+        else:
+            nsids = {}
+        fclose = df.close.dropna().astype(float).to_dict()
+        for sid in nsids:
+            fclose[sid] = prev_fclose[sid]
+
         for dname in self.quote_sql.dnames:
             key = {'dname': dname, 'date': date}
             self.db.quote.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
+        self.db.quote.update({'dname': 'fclose', 'date': date}, {'$set': {'dvalue': fclose}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}',
                 len(df), self.db.quote.name, self.db.name, date)
 
