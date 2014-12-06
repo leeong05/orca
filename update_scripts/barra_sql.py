@@ -61,14 +61,14 @@ def unzip_files(date, zips):
         zipfile = ZipFile(_idfile)
         zipfile.extract('CHN_X_Asset_ID.%s' % date, dirdir)
     while zips:
-        zip = zips.pop()
-        model = 'daily' if zip.find('CNE5D') != -1 else 'short'
+        zipf = zips.pop()
+        model = 'daily' if zipf.find('CNE5D') != -1 else 'short'
         dstdir = os.path.join(dirdir, model, date[:4], date[4:6], date[6:8])
         if not os.path.exists(dstdir):
             os.makedirs(dstdir)
             logger.debug('Created directory {}', dstdir)
-        zipfile = ZipFile(zip)
-        logger.info('Extracting files from %s:\n%s', zip, '\n\t'.join(zipfile.namelist()))
+        zipfile = ZipFile(zipf)
+        logger.info('Extracting files from {}:\n{}', zipf, '\n\t'.join(zipfile.namelist()))
         zipfile.extractall(dstdir)
 
 def get_idmaps(date):

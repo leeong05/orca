@@ -51,7 +51,7 @@ class QuoteUpdater(UpdaterBase):
 
         new_sids = set(df.sid) - set(self.db.sids.distinct('sid'))
         if len(new_sids):
-            self.logger.info('Found %d new sids', len(new_sids))
+            self.logger.info('Found {} new sids', len(new_sids))
             for sid in new_sids:
                 self.db.sids.update({'sid': sid}, {'sid': sid}, upsert=True)
 
