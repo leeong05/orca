@@ -2,12 +2,11 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-import logging
-
 import pandas as pd
+import logbook
+logbook.set_datetime_format('local')
 
 from engine import fetch_sql
-from orca import logger
 
 
 class AlphaDBFetcher(object):
@@ -21,15 +20,8 @@ class AlphaDBFetcher(object):
     LOGGER_NAME = 'alphadb'
 
     def __init__(self, **kwargs):
-        self.logger = logger.get_logger(AlphaDBFetcher.LOGGER_NAME)
-        self.set_debug_mode(kwargs.get('debug_on', True))
+        self.logger = logbook.Logger(AlphaDBFetcher.LOGGER_NAME)
         self.delay = kwargs.get('delay', 0)
-
-    def set_debug_mode(self, debug_on):
-        """Enable/Disable debug level message in data fetchers.
-        This is enabled by default."""
-        level = logging.DEBUG if debug_on else logging.INFO
-        self.logger.setLevel(level)
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the alpha logger."""

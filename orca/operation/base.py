@@ -3,7 +3,6 @@
 """
 
 import abc
-import logging
 
 import logbook
 logbook.set_datetime_format('local')
@@ -21,9 +20,8 @@ class OperationBase(object):
 
     LOGGER_NAME = 'operation'
 
-    def __init__(self, debug_on=True):
+    def __init__(self):
         self.logger = logbook.Logger(OperationBase.LOGGER_NAME)
-        self.set_debug_mode(debug_on)
 
     @abc.abstractmethod
     def operate(self, alpha):
@@ -35,12 +33,6 @@ class OperationBase(object):
         :raises: NotImplementedError
         """
         raise NotImplementedError
-
-    def set_debug_mode(self, debug_on):
-        """Enable/Disable debug level messages in the operation.
-        This is enabled by default."""
-        level = logging.DEBUG if debug_on else logging.INFO
-        self.logger.setLevel(level)
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the operation logger."""

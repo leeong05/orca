@@ -3,7 +3,6 @@
 """
 
 import abc
-import logging
 
 import pandas as pd
 import logbook
@@ -18,7 +17,6 @@ from orca.utils import dateutil
 class FetcherBase(object):
     """Base class for mongo fetchers.
 
-    :param boolean debug_on: Enable/Disable debug level messages. Default: True
     :param boolean datetime_index: Whether to use DatetimeIndex or list of date strings. Default: False
     :param boolean reindex: Whether to use full sids as columns in DataFrame. Default: False
     :param boolean date_check: Whethter to check if passed date-related parameters are valid. Default: False
@@ -33,19 +31,12 @@ class FetcherBase(object):
 
     LOGGER_NAME = 'mongo'
 
-    def __init__(self, debug_on=True, datetime_index=False, reindex=False, date_check=False, delay=1):
+    def __init__(self, datetime_index=False, reindex=False, date_check=False, delay=1):
         self.logger = logbook.Logger(FetcherBase.LOGGER_NAME)
-        self.set_debug_mode(debug_on)
         self.datetime_index = datetime_index
         self.reindex = reindex
         self.date_check = date_check
         self.delay = delay
-
-    def set_debug_mode(self, debug_on):
-        """Enable/Disable debug level message in data fetchers.
-        This is enabled by default."""
-        level = logging.DEBUG if debug_on else logging.INFO
-        self.logger.setLevel(level)
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the alpha logger."""

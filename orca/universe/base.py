@@ -3,7 +3,6 @@
 """
 
 import abc
-import logging
 
 import pandas as pd
 from pandas.tseries.index import DatetimeIndex
@@ -20,7 +19,6 @@ from orca.utils import dateutil
 class FilterBase(object):
     """Base class for filters.
 
-    :param boolean debug_on: Enable/Disable debug level messages. Default: True
     :param boolean datetime_index: Whether to use DatetimeIndex or list of date strings. Default: False
     :param boolean reindex: Whether to use full sids as columns in DataFrame. Default: False
     :param boolean date_check: Whethter to check if passed date-related parameters are valid. Default: False
@@ -34,18 +32,11 @@ class FilterBase(object):
 
     LOGGER_NAME = 'universe'
 
-    def __init__(self, debug_on=True, datetime_index=True, reindex=True, date_check=False):
+    def __init__(self, datetime_index=True, reindex=True, date_check=False):
         self.logger = logbook.Logger(FilterBase.LOGGER_NAME)
-        self.set_debug_mode(debug_on)
         self.datetime_index = datetime_index
         self.reindex = reindex
         self.date_check = date_check
-
-    def set_debug_mode(self, debug_on):
-        """Enable/Disable debug level message in data fetchers.
-        This is enabled by default."""
-        level = logging.DEBUG if debug_on else logging.INFO
-        self.logger.setLevel(level)
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the alpha logger."""
@@ -145,7 +136,6 @@ class DataFilter(FilterBase):
             dname, fetcherclass = data[0], data[1]
             dct = {'datetime_index': self.datetime_index,
                    'reindex': self.reindex,
-                   'debug_on': self.logger.level == logging.DEBUG,
                    'date_check': self.date_check}
             if len(data) == 3:
                 dct.update(data[2])

@@ -4,7 +4,6 @@
 
 import os
 import abc
-import logging
 
 import logbook
 logbook.set_datetime_format('local')
@@ -24,16 +23,9 @@ class IOBase(object):
 
     LOGGER_NAME = 'data'
 
-    def __init__(self, cachedir, debug_on=True):
+    def __init__(self, cachedir):
         self.cachedir = cachedir
         self.logger = logbook.Logger(IOBase.LOGGER_NAME)
-        self.set_debug_mode(debug_on)
-
-    def set_debug_mode(self, debug_on):
-        """Enable/Disable debug level message in data savers/loaders.
-        This is enabled by default."""
-        level = logging.DEBUG if debug_on else logging.INFO
-        self.logger.setLevel(level)
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the data logger."""

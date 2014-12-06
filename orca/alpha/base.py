@@ -3,7 +3,6 @@
 """
 
 import abc
-import logging
 
 import pandas as pd
 import logbook
@@ -26,9 +25,8 @@ class AlphaBase(object):
 
     LOGGER_NAME = 'alpha'
 
-    def __init__(self, debug_on=True):
+    def __init__(self):
         self.logger = logbook.Logger(AlphaBase.LOGGER_NAME)
-        self.set_debug_mode(debug_on)
 
     @abc.abstractmethod
     def generate(self, date):
@@ -48,12 +46,6 @@ class AlphaBase(object):
         if di >= offset and len(DATES)-1 >= di+offset:
             return DATES[di-offset]
         raise ValueError('Can\'t get date with the specified offset')
-
-    def set_debug_mode(self, debug_on):
-        """Enable/Disable debug level messages in the alpha.
-        This is enabled by default."""
-        level = logging.DEBUG if debug_on else logging.INFO
-        self.logger.setLevel(level)
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the alpha logger."""
