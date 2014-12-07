@@ -2,7 +2,7 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-from multiprocessing import Pool, cpu_count()
+from multiprocessing import Pool, cpu_count
 import pandas as pd
 
 from base import UpdaterBase
