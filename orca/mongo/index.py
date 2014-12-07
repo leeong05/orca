@@ -28,8 +28,8 @@ class IndexQuoteFetcher(KDayFetcher):
 
     def fetch_window(self, dname, window, index=None, **kwargs):
         """
-        :param dname: Data name or a list of data names
-        :type dname: str, list, None(to fetch all daily quote items)
+        :param dname: Data name or a list of data names or None(to fetch all daily quote items)
+        :type dname: str, list, None
         :param str index: Index name
         :returns: Series if ``dname`` is only a string or DataFrame with ``dname`` in the columns
         """
