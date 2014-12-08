@@ -2,6 +2,7 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import numpy as np
 import pandas as pd
 
 from base import UpdaterBase
@@ -12,7 +13,7 @@ import quote_oracle
 class QuoteUpdater(UpdaterBase):
     """The updater class for collection 'quote'."""
 
-    def __init__(self, source=None, timeout=10):
+    def __init__(self, source=None, timeout=60):
         self.source = source
         super(QuoteUpdater, self).__init__(timeout=timeout)
 
@@ -54,15 +55,15 @@ class QuoteUpdater(UpdaterBase):
             self.logger.info('Found {} new sids', len(new_sids))
             for sid in new_sids:
                 self.db.sids.update({'sid': sid}, {'sid': sid}, upsert=True)
-
+ 
         di = self.dates.index(date)
         if di >= 1:
             prev_date = self.dates[di-1]
-            prev_fclose = self.db.quote.find_one(
-                    {'dname': 'fclose', 'date': prev_date},
-                    {'_id': 0, 'dvalue': 1})['dvalue']
+            prev_fclose = self.db.quote.find_one({'dname': 'fclose', 'date': prev_date}, {'_id': 0, 'dvalue': 1})['dvalue']
             nsids = set(prev_fclose.keys()) - set(df.index)
         else:
+            prev_date = None
+            prev_fclose = {}
             nsids = {}
         fclose = df.close.dropna().astype(float).to_dict()
         for sid in nsids:
@@ -74,7 +75,6 @@ class QuoteUpdater(UpdaterBase):
         self.db.quote.update({'dname': 'fclose', 'date': date}, {'$set': {'dvalue': fclose}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}',
                 len(df), self.db.quote.name, self.db.name, date)
-
 
 if __name__ == '__main__':
     quote = QuoteUpdater()

@@ -12,7 +12,7 @@ import cax_oracle
 class CaxUpdater(UpdaterBase):
     """The updater class for collections 'cax', 'shares'"""
 
-    def __init__(self, source=None, timeout=10):
+    def __init__(self, source=None, timeout=30):
         self.source = source
         UpdaterBase.__init__(self, timeout)
 
