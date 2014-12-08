@@ -13,7 +13,7 @@ import indexquote_oracle
 class IndexQuoteUpdater(UpdaterBase):
     """The updater class for collection 'index_quote'."""
 
-    def __init__(self, source=None, timeout=10):
+    def __init__(self, source=None, timeout=60):
         self.source = source
         UpdaterBase.__init__(self, timeout)
 
