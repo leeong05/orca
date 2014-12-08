@@ -29,8 +29,7 @@ class IndexQuoteUpdater(UpdaterBase):
         return
 
         self.logger.debug('Ensuring index index_1_date_1 on collection index_quote')
-        self.db.index_quote.ensure_index([('index', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
+        self.db.index_quote.ensure_index([('index', 1), ('date', 1)], background=True)
 
     def update(self, date):
         """Update index quote for the **same** day after market close."""

@@ -2,7 +2,6 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-import numpy as np
 import pandas as pd
 
 from base import UpdaterBase
@@ -31,9 +30,6 @@ class QuoteUpdater(UpdaterBase):
         self.logger.debug('Ensuring index sid_1 on collection sids')
         self.db.sids.ensure_index([('sid', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_dname_1 on collection quote')
-        self.db.quote.ensure_index([('date', 1), ('dname', 1)],
-                unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index dname_1_date_1 on collection quote')
         self.db.quote.ensure_index([('dname', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
@@ -55,7 +51,7 @@ class QuoteUpdater(UpdaterBase):
             self.logger.info('Found {} new sids', len(new_sids))
             for sid in new_sids:
                 self.db.sids.update({'sid': sid}, {'sid': sid}, upsert=True)
- 
+
         di = self.dates.index(date)
         if di >= 1:
             prev_date = self.dates[di-1]

@@ -26,14 +26,8 @@ class CaxUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        self.logger.debug('Ensuring index date_1_dname_1 on collection cax')
-        self.db.cax.ensure_index([('date', 1), ('dname', 1)],
-                unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index dname_1_date_1 on collection cax')
         self.db.cax.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_dname_1 on collection shares')
-        self.db.shares.ensure_index([('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index dname_1_date_1 on collection shares')
         self.db.shares.ensure_index([('dname', 1), ('date', 1)],

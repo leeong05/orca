@@ -27,9 +27,6 @@ class SYWGQuoteUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        self.logger.debug('Ensuring index date_1_dname_1 on collection sywgindex_quote')
-        self.db.sywgindex_quote.ensure_index([('date', 1), ('dname', 1)],
-                unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index dname_1_date_1 on collection sywgindex_quote')
         self.db.sywgindex_quote.ensure_index([('dname', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)

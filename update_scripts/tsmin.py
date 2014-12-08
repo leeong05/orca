@@ -38,12 +38,8 @@ class TSMinUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        self.logger.debug('Ensuring index date_1_dname_1_time_1 on collection {}', self.collection.name)
-        self.collection.ensure_index([('date', 1), ('dname', 1), ('time', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1_time_1 on collection {}', self.collection.name)
-        self.collection.ensure_index([('dname', 1), ('date', 1), ('time', 1)],
-                unique=True, dropDups=True, background=True)
+        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.collection.name)
+        self.collection.ensure_index([('dname', 1), ('date', 1)], background=True)
 
     def update(self, date):
         """Update TinySoft minute-bar data for the **same** day after market close."""

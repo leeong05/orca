@@ -30,14 +30,8 @@ class IndustryUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        self.logger.debug('Ensuring index standard_1_date_1_dname_1 on collection industry')
-        self.db.industry.ensure_index([('standard', 1), ('date', 1), ('dname', 1)],
-                unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index standard_1_dname_1_date_1 on collection industry')
         self.db.industry.ensure_index([('standard', 1), ('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index standard_1_date_1_dname_1 on collection industry_info')
-        self.db.industry_info.ensure_index([('standard', 1), ('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index standard_1_dname_1_date_1 on collection industry_info')
         self.db.industry_info.ensure_index([('standard', 1), ('dname', 1), ('date', 1)],

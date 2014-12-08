@@ -29,9 +29,8 @@ class TSRetUpdater(UpdaterBase):
     def pro_update(self):
         return
 
-        self.logger.debug('Ensuring index dname_1_date_1_time_1 on collection {}', self.collection.name)
-        self.collection.ensure_index([('dname', 1), ('date', 1), ('time', 1)],
-                unique=True, dropDups=True, background=True)
+        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.collection.name)
+        self.collection.ensure_index([('dname', 1), ('date', 1)], background=True)
 
     def update(self, date):
         """Update TinySoft interval returns data(1min, 5min, 15min, 30min, 60min, 120min) for the **same** day after market close."""
