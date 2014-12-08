@@ -23,6 +23,7 @@ pip install -U statsmodels
 pip install -U blockdiag
 pip install -U Sphinx
 pip install -U sphinxcontrib-blockdiag
+pip install -U logbook
 
 pip install -U pymssql
 easy_install -U mysql-connector-python

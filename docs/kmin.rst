@@ -45,3 +45,16 @@ Example::
    from orca.utils.dateutil import generate_timestamps as gen_ts
    times = gen_ts('130500', '150000', step=300, exclude_end=False)
    tsmin.fetch('close', times, '20140101', '20140301') 
+
+* Fetcher: :py:class:`~orca.mongo.interval.IntervalReturnsFetcher`
+
+======================= =================================================
+Data name               Remark
+======================= =================================================
+returns1                returns resampled every 1 minute
+returns5                returns resampled every 5 minutes
+returns15               returns resampled every 15 minutes
+returns30               returns resampled every 30 minutes
+returns60               returns resampled every 60 minutes
+returns120              returns resampled every 120 minutes
+======================= =================================================

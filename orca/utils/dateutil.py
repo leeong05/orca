@@ -117,23 +117,26 @@ def cut_window(dates, startdate, enddate=None, backdays=0):
     return dates[startindex-backdays: endindex+1]
 
 _dummy_date = datetime(1900, 1, 1)
-def generate_timestamps(starttime, endtime, step, exclud_end=True):
+def generate_timestamps(starttime, endtime, step, exclude_end=True, exclude_begin=False):
     """Generate consecutive time stamps.
 
     :param str starttime, endtime: Must be 6-length time string in the format 'hhmmss'
     :param int step: Number of **seconds** as step
-    :param boolean end_excluded: Whether the ``endtime`` itself should be excluded from the result. Default: True
+    :param boolean exclude_end: Whether the ``endtime`` itself should be excluded from the result. Default: True
+    :param boolean exclude_begin: Whether the ``starttime`` itself should be excluded from the result. Default: False
     :returns: Python generator
     """
 
     starttime = time(int(starttime[:2]), int(starttime[2:4]), int(starttime[4:6]))
     step = timedelta(seconds=int(step))
     dt = datetime.combine(_dummy_date, starttime)
+    if exclude_begin:
+        dt += step
 
     while True:
         timestamp = dt.strftime('%H%M%S')
-        if (exclud_end and timestamp < endtime) or \
-                (not exclud_end and timestamp <= endtime):
+        if (exclude_end and timestamp < endtime) or \
+                (not exclude_end and timestamp <= endtime):
             yield timestamp
             dt += step
         else:

@@ -240,4 +240,4 @@ class KMinFetcher(FetcherBase):
         res = self.fetch_history(dname, times, date, 1, delay=offset, **kwargs)
         if isinstance(times, str):
             return res.iloc[0]
-        return res.major_xs(res.major_axis[0])
+        return res.major_xs(res.major_axis[0]).T
