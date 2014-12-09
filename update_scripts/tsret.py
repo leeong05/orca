@@ -2,8 +2,11 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import pandas as pd
+
 from orca.mongo.interval import IntervalFetcher
 from orca.mongo.quote import QuoteFetcher
+from orca.mongo.index import IndexQuoteFetcher
 from orca.utils import dateutil
 
 from base import UpdaterBase
@@ -16,6 +19,7 @@ class TSRetUpdater(UpdaterBase):
         UpdaterBase.__init__(self, timeout)
         self.interval = IntervalFetcher('1min')
         self.quote = QuoteFetcher()
+        self.indexquote = IndexQuoteFetcher()
         before_noon = dateutil.generate_timestamps('093000', '113000', 60, exclude_end=False, exclude_begin=True)
         after_noon = dateutil.generate_timestamps('130000', '150000', 60, exclude_end=False, exclude_begin=True)
         self.times = list(before_noon) + list(after_noon)
@@ -34,6 +38,7 @@ class TSRetUpdater(UpdaterBase):
 
     def update(self, date):
         """Update TinySoft interval returns data(1min, 5min, 15min, 30min, 60min, 120min) for the **same** day after market close."""
+        """
         interval = self.interval.fetch_daily('close', self.times, date)
         interval.ix['093000'] = self.quote.fetch_daily('prev_close', date).reindex(columns=interval.columns)
         interval = interval.sort_index()
@@ -45,6 +50,24 @@ class TSRetUpdater(UpdaterBase):
                 key.update({'time': time})
                 self.db.ts_ret.update(key, {'$set': {'dvalue': ser.dropna().to_dict()}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', interval.shape[1], self.collection.name, self.db.name, date)
+        """
+
+        indice = self.db.tsindex_1min.distinct('dname')
+        for index in indice:
+            query = {'dname': index, 'date': date}
+            proj = {'_id': 0, 'close': 1}
+            ser = pd.DataFrame(list(self.db.tsindex_1min.find(query, proj))).close
+            ser.index = self.times
+            prev_close = self.indexquote.fetch_daily('prev_close', date, index=index)
+            ser.ix['093000'] = prev_close
+            ser = ser.sort_index()
+            for i in (5, 15, 30, 60, 120):
+                sub_ser = ser.ix[::i]
+                sub_ret = sub_ser.pct_change(1).ix[1:]
+                key = {'dname': 'returns'+str(i), 'index': index, 'date': date}
+                self.db.tsindex_ret.update(key, {'$set': {'dvalue': sub_ret.to_dict()}}, upsert=True)
+        self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}', len(indice), self.db.tsindex_ret.name, self.db.name, date)
+
 
 if __name__ == '__main__':
     ts_ret = TSRetUpdater()

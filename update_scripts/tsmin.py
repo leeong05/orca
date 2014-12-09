@@ -33,6 +33,7 @@ class TSMinUpdater(UpdaterBase):
         self.__dict__.update({
                 'dates': self.db.dates.distinct('date'),
                 'collection': self.db['ts_'+self.bar],
+                'index_collection': self.db['tsindex_'+self.bar],
                 })
 
     def pro_update(self):
@@ -40,6 +41,8 @@ class TSMinUpdater(UpdaterBase):
 
         self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.collection.name)
         self.collection.ensure_index([('dname', 1), ('date', 1)], background=True)
+        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.index_collection.name)
+        self.index_collection.ensure_index([('dname', 1), ('date', 1)], background=True)
 
     def update(self, date):
         """Update TinySoft minute-bar data for the **same** day after market close."""
@@ -50,22 +53,34 @@ class TSMinUpdater(UpdaterBase):
             return
 
         df = pd.read_csv(srcfile, header=0, usecols=tsmin_sql.col_index, names=tsmin_sql.col_names, dtype={0: np.str})
-        df = df.ix[df.sid.apply(tsmin_sql.is_stock)]
-        df.sid = [sid[2:8] for sid in df.sid]
         df['date'] = date
         df['time'] = [dt[11:13]+dt[14:16]+dt[17:19] for dt in df.datetime]
         vwap = df.amount / df.volume
         vwap[np.isinf(vwap)] = np.nan
         df['vwap'] = vwap
         df.drop('datetime', axis=1, inplace=True)
-        df.index = df.sid
+        is_stock = df.sid.apply(tsmin_sql.is_stock)
 
-        grouped = df.groupby('time')
+        idf = df.ix[~is_stock]
+        idf.index = idf.sid
+        for sid, ser in idf.iterrows():
+            print ser
+            key = {'dname': sid, 'date': date, 'time': ser['time']}
+            ser = ser.ix[tsmin_sql.index_dnames]
+            self.index_collection.update(key, {'$set': ser.to_dict()}, upsert=True)
+
+        sdf = df.ix[is_stock]
+        sdf.sid = [sid[2:8] for sid in sdf.sid]
+        sdf.index = sdf.sid
+
+        grouped = sdf.groupby('time')
         pool = Pool(self.threads)
         pool.imap_unordered(worker, ((date, time, df) for time, df in grouped), self.threads)
         pool.close()
         pool.join()
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
+
+
 
 if __name__ == '__main__':
     ts_5min = TSMinUpdater(bar='5min')

@@ -27,10 +27,13 @@ db.index_quote.ensureIndex({index: 1, date: 1}, {unique: true, dropDups: true, b
 db.sywgindex_quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.ts_1min.ensureIndex({dname: 1, date: 1}, {background: true})
+db.tsindex_1min.ensureIndex({dname: 1, date: 1}, {background: true})
 
 db.ts_5min.ensureIndex({dname: 1, date: 1}, {background: true})
+db.tsindex_5min.ensureIndex({dname: 1, date: 1}, {background: true})
 
 db.ts_ret.ensureIndex({dname: 1, date: 1}, {background: true})
+db.tsindex_ret.ensureIndex({index: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_idmaps.ensureIndex({date: 1}, {unique: true, dropDups: true, background: true})
 
