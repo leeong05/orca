@@ -61,15 +61,15 @@ class TSMinUpdater(UpdaterBase):
         df.drop('datetime', axis=1, inplace=True)
         is_stock = df.sid.apply(tsmin_sql.is_stock)
 
-        idf = df.ix[~is_stock]
+        idf = df.ix[~is_stock].copy()
         idf.index = idf.sid
         for sid, ser in idf.iterrows():
-            print ser
             key = {'dname': sid, 'date': date, 'time': ser['time']}
             ser = ser.ix[tsmin_sql.index_dnames]
             self.index_collection.update(key, {'$set': ser.to_dict()}, upsert=True)
+        self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', len(idf.sid.unique()), self.index_collection.name, self.db.name, date)
 
-        sdf = df.ix[is_stock]
+        sdf = df.ix[is_stock].copy()
         sdf.sid = [sid[2:8] for sid in sdf.sid]
         sdf.index = sdf.sid
 
@@ -79,8 +79,6 @@ class TSMinUpdater(UpdaterBase):
         pool.close()
         pool.join()
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
-
-
 
 if __name__ == '__main__':
     ts_5min = TSMinUpdater(bar='5min')

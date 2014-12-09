@@ -38,7 +38,6 @@ class TSRetUpdater(UpdaterBase):
 
     def update(self, date):
         """Update TinySoft interval returns data(1min, 5min, 15min, 30min, 60min, 120min) for the **same** day after market close."""
-        """
         interval = self.interval.fetch_daily('close', self.times, date)
         interval.ix['093000'] = self.quote.fetch_daily('prev_close', date).reindex(columns=interval.columns)
         interval = interval.sort_index()
@@ -50,7 +49,6 @@ class TSRetUpdater(UpdaterBase):
                 key.update({'time': time})
                 self.db.ts_ret.update(key, {'$set': {'dvalue': ser.dropna().to_dict()}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', interval.shape[1], self.collection.name, self.db.name, date)
-        """
 
         indice = self.db.tsindex_1min.distinct('dname')
         for index in indice:
