@@ -45,23 +45,14 @@ class BarraUpdater(UpdaterBase):
         self.logger.debug('Ensuring index date_1 on collection {}', self.barra_idmaps.name)
         self.barra_idmaps.ensure_index([('date', 1)],
                 unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_dname_1 on collection {}', self.exposure.name)
-        self.exposure.ensure_index([('date', 1), ('dname', 1)],
-                unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.exposure.name)
         self.exposure.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_factor_1 on collection {}', self.facret.name)
-        self.facret.ensure_index([('date', 1), ('factor', 1)],
                 unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index factor_1_date_1 on collection {}', self.facret.name)
         self.facret.ensure_index([('factor', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index date_1_factor_1 on collection {}', self.faccov.name)
         self.faccov.ensure_index([('date', 1), ('factor', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_dname_1 on collection {}', self.specifics.name)
-        self.specifics.ensure_index([('date', 1), ('dname', 1)],
                 unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.specifics.name)
         self.specifics.ensure_index([('dname', 1), ('date', 1)],
@@ -70,10 +61,10 @@ class BarraUpdater(UpdaterBase):
     def update(self, date):
         """Update factor exposure, factor returns, factor covariance and stocks specifics for **previous** day before market open."""
         date = self.dates[self.dates.index(date)-1]
-        if not os.path.exists(barra_sql.gp_idmaps(date)):
+        if not os.path.exists(barra_sql.gp_idmaps(date, self.model)):
             self.logger.error('Barra model data does not exist on {}', date)
             barra_sql.fetch_and_parse(date)
-        self.idmaps = json.load(open(barra_sql.gp_idmaps(date)))
+        self.idmaps = json.load(open(barra_sql.gp_idmaps(date, self.model)))
         if self.update_idmaps:
             self.barra_idmaps.update({'date': date}, {'date': date, 'idmaps': self.idmaps}, upsert=True)
         self.update_exposure(date)

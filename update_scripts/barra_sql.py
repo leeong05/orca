@@ -130,8 +130,8 @@ def gp_dir(date, model):
 def gp_idfile(date):
     return os.path.join(dirdir, 'CHN_X_Asset_ID.' + date)
 
-def gp_idmaps(date):
-    return os.path.join(gp_dir(date, 'daily'), 'idmaps.%s.json' % date)
+def gp_idmaps(date, model):
+    return os.path.join(gp_dir(date, model), 'idmaps.%s.json' % date)
 
 def gp_expjson(date, model):
     return os.path.join(gp_dir(date, model), 'CNE5'+model[0].upper()+'_100_Asset_Exposure.%s.json' % date)
