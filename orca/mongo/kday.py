@@ -40,3 +40,22 @@ class ZYYXConsensusFetcher(KDayFetcher):
     def __init__(self, **kwargs):
         self.collection = DB.zyconsensus
         super(ZYYXConsensusFetcher, self).__init__(**kwargs)
+
+
+class MiscFetcher(KDayFetcher):
+    """Class to fetch tradable and other miscellaneous data."""
+
+    dnames = DB.misc.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.misc
+        super(MiscFetcher, self).__init__(**kwargs)
+
+    def fetch_daily(self, *args, **kwargs):
+        """A variant of :py:meth:`orca.mongo.base.KDayFetcher.fetch_daily`.
+
+        One can provide a boolean keyword argument ``as_list`` to return the valid sids."""
+        as_list = kwargs.get('as_list', False)
+        ser = super(MiscFetcher, self).fetch_daily(*args, **kwargs)
+        if as_list:
+            return list(ser.dropna().index)

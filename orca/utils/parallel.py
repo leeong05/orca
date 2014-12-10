@@ -2,8 +2,10 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-from orca.logger import get_logger
-logger = get_logger('parallel')
+import logbook
+logbook.set_datetime_format('local')
+
+logger = logbook.Logger('parallel')
 
 import multiprocessing
 
@@ -54,7 +56,7 @@ def run_hdf(store, alpha, params, startdate, enddate, predicate=None, threads=mu
     """
     if os.path.exists(store):
         os.remove(store)
-    logger = get_logger(store)
+    logger = logbook.Logger(store)
     store = pd.HDFStore(store)
 
     iterobj = ((i, alpha, param, startdate, enddate) for i, param in enumerate(params))
@@ -86,7 +88,7 @@ def run_csv(csvdir, alpha, params, startdate, enddate, predicate=None, threads=m
     """
     if os.path.exists(csvdir) and os.path.isdir(csvdir):
         shutil.rmtree(csvdir)
-    logger = get_logger(csvdir)
+    logger = logbook.Logger(csvdir)
     os.makedirs(csvdir)
 
     iterobj = ((i, alpha, param, startdate, enddate) for i, param in enumerate(params))
