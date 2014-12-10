@@ -33,6 +33,7 @@ class MiscUpdater(UpdaterBase):
         self.update_tradable(date)
 
     def update_tradable(self, date):
+        """Update daily tradable data for the **same** day before market open."""
         fpath = misc_sql.gp_tradable(date)
         if not os.path.exists(fpath):
             self.logger.warning('File not exists on {}', date)

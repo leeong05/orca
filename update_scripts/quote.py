@@ -35,6 +35,7 @@ class QuoteUpdater(UpdaterBase):
                 unique=True, dropDups=True, background=True)
 
     def update(self, date):
+        """Update daily quote data for the **same** day after market open."""
         CMD = self.quote_sql.CMD.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
