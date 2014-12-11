@@ -5,6 +5,8 @@
 import abc
 
 import pandas as pd
+from pandas.tseries.index import DatetimeIndex
+
 import logbook
 logbook.set_datetime_format('local')
 
@@ -194,11 +196,12 @@ class KMinFetcher(FetcherBase):
                 backdays=backdays)
         return self.fetch_window(dname, times, window, **kwargs)
 
-    def fetch_window(self, dname, times, window, **kwargs):
+    def fetch_window(self, dname, times, window, as_frame=False, **kwargs):
         """Fetch minute-bar data(specified by time stamps) for a consecutive days.
 
-        :param times: Time stamps to indicate which minute-bars should be fetched. This will affect the returned data type
+        :param times: Time stamps to indicate which minute-bars should be fetched. This will affect the returned data type; when it is ``[]``, it defaults to fetch all times
         :type times: str, list
+        :param boolean as_frame: Only use this when ``times`` is a list. Default: False
         :returns: DataFrame(if ``type(times)`` is ``str``) or Panel(with ``times`` as the item-axis)
         """
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
@@ -206,7 +209,9 @@ class KMinFetcher(FetcherBase):
 
         query = {'dname': dname,
                  'date': {'$gte': window[0], '$lte': window[-1]},
-                 'time': {'$in': [times] if isinstance(times, str) else times}}
+                 }
+        if times:
+            query.update({'time': {'$in': [times] if isinstance(times, str) else times}})
         proj = {'_id': 0, 'dvalue': 1, 'date': 1, 'time': 1}
         cursor = self.collection.find(query, proj)
         dfs = pd.DataFrame({(row['date'], row['time']): row['dvalue'] for row in cursor}).T
@@ -219,7 +224,9 @@ class KMinFetcher(FetcherBase):
         if reindex:
             panel = panel.reindex(major_axis=window, minor_axis=SIDS)
 
-        return panel[times] if isinstance(times, str) else panel
+        if isinstance(times, str):
+            return panel[times]
+        return self.to_frame(panel) if as_frame else panel
 
     def fetch_history(self, dname, times, date, backdays, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
@@ -232,7 +239,7 @@ class KMinFetcher(FetcherBase):
         window = DATES[di-backdays+1: di+1]
         return self.fetch_window(dname, times, window, **kwargs)
 
-    def fetch_daily(self, dname, times, date, offset=0, **kwargs):
+    def fetch_daily(self, dname, times, date, offset=0, as_frame=False, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene.
 
         :returns: Series(if ``type(times)`` is ``str``) or DataFrame(with ``times`` as the columns)
@@ -240,4 +247,66 @@ class KMinFetcher(FetcherBase):
         res = self.fetch_history(dname, times, date, 1, delay=offset, **kwargs)
         if isinstance(times, str):
             return res.iloc[0]
-        return res.major_xs(res.major_axis[0]).T
+        return res if as_frame else res.major_xs(res.major_axis[0]).T
+
+    @staticmethod
+    def to_frame(panel):
+        if isinstance(panel.major_axis, DatetimeIndex):
+            panel.major_axis = dateutil.to_datestr(panel.major_axis)
+        df = panel.transpose(2, 1, 0).to_frame(filter_observations=False)
+        df.index = pd.to_datetime(pd.Series(df.index.get_level_values(0)) + ' ' + \
+                                  pd.Series(df.index.get_level_values(1)))
+        return df
+
+    def generate_dateintervals(self, date, time, num, offset=0):
+        di = DATES.index(date)
+        ti = self.intervals.index(time)
+
+        if offset >= 0:
+            for i in range(offset):
+                date, time = DATES[di], self.intervals[ti]
+                if ti == 0:
+                    ti = len(self.intervals)
+                    di -= 1
+                ti -= 1
+        else:
+            for i in range(-offset):
+                date, time = DATES[di], self.intervals[ti]
+                if ti == len(self.intervals) - 1:
+                    ti = 0
+                    di += 1
+                ti += 1
+
+        cnt, res = 0, []
+        while cnt < num:
+            date, time = DATES[di], self.intervals[ti]
+            if ti == 0:
+                ti = len(self.intervals)
+                di -= 1
+            ti -= 1
+            cnt += 1
+            res.append((date, time))
+        return res[::-1]
+
+    def fetch_intervals(self, dname, date, time, num, offset=0, **kwargs):
+        date_check = kwargs.get('date_check', self.date_check)
+        reindex = kwargs.get('reindex', self.reindex)
+
+        date = dateutil.compliment_datestring(date, -1, date_check)
+        date = dateutil.parse_date(DATES, date, -1)[1]
+
+        dateintervals = self.generate_dateintervals(date, time, num, offset=offset)
+        dateindex = pd.to_datetime([dis[0]+' '+dis[1] for dis in dateintervals])
+        window = [dis[0] for dis in dateintervals]
+
+        query = {'dname': dname,
+                 'date': {'$gte': window[0], '$lte': window[-1]},
+                 }
+        proj = {'_id': 0, 'dvalue': 1, 'date': 1, 'time': 1}
+        cursor = self.collection.find(query, proj)
+        df = pd.DataFrame({row['date']+' '+row['time']: row['dvalue'] for row in cursor}).T
+        df.index = pd.to_datetime(df.index)
+        df = df.ix[dateindex]
+        if reindex:
+            df = df.reindex(columns=SIDS)
+        return df

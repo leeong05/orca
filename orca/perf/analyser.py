@@ -5,7 +5,6 @@
 import numpy as np
 import pandas as pd
 
-from orca.utils import dateutil
 from orca.operation import api
 
 import util
@@ -28,11 +27,11 @@ class Analyser(object):
 
     .. py:attribute:: AC
 
-       A ``dict`` with key being the number of days, value being the Auto-corrwithelation time series.
+       A ``dict`` with key being the number of days, value being the auto-corrwithelation time series.
 
     .. py:attribute:: rAC
 
-       A ``dict`` with key being the number of days, value being the rank Auto-corrwithelation time series.
+       A ``dict`` with key being the number of days, value being the rank auto-corrwithelation time series.
 
     .. py:attribute:: turnover
 
@@ -45,7 +44,7 @@ class Analyser(object):
 
     def __init__(self, alpha, data, index_data=None):
         self.alpha = api.scale(alpha)
-        self.dates = dateutil.to_datestr(self.alpha.index)
+        self.intervals = self.alpha.index.date
 
         self.IC, self.rIC = {}, {}
         self.AC, self.rAC = {}, {}
@@ -62,7 +61,8 @@ class Analyser(object):
 
         change = self.alpha.fillna(0) - self.alpha.shift(1).fillna(0)
         turnover = np.abs(change).sum(axis=1)
-        return turnover.iloc[1:]
+        self.turnover = turnover.iloc[1:]
+        return self.turnover
 
     def get_ic(self, n=1, rank=False):
         if rank and n in self.rIC:
@@ -81,7 +81,7 @@ class Analyser(object):
         return ic
 
     def get_ir(self, n=1, rank=False, by=None):
-        return util.resample(self.get_ic(1), how='ir', by=by)
+        return util.resample(self.get_ic(n=n, rank=rank), how='ir', by=by)
 
     def get_ac(self, n=1, rank=False):
         if rank and n in self.rAC:
@@ -146,7 +146,7 @@ class Analyser(object):
         return self.get_returns_metric(util.Sharpe, cost=cost, by=by, index=index)
 
     def summary_ir(self, by=None, freq='daily'):
-        """Returns a IR-related metrics summary series(``by`` is None, default)/dataframe.
+        """Returns a IR-related metrics summary Series/Dataframe.
 
         :param str freq: Which frequency of statistics is of interest? 'daily'(default): only returns IR1, rIR1; 'weekly': returns also IR5, rIR5; 'monthly': returns also IR20, rIR20
 
@@ -185,7 +185,7 @@ class Analyser(object):
         return res
 
     def summary_turnover(self, by=None, freq='daily'):
-        """Returns a turnover-related metrics summary series(``by`` is None, default)/dataframe.
+        """Returns a turnover-related metrics summary Series/Dataframe.
 
         :param str freq: Which frequency of statistics is of interest? 'daily'(default): only returns turnover, AC1, rAC1; 'weekly': returns also AC5, rAC5; 'monthly': returns also AC20, rAC20
 
@@ -224,7 +224,7 @@ class Analyser(object):
         return res
 
     def summary_returns(self, cost=0, by=None, index=False):
-        """Returns a turnover-related metrics summary series(``by`` is None, default)/dataframe.
+        """Returns a returns-related metrics summary Series/Dataframe.
 
         These metrics are:
         * annualized_returns_0: annualized_returns(%) before cost
@@ -280,4 +280,271 @@ class Analyser(object):
                 self.summary_ir(by=by, freq=freq),
                 self.summary_turnover(by=by, freq=freq),
                 self.summary_returns(cost=cost, by=by)
+                ])
+
+
+class IntAnalyser(object):
+    """Class for intraday alpha (as portfolio) performance analysis.
+
+    :param DataFrame alpha: Alpha to be analysed. Be sure to properly format the DataFrame as in :py:func:`orca.operation.api.format`
+    :param DataFrame data: Interval returns data properly formatted
+    :param Series index_data: Series of index interval returns that has the same index as ``alpha``. Default: None
+
+    .. py:attribute:: IC_t/rIC_t
+
+       Daily average of intraday IC/rank IC
+
+    .. py:attribute: IC_h/rIC_h
+
+       Daily time series of overnight holding IC/rank IC
+
+    .. py:attribute:: AC_t/rAC_t
+
+       Daily average of intraday auto-correlation/rank auto-correlation
+
+    .. py:attribute:: AC_h/rAC_h
+
+       Daily time series of overnight auto-correlation/rank auto-correlation
+
+    .. py:attribute:: turnover_t
+
+       Daily average of intraday turnover
+
+    .. py:attribute:: turnover_h
+
+       Daily time series of overnight holding turnover
+    """
+
+    def __init__(self, alpha, data, index_data=None):
+        self.alpha = api.scale(alpha)
+        self.intervals = len(self.alpha) / len(np.unique(self.alpha.index.date))
+
+        self.IC_t, self.rIC_t = None, None
+        self.IC_h, self.rIC_h = None, None
+        self.AC_t, self.rAC_t = None, None
+        self.AC_h, self.rAC_h = None, None
+        self.turnover, self.turnover_t, self.turnover_h = None, None, None
+        self.returns = None
+
+        self.data = data.ix[self.alpha.index]
+        if index_data is not None:
+            self.index_data = index_data.ix[self.alpha.index]
+
+    def get_turnover(self):
+        if self.turnover is not None:
+            return (self.turnover_t, self.turnover_h, self.turnover)
+
+        change = self.alpha.fillna(0) - self.alpha.shift(1).fillna(0)
+        tvr = np.abs(change).sum(axis=1)
+        self.turnover = tvr.copy()
+        tvr_h = tvr[::self.intervals].copy()
+        tvr_h.index = tvr_h.index.date
+        self.turnover_h = tvr_h.iloc[1:]
+        tvr[::self.intervals] = 0
+        self.turnover_t = tvr.resample('D', how='sum')
+        return (self.turnover_t, self.turnover_h, self.turnover)
+
+    def get_ic(self, rank=False):
+        if rank and self.rIC_t:
+            return (self.rIC_t, self.rIC_h)
+        if not rank and self.IC_t:
+            return (self.IC_t, self.IC_h)
+
+        shifted = self.alpha.shift(1)
+        returns = self.data
+        if rank:
+            ic = returns.rank(axis=1).corrwith(shifted.rank(axis=1), axis=1)
+        else:
+            ic = returns.corrwith(shifted, axis=1)
+        ic_h = ic[::self.intervals].copy()
+        ic_h.index = ic_h.index.date
+        ic_h = ic_h.iloc[1:]
+
+        ic[::self.intervals] = 0
+        ic_t = ic.resample('D', how='sum') / (self.intervals-1)
+        if rank:
+            self.rIC_t = ic_t
+            self.rIC_h = ic_h
+        else:
+            self.IC_t = ic_t
+            self.IC_h = ic_h
+        return (ic_t, ic_h)
+
+    def get_ir(self, rank=False, by=None):
+        ic_t, ic_h = self.get_ic(rank=rank)
+        return util.resample(ic_t, how='ir', by=by), util.resample(ic_h, how='ir', by=by)
+
+    def get_ac(self, rank=False):
+        if rank and self.rAC:
+            return self.rAC_t
+        if not rank and self.AC:
+            return self.AC_t
+
+        shifted = self.alpha.shift(1)
+        alpha = self.alpha.copy()
+        shifted[shifted.isnull() & ~alpha.isnull()] = 0
+        alpha[~shifted.isnull() & alpha.isnull()] = 0
+        if rank:
+            ac = alpha.rank(axis=1).corrwith(shifted.rank(axis=1), axis=1)
+        else:
+            ac = alpha.corrwith(shifted, axis=1)
+        ac_h = ac[::self.intervals].copy()
+        ac_h.index = ac_h.index.date
+        ac_h = ac_h.iloc[1:]
+
+        ac[::self.intervals] = 0
+        ac_t = ac.resample('D', how='sum') / (self.intervals-1)
+        if rank:
+            self.rAC_t = ac_t
+            self.rAC_h = ac_h
+        else:
+            self.AC_t = ac_t
+            self.AC_h = ac_h
+        return (ac_t, ac_h)
+
+    def get_returns(self, cost=0, index=False):
+        """
+        :param float cost: Linear amount-proportion trading cost. Default: 0
+        :param boolean index: Whether we measure returns against index. Default: False
+        """
+
+        if self.returns_h is None:
+            self.returns = (self.data * self.alpha.shift(1)).sum(axis=1)
+
+        if cost:
+            ret = (self.returns-self.index_data if index else self.returns) - cost * self.get_turnover()[-1]
+        else:
+            ret = self.returns-self.index_data if index else self.returns
+
+        ret_d = ret.resample('D', how='sum')
+        ret_h = ret[::self.intervals].copy()
+        ret_h.index = ret_h.index.date
+        ret[::self.intervals] = 0
+        ret_t = ret.resample('D', how='sum')
+        return (ret_t, ret_h, ret_d)
+
+    def get_returns_metric(self, how, cost=0, by=None, index=False):
+        """Calculated metrics based on the daily returns time-series.
+
+        :param function how: Used in resampling method
+        :param by: Caculation frequency. None(default): whole period; 'A': yearly; 'Q': quarterly; 'M': monthly
+        :param boolean index: Whether we measure returns against index. Default: False
+        """
+        ret_t, ret_h, ret_d = self.get_returns(cost=cost, index=index)
+
+        if by is None:
+            return (how(ret_t), how(ret_h), how(ret_d))
+
+        return (ret_t.resample(by, how=how), ret_h.resample(by, how=how), ret_d.resample(by, how=how))
+
+    def get_drawdown(self, cost=0, by=None, index=False):
+        """Use :py:meth:`get_returns_metric` to calculate drawdown."""
+        return self.get_returns_metric(util.drawdown, cost=cost, by=by, index=index)
+
+    def get_annualized_returns(self, cost=0, by=None, index=False):
+        """Use :py:meth:`get_returns_metric` to calculate annualized returns."""
+        return self.get_returns_metric(util.annualized_returns, cost=cost, by=by, index=index)
+
+    def get_perwin(self, cost=0, by=None, index=False):
+        """Use :py:meth:`get_returns_metric` to calculate winning percentage."""
+        return self.get_returns_metric(util.perwin, cost=cost, by=by, index=index)
+
+    def get_returns_sharpe(self, cost=0, by=None, index=False):
+        """Use :py:meth:`get_returns_metric` to calculate Sharpe ratio."""
+        return self.get_returns_metric(util.Sharpe, cost=cost, by=by, index=index)
+
+    def summary_ir(self, by=None, freq='daily'):
+        """Returns a IR-related metrics summary Series/Dataframe."""
+        index = ['days', 'IR_t', 'rIR_t', 'IR_h', 'rIR_h']
+        ic_t, ic_h = self.get_ic()
+        ric_t, ric_h = self.get_ic(rank=True)
+        res = {
+                'days': util.resample(ic_t, how='count', by=by),
+                'IR_t': util.resample(ic_t, how='ir', by=by),
+                'rIR_t': util.resample(ric_t, how='ir', by=by),
+                'IR_h': util.resample(ic_h, how='ir', by=by),
+                'rIR_h': util.resample(ric_h, how='ir', by=by),
+                }
+        res = pd.Series(res) if by is None else pd.DataFrame(res).T
+        res = res.reindex(index)
+        return res
+
+    def summary_turnover(self, by=None):
+        """Returns a turnover-related metrics summary Series/Dataframe."""
+        index = ['turnover_t', 'turnover_h']
+        tvr_t, tvr_h = self.get_turnover()[:2]
+        res = {
+                'turnover_t': util.resample(tvr_t, how='mean', by=by),
+                'turnover_h': util.resample(tvr_h, how='mean', by=by),
+                }
+        res = pd.Series(res) if by is None else pd.DataFrame(res).T
+        res = res.reindex(index)
+        return res
+
+    def summary_returns(self, cost=0, by=None, index=False, which='trading'):
+        """Returns a turnover-related metrics summary Series/Dataframe.
+
+        :param str which: Which returns is of interest? Must be one of ('trading', 'holding', 'daily'). Default: 'trading'
+
+        These metrics are:
+        * annualized_returns_0: annualized_returns(%) before cost
+        * annualized_returns: annualized_returns(%) after cost
+        * SR_0: Sharpe Ratio for daily returns series before cost
+        * SR: Sharpe Ratio for daily returns series after cost
+        * drawdown: drawdown within the period
+        * ddstart: drawdown start date
+        * ddend: drawdown end date
+        * perwin: winning percentage
+        """
+
+        if which == 'holding':
+            which = 1
+        elif which == 'daily':
+            which = 2
+        else:
+            which = 0
+
+        if by is None:
+            ddstart, ddend, drawdown = self.get_drawdown(cost=cost, index=index)[which]
+            ddstart, ddend = ddstart.strftime('%Y%m%d'), ddend.strftime('%Y%m%d')
+        else:
+            temp = self.get_drawdown(cost=cost, by=by, index=index)[which]
+            ddstart = temp.apply(lambda x: x[0].strftime('%Y%m%d'))
+            ddend = temp.apply(lambda x: x[1].strftime('%Y%m%d'))
+            drawdown = temp.apply(lambda x: x[2])
+
+        res = {
+                'annualized_returns_0': self.get_annualized_returns(cost=0, by=by, index=index)[which],
+                'annualized_returns': self.get_annualized_returns(cost=cost, by=by, index=index)[which],
+                'SR_0': self.get_returns_sharpe(cost=0, by=by, index=index)[which],
+                'SR': self.get_returns_sharpe(cost=cost, by=by, index=index)[which],
+                'perwin': self.get_perwin(cost=cost, by=by, index=index)[which],
+                'drawdown': drawdown,
+                'ddstart': ddstart,
+                'ddend': ddend,
+                }
+        res = pd.Series(res) if by is None else pd.DataFrame(res).T
+        index = ['annualized_returns_0', 'annualized_returns', 'SR_0', 'SR',
+                'drawdown', 'ddstart', 'ddend', 'perwin']
+        res = res.reindex(index)
+        return res
+
+    def summary(self, cost=0, by=None, group='ir', which='trading'):
+        """Returns a summary Series/Dataframe.
+
+        :param str group: Which aspect to be summarized. 'ir'(default): IR-related metrics; 'turnover': Turnover-related metrics; 'returns': Returns/PNL-related metrics; 'all': All metrics in the above 3 groups
+        :param str which: Which returns is of interest? Only used when ``group`` is 'returns'; must be one of ('trading', 'holding', 'daily'). Default: 'trading'
+        """
+
+        if group == 'ir':
+            return self.summary_ir(by=by)
+        elif group == 'turnover':
+            return self.summary_turnover(by=by)
+        elif group == 'returns':
+            return self.summary_returns(cost=cost, by=by, which=which)
+        else:
+            return pd.concat([
+                self.summary_ir(by=by),
+                self.summary_turnover(by=by),
+                self.summary_returns(cost=cost, by=by, which=which)
                 ])

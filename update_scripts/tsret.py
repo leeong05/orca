@@ -20,9 +20,7 @@ class TSRetUpdater(UpdaterBase):
         self.interval = IntervalFetcher('1min')
         self.quote = QuoteFetcher()
         self.indexquote = IndexQuoteFetcher()
-        before_noon = dateutil.generate_timestamps('093000', '113000', 60, exclude_end=False, exclude_begin=True)
-        after_noon = dateutil.generate_timestamps('130000', '150000', 60, exclude_end=False, exclude_begin=True)
-        self.times = list(before_noon) + list(after_noon)
+        self.times = dateutil.generate_intervals(60)
 
     def pre_update(self):
         self.__dict__.update({

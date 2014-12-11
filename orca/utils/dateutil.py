@@ -142,6 +142,14 @@ def generate_timestamps(starttime, endtime, step, exclude_end=True, exclude_begi
         else:
             break
 
+def generate_intervals(step, exclude_end=False, exclude_begin=True):
+    """
+    :param int step: Number of **seconds** as step
+    """
+    before_noon = list(generate_timestamps('093000', '113000', step, exclude_begin=exclude_begin, exclude_end=exclude_end))
+    after_noon = list(generate_timestamps('130000', '150000', step, exclude_begin=exclude_begin, exclude_end=exclude_end))
+    return before_noon + after_noon
+
 def get_startfrom(l, x, n):
     """Get a sub-list with length ``n`` and the first element >= ``x``."""
     i, x = parse_date(l, x, 1)

@@ -3,6 +3,8 @@
 """
 
 from orca import DB
+from orca.utils import dateutil
+
 from base import KMinFetcher
 
 
@@ -16,6 +18,10 @@ class IntervalFetcher(KMinFetcher):
             '5min': DB.ts_5min,
             '1min': DB.ts_1min,
             }
+    intervals = {
+            '5min': dateutil.generate_intervals(300),
+            '1min': dateutil.generate_intervals(60),
+            }
     dnames = DB.ts_5min.distinct('dname')
 
     def __init__(self, freq, **kwargs):
@@ -23,6 +29,7 @@ class IntervalFetcher(KMinFetcher):
             raise ValueError('No minute-bar data of frequency {0!r} exists'.format(freq))
         self._freq = freq
         self.collection = IntervalFetcher.collections[freq]
+        self.intervals = IntervalFetcher.intervals[freq]
         super(IntervalFetcher, self).__init__(**kwargs)
 
     @property
@@ -37,6 +44,7 @@ class IntervalFetcher(KMinFetcher):
             return
         self._freq = freq
         self.collection = IntervalFetcher.collections[freq]
+        self.intervals = IntervalFetcher.intervals[freq]
 
 
 class IntervalReturnsFetcher(KMinFetcher):
@@ -47,11 +55,12 @@ class IntervalReturnsFetcher(KMinFetcher):
 
     freqs = ('1min', '5min', '15min', '30min', '60min', '120min')
 
-    def __init__(self, freq, **kwargs):
-        if freq not in IntervalReturnsFetcher.freqs:
+    def __init__(self, freq=None, **kwargs):
+        if freq is not None and freq not in IntervalReturnsFetcher.freqs:
             raise ValueError('No interval returns of frequency {0!r} exists'.format(freq))
-        self._freq = freq
-        self._dname = 'returns'+freq[:-3]
+        if freq is not None:
+            self._freq = freq
+            self._dname = 'returns'+freq[:-3]
         self.collection = DB.ts_ret
         super(IntervalReturnsFetcher, self).__init__(**kwargs)
 
