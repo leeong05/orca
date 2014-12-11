@@ -60,6 +60,8 @@ class FilterBase(object):
 
     @staticmethod
     def format(df, datetime_index, reindex):
+        if df is None:
+            return df
         if reindex:
             df = df.reindex(columns=SIDS).fillna(False)
         if datetime_index:
@@ -167,7 +169,8 @@ class DataFilter(FilterBase):
         df = df.iloc[self.window-1:]
         df.index = univ_window
         if return_parent is True:
-            return (self.format(parent), self.format(df))
+            return (self.format(parent, datetime_index=datetime_index, reindex=reindex),
+                    self.format(df, datetime_index=datetime_index, reindex=reindex))
         return self.format(df, datetime_index=datetime_index, reindex=reindex)
 
 

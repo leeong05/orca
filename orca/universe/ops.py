@@ -71,7 +71,7 @@ class NegateFilter(FilterBase):
 
     def filter(self, startdate, enddate=None, parent=None, **kwargs):
         kwargs.update({'return_parent': True})
-        df = self._filter.filter(startdate, enddate=enddate, parent=parent, **kwargs)
+        parent, df = self._filter.filter(startdate, enddate=enddate, parent=parent, **kwargs)
         if parent is None:
             return ~df
         return ~df & parent

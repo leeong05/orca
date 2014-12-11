@@ -11,14 +11,13 @@ import misc_sql
 
 
 class MiscUpdater(UpdaterBase):
-    """The updater class for collection 'tradable'."""
+    """The updater class for collection 'misc'."""
 
     def __init__(self, source=None, timeout=60):
         self.source = source
         super(MiscUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
-        self.connect_jydb()
         self.dates = self.db.dates.distinct('date')
         self.collection = self.db.misc
 
@@ -53,5 +52,5 @@ class MiscUpdater(UpdaterBase):
                 len(tradable), self.collection.name, 'tradable', self.db.name, date)
 
 if __name__ == '__main__':
-    quote = MiscUpdater()
-    quote.run()
+    misc = MiscUpdater()
+    misc.run()

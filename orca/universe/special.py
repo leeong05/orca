@@ -9,6 +9,7 @@ from orca import (
         SIDS,
         )
 from orca.mongo.quote import QuoteFetcher
+from orca.mongo.kday import MiscFetcher
 from orca.mongo.components import ComponentsFetcher
 from orca.mongo.industry import IndustryFetcher
 from orca.utils import dateutil
@@ -69,7 +70,7 @@ class ActiveFilter(SimpleDataFilter):
 
     def __init__(self, **kwargs):
         super(ActiveFilter, self).__init__(
-                ('close', QuoteFetcher),
+                ('tradable', MiscFetcher),
                 1,
                 rule=rules.is_finite(),
                 delay=0,

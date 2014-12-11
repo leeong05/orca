@@ -118,3 +118,45 @@ Example::
 
    components.fetch('HS300', '20140101', '20140301', as_bool=True)
    components.fetch('SH000300', '20140101', '20140301', as_bool=False)
+
+* Fetcher: :py:class:`~orca.mongo.kday.MiscFetcher`
+
+======================= =================================================
+Data name               Remark
+======================= =================================================
+SH
+SZ
+CYB
+ZXB
+T1Y
+HS300
+CS500
+CS800
+FINANCE
+NONFIN
+BANK
+NONBANK
+Tradable
+Active
+TotalCap70Q
+TotalCap70S
+TotalCap70Y
+FloatCap70Q
+FloatCap70S
+FloatCap70Y
+Liq70Q
+Liq70S
+Liq70Y
+Cap70Liq70Q
+Cap70Liq70S
+Cap70Liq70Y
+TOP70Q
+TOP70S
+TOP70Y
+BCap70Liq70Q
+BCap70Liq70S
+BCap70Liq70Y
+BTOP70Q
+BTOP70S
+BTOP70Y
+======================= =================================================

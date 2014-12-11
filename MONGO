@@ -1,6 +1,10 @@
 db.dates.ensureIndex({date: 1, unique: true, dropDups: true})
 db.sids.ensureIndex({sid: 1, unique: true, dropDups: true})
 
+db.misc.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+
+db.universe.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+
 db.cax.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.shares.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
