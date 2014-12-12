@@ -9,6 +9,7 @@ import matplotlib.cm as cm
 from matplotlib.dates import DateFormatter
 
 import util
+from analyser import IntAnalyser
 
 
 class Plotter(object):
@@ -18,6 +19,11 @@ class Plotter(object):
     """
 
     datefmt = DateFormatter('%Y%m%d')
+    whiches = {
+            'trading': 0,
+            'holding': 1,
+            'daily': 2
+            }
 
     def __init__(self, analyser):
         self.analyser = analyser
@@ -86,13 +92,18 @@ class Plotter(object):
             ax.legend([bar[0] for bar in bars], list(pdobj.columns))
         return fig
 
-    def plot_turnover(self, ma=None, startdate=None, enddate=None):
+    def plot_turnover(self, ma=None, startdate=None, enddate=None, which='trading'):
         """
         :param int ma: MA periods. Default: None, do not plot MA
         :param str startdate, enddate: Limit the time range
+        :param str which: Which turnover is of interest? Use this when ``analyser`` is of class :py:class:`orca.perf.analyser.IntAnalyser`; must be one of ('trading', 'holding', 'daily')
         """
         title = 'Turnover'
-        tvr = self.cut(self.analyser.get_turnover(), startdate, enddate)
+        if isinstance(self.analyser, IntAnalyser):
+            tvr = self.analyser.get_turnover()[Plotter.whiches[which]]
+        else:
+            tvr = self.analyser.get_turnover()
+        tvr = self.cut(tvr, startdate, enddate)
 
         if ma is not None:
             ma_tvr = pd.rolling_mean(tvr, ma)
@@ -100,12 +111,17 @@ class Plotter(object):
             return self._plot1(df, title)
         return self._plot1(tvr, title)
 
-    def plot_ic(self, n=1, rank=False, ma=None, startdate=None, enddate=None):
+    def plot_ic(self, n=1, rank=False, ma=None, startdate=None, enddate=None, which='trading'):
         """
         :param int ma: MA periods. Default: None, do not plot MA
+        :param str which: Which IC is of interest? Use this when ``analyser`` is of class :py:class:`orca.perf.analyser.IntAnalyser`; must be one of ('trading', 'holding', 'daily')
         """
         title = ('rIC(%s)' if rank else 'IC(%s)') % n
-        ic = self.cut(self.analyser.get_ic(n=n, rank=rank), startdate, enddate)
+        if isinstance(self.analyser, IntAnalyser):
+            ic = self.analyser.get_ic(rank=rank)[Plotter.whiches[which]]
+        else:
+            ic = self.analyser.get_ic(n=n, rank=rank)
+        ic = self.cut(ic, startdate, enddate)
 
         if ma is not None:
             ma_ic = pd.rolling_mean(ic, ma)
@@ -113,12 +129,17 @@ class Plotter(object):
             return self._plot1(df, title)
         return self._plot1(ic, title)
 
-    def plot_ac(self, n=1, rank=False, ma=None, startdate=None, enddate=None):
+    def plot_ac(self, n=1, rank=False, ma=None, startdate=None, enddate=None, which='trading'):
         """
         :param int ma: MA periods. Default: None, do not plot MA
+        :param str which: Which AC is of interest? Use this when ``analyser`` is of class :py:class:`orca.perf.analyser.IntAnalyser`; must be one of ('trading', 'holding', 'daily')
         """
         title = ('rAC(%s)' if rank else 'AC(%s)') % n
-        ac = self.cut(self.analyser.get_ac(n=n, rank=rank), startdate, enddate)
+        if isinstance(self.analyser, IntAnalyser):
+            ac = self.analyser.get_ac(rank=rank)[Plotter.whiches[which]]
+        else:
+            ac = self.analyser.get_ac(n=n, rank=rank)
+        ac = self.cut(ac, startdate, enddate)
 
         if ma is not None:
             ma_ac = pd.rolling_mean(ac, ma)
@@ -126,14 +147,19 @@ class Plotter(object):
             return self._plot1(df, title)
         return self._plot1(ac, title)
 
-    def plot_pnl(self, cost=None, index=False, plot_index=False, drawdown=False, startdate=None, enddate=None):
+    def plot_pnl(self, cost=None, index=False, plot_index=False, drawdown=False, startdate=None, enddate=None, which='trading'):
         """Plot PNL line.
 
         :param boolean plot_index: Whether to add a PNL line for index. Default: False
         :param boolean drawdown: Whether to mark the drawdown on the PNL line. Default: False
+        :param str which: Which returns is of interest? Use this when ``analyser`` is of class :py:class:`orca.perf.analyser.IntAnalyser`; must be one of ('trading', 'holding', 'daily')
         """
         title = 'Cumulative PNL'
-        ret = self.cut(self.analyser.get_returns(index=index), startdate, enddate)
+        if isinstance(self.analyser, IntAnalyser):
+            ret = self.analyser.get_returns(index=index)[Plotter.whiches[which]]
+        else:
+            ret = self.analyser.get_returns(index=index)
+        ret = self.cut(ret, startdate, enddate)
         if drawdown:
             start, end = util.drawdown(ret)[:2]
         if plot_index:
@@ -157,15 +183,20 @@ class Plotter(object):
             pnl = ret.cumsum()
         return self._plot1(pnl, title, [start, end]) if drawdown else self._plot1(pnl, title)
 
-    def plot_returns(self, by, index=False, plot_index=False, startdate=None, enddate=None):
+    def plot_returns(self, by, index=False, plot_index=False, startdate=None, enddate=None, which='trading'):
         """Plot resampled returns using bars.
 
         :param str by: 'A': annually, 'Q': quarterly, 'M': monthly, 'W': weekly
+        :param str which: Which returns is of interest? Use this when ``analyser`` is of class :py:class:`orca.perf.analyser.IntAnalyser`; must be one of ('trading', 'holding', 'daily')
         """
         mapping = {'A': 'Year', 'Q': 'Quarter', 'M': 'Month', 'W': 'Week'}
         title = 'Returns by %s' % mapping.get(by)
 
-        ret = self.cut(self.analyser.get_returns(index=index), startdate, enddate)
+        if isinstance(self.analyser, IntAnalyser):
+            ret = self.analyser.get_returns(index=index)[Plotter.whiches[which]]
+        else:
+            ret = self.analyser.get_returns(index=index)
+        ret = self.cut(ret, startdate, enddate)
         ret = ret.resample(by, how='sum')
         if plot_index:
             ret_i = self.analyser.index_data.ix[ret.index]
@@ -180,6 +211,11 @@ class QuantilesPlotter(object):
     """
 
     datefmt = DateFormatter('%Y%m%d')
+    whiches = {
+            'trading': 0,
+            'holding': 1,
+            'daily': 2
+            }
 
     def __init__(self, analysers):
         self.analysers = analysers
@@ -234,19 +270,28 @@ class QuantilesPlotter(object):
 
         return fig
 
-    def plot_pnl(self, startdate=None, enddate=None):
+    def plot_pnl(self, startdate=None, enddate=None, which='trading'):
         """Plot PNL lines for quantiles in the same plot.
+
+        :param str which: Which returns is of interest? Use this when ``analyser`` is of class :py:class:`orca.perf.analyser.IntAnalyser`; must be one of ('trading', 'holding', 'daily')
         """
-        rets = [self.cut(analyser.get_returns(), startdate, enddate) for analyser in self.analysers]
+        if isinstance(self.analysers[0], IntAnalyser):
+            rets = [self.cut(analyser.get_returns()[QuantilesPlotter.whiches[which]], startdate, enddate) for analyser in self.analysers]
+        else:
+            rets = [self.cut(analyser.get_returns(), startdate, enddate) for analyser in self.analysers]
         pnl = pd.concat(rets, axis=1).cumsum()
         return self._plot1(pnl, 'Quantiles')
 
-    def plot_returns(self, by=None, startdate=None, enddate=None):
+    def plot_returns(self, by=None, startdate=None, enddate=None, which='trading'):
         """Plot returns for each quantile, with one subplot for one period.
 
         :param str by: 'A': annually, 'Q': quarterly, 'M': monthly. Default: None
+        :param str which: Which returns is of interest? Use this when ``analyser`` is of class :py:class:`orca.perf.analyser.IntAnalyser`; must be one of ('trading', 'holding', 'daily')
         """
-        rets = [self.cut(analyser.get_returns(), startdate, enddate) for analyser in self.analysers]
+        if isinstance(self.analysers[0], IntAnalyser):
+            rets = [self.cut(analyser.get_returns()[QuantilesPlotter.whiches[which]], startdate, enddate) for analyser in self.analysers]
+        else:
+            rets = [self.cut(analyser.get_returns(), startdate, enddate) for analyser in self.analysers]
         rets = pd.concat(rets, axis=1)
         if by is not None:
             rets = rets.resample(by, 'sum')

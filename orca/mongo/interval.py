@@ -55,12 +55,11 @@ class IntervalReturnsFetcher(KMinFetcher):
 
     freqs = ('1min', '5min', '15min', '30min', '60min', '120min')
 
-    def __init__(self, freq=None, **kwargs):
+    def __init__(self, freq, **kwargs):
         if freq is not None and freq not in IntervalReturnsFetcher.freqs:
             raise ValueError('No interval returns of frequency {0!r} exists'.format(freq))
-        if freq is not None:
-            self._freq = freq
-            self._dname = 'returns'+freq[:-3]
+        self._freq = freq
+        self._dname = 'returns'+freq[:-3]
         self.collection = DB.ts_ret
         super(IntervalReturnsFetcher, self).__init__(**kwargs)
 

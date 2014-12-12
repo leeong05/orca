@@ -251,6 +251,7 @@ class KMinFetcher(FetcherBase):
 
     @staticmethod
     def to_frame(panel):
+        """Transform a time-itemized, date-major_axised Panel into DataFrame with DatetimeIndex."""
         if isinstance(panel.major_axis, DatetimeIndex):
             panel.major_axis = dateutil.to_datestr(panel.major_axis)
         df = panel.transpose(2, 1, 0).to_frame(filter_observations=False)
@@ -259,6 +260,7 @@ class KMinFetcher(FetcherBase):
         return df
 
     def generate_dateintervals(self, date, time, num, offset=0):
+        """Generate an ordered list of (date, time) tuple."""
         di = DATES.index(date)
         ti = self.intervals.index(time)
 
@@ -289,6 +291,10 @@ class KMinFetcher(FetcherBase):
         return res[::-1]
 
     def fetch_intervals(self, dname, date, time, num, offset=0, **kwargs):
+        """Return a consecutive interval data.
+
+        ``offset`` is to set offset of ``time``; along with ``date``, they determine the ending datetime.
+        """
         date_check = kwargs.get('date_check', self.date_check)
         reindex = kwargs.get('reindex', self.reindex)
 

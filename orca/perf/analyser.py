@@ -298,6 +298,10 @@ class IntAnalyser(object):
 
        Daily time series of overnight holding IC/rank IC
 
+    .. py:attribute: IC_d/rIC_d
+
+       Daily time series of sum of intraday and overnight holding IC/rank IC
+
     .. py:attribute:: AC_t/rAC_t
 
        Daily average of intraday auto-correlation/rank auto-correlation
@@ -306,13 +310,21 @@ class IntAnalyser(object):
 
        Daily time series of overnight auto-correlation/rank auto-correlation
 
+    .. py:attribute:: AC_d/rAC_d
+
+       Daily time series of sum of intraday and overnight holding AC/rank AC
+
     .. py:attribute:: turnover_t
 
-       Daily average of intraday turnover
+       Daily average of intraday turnover/returns
 
     .. py:attribute:: turnover_h
 
-       Daily time series of overnight holding turnover
+       Daily time series of overnight holding turnover/returns
+
+    .. py:attribute:: turnover_d
+
+       Daily time series of sum of intraday and overnight holding turnover/returns
     """
 
     def __init__(self, alpha, data, index_data=None):
@@ -321,10 +333,12 @@ class IntAnalyser(object):
 
         self.IC_t, self.rIC_t = None, None
         self.IC_h, self.rIC_h = None, None
+        self.IC_d, self.rIC_d = None, None
         self.AC_t, self.rAC_t = None, None
         self.AC_h, self.rAC_h = None, None
-        self.turnover, self.turnover_t, self.turnover_h = None, None, None
-        self.returns = None
+        self.AC_d, self.rAC_d = None, None
+        self.turnover_t, self.turnover_h, self.turnover_d = None, None, None
+        self.turnover, self.returns = None, None
 
         self.data = data.ix[self.alpha.index]
         if index_data is not None:
@@ -337,12 +351,13 @@ class IntAnalyser(object):
         change = self.alpha.fillna(0) - self.alpha.shift(1).fillna(0)
         tvr = np.abs(change).sum(axis=1)
         self.turnover = tvr.copy()
+        self.turnover_d = tvr.resample('D', how='sum')
         tvr_h = tvr[::self.intervals].copy()
         tvr_h.index = tvr_h.index.date
         self.turnover_h = tvr_h.iloc[1:]
         tvr[::self.intervals] = 0
         self.turnover_t = tvr.resample('D', how='sum')
-        return (self.turnover_t, self.turnover_h, self.turnover)
+        return (self.turnover_t, self.turnover_h, self.turnover_d)
 
     def get_ic(self, rank=False):
         if rank and self.rIC_t:
@@ -354,8 +369,10 @@ class IntAnalyser(object):
         returns = self.data
         if rank:
             ic = returns.rank(axis=1).corrwith(shifted.rank(axis=1), axis=1)
+            self.rIC_d = ic.resample('D', how='mean')
         else:
             ic = returns.corrwith(shifted, axis=1)
+        ic_d = ic.resample('D', how='mean')
         ic_h = ic[::self.intervals].copy()
         ic_h.index = ic_h.index.date
         ic_h = ic_h.iloc[1:]
@@ -365,14 +382,16 @@ class IntAnalyser(object):
         if rank:
             self.rIC_t = ic_t
             self.rIC_h = ic_h
+            self.rIC_d = ic_d
         else:
             self.IC_t = ic_t
             self.IC_h = ic_h
-        return (ic_t, ic_h)
+            self.IC_d = ic_d
+        return (ic_t, ic_h, ic_d)
 
     def get_ir(self, rank=False, by=None):
-        ic_t, ic_h = self.get_ic(rank=rank)
-        return util.resample(ic_t, how='ir', by=by), util.resample(ic_h, how='ir', by=by)
+        ic_t, ic_h, ic_d = self.get_ic(rank=rank)
+        return util.resample(ic_t, how='ir', by=by), util.resample(ic_h, how='ir', by=by), util.resample(ic_d, how='ir', by=by)
 
     def get_ac(self, rank=False):
         if rank and self.rAC:
@@ -388,6 +407,7 @@ class IntAnalyser(object):
             ac = alpha.rank(axis=1).corrwith(shifted.rank(axis=1), axis=1)
         else:
             ac = alpha.corrwith(shifted, axis=1)
+        ac_d = ac.resample('D', how='mean')
         ac_h = ac[::self.intervals].copy()
         ac_h.index = ac_h.index.date
         ac_h = ac_h.iloc[1:]
@@ -397,10 +417,12 @@ class IntAnalyser(object):
         if rank:
             self.rAC_t = ac_t
             self.rAC_h = ac_h
+            self.rAC_d = ac_d
         else:
             self.AC_t = ac_t
             self.AC_h = ac_h
-        return (ac_t, ac_h)
+            self.AC_d = ac_d
+        return (ac_t, ac_h, ac_d)
 
     def get_returns(self, cost=0, index=False):
         """
@@ -408,14 +430,16 @@ class IntAnalyser(object):
         :param boolean index: Whether we measure returns against index. Default: False
         """
 
-        if self.returns_h is None:
+        if self.returns is None:
             self.returns = (self.data * self.alpha.shift(1)).sum(axis=1)
 
         if cost:
-            ret = (self.returns-self.index_data if index else self.returns) - cost * self.get_turnover()[-1]
+            self.get_turnover()
+            ret = (self.returns-self.index_data if index else self.returns) - cost * self.turnover
         else:
             ret = self.returns-self.index_data if index else self.returns
 
+        ret = ret.copy()
         ret_d = ret.resample('D', how='sum')
         ret_h = ret[::self.intervals].copy()
         ret_h.index = ret_h.index.date
@@ -455,15 +479,17 @@ class IntAnalyser(object):
 
     def summary_ir(self, by=None, freq='daily'):
         """Returns a IR-related metrics summary Series/Dataframe."""
-        index = ['days', 'IR_t', 'rIR_t', 'IR_h', 'rIR_h']
-        ic_t, ic_h = self.get_ic()
-        ric_t, ric_h = self.get_ic(rank=True)
+        index = ['days', 'IR_t', 'rIR_t', 'IR_h', 'rIR_h', 'IR_d', 'rIR_d']
+        ic_t, ic_h, ic_d = self.get_ic()
+        ric_t, ric_h, ric_d = self.get_ic(rank=True)
         res = {
                 'days': util.resample(ic_t, how='count', by=by),
                 'IR_t': util.resample(ic_t, how='ir', by=by),
                 'rIR_t': util.resample(ric_t, how='ir', by=by),
                 'IR_h': util.resample(ic_h, how='ir', by=by),
                 'rIR_h': util.resample(ric_h, how='ir', by=by),
+                'IR_d': util.resample(ic_d, how='ir', by=by),
+                'rIR_d': util.resample(ric_d, how='ir', by=by),
                 }
         res = pd.Series(res) if by is None else pd.DataFrame(res).T
         res = res.reindex(index)
@@ -471,11 +497,12 @@ class IntAnalyser(object):
 
     def summary_turnover(self, by=None):
         """Returns a turnover-related metrics summary Series/Dataframe."""
-        index = ['turnover_t', 'turnover_h']
-        tvr_t, tvr_h = self.get_turnover()[:2]
+        index = ['turnover_t', 'turnover_h', 'turnover_d']
+        tvr_t, tvr_h, tvr_d = self.get_turnover()
         res = {
                 'turnover_t': util.resample(tvr_t, how='mean', by=by),
                 'turnover_h': util.resample(tvr_h, how='mean', by=by),
+                'turnover_d': util.resample(tvr_d, how='mean', by=by),
                 }
         res = pd.Series(res) if by is None else pd.DataFrame(res).T
         res = res.reindex(index)

@@ -82,9 +82,7 @@ class IntervalAlphaBase(AlphaBase):
         if freq not in IntervalAlphaBase.freqs:
             raise ValueError('Frequency {0!r} is currently not supported'.format(freq))
         self.freq = 60 * int(freq[:-3])
-        before_noon = dateutil.generate_timestamps('093000', '113000', self.freq, exclude_begin=True, exclude_end=False)
-        after_noon = dateutil.generate_timestamps('130000', '150000', self.freq, exclude_begin=True, exclude_end=False)
-        self.times = list(before_noon) + list(after_noon)
+        self.times = dateutil.generate_intervals(self.freq)
 
     @abc.abstractmethod
     def generate(self, date, time):

@@ -22,6 +22,16 @@ def intersect(df, univ):
     df[~(univ.ix[df.index].fillna(False))] = np.nan
     return df
 
+def intersect_interval(df, univ):
+    """Intersect an interval DataFrame with a daily universe."""
+    dates = np.unique(df.index.date)
+    univ = univ.copy().ix[dates]
+    index = df.index[::len(df)/len(dates)]
+    univ.index = index
+    univ = univ.reindex(index=df.index).fillna(False)
+    df = df.copy()
+    df[~univ] = np.nan
+
 def neutralize(df):
     """Make DataFrame with mean 0 for each row."""
     return df.subtract(df.mean(axis=1), axis=0)
