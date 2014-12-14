@@ -291,8 +291,7 @@ class KMinFetcher(FetcherBase):
         return res[::-1]
 
     def fetch_intervals(self, dname, date, time, num, offset=0, **kwargs):
-        """Return a consecutive interval data.
-
+        """Return a consecutive interval data
         ``offset`` is to set offset of ``time``; along with ``date``, they determine the ending datetime.
         """
         date_check = kwargs.get('date_check', self.date_check)

@@ -58,21 +58,21 @@ class AdjQuoteFetcher(KDayFetcher):
             bdi, basedate = dateutil.parse_date(DATES, basedate, self.mode)
             if self.mode == AdjQuoteFetcher.FORWARD:
                 if bdi > sdi:
-                    raise ValueError('With AdjQuoteFetcher.FORWARD mode, basedate %s cannot be larger than startdate %s' % (repr(basedate), repr(startdate)))
+                    raise ValueError('With AdjQuoteFetcher.FORWARD mode, basedate {!r} cannot be larger than startdate {!r}'.format(basedate, startdate))
                 adj_window = DATES[bdi: edi+1]
             else:
                 if bdi < edi:
-                    raise ValueError('With AdjQuoteFetcher.BACKWARD mode, basedate %s cannot be smaller than enddate %s' % (repr(basedate), repr(startdate)))
+                    raise ValueError('With AdjQuoteFetcher.BACKWARD mode, basedate {!r} cannot be smaller than enddate {!r}'.format(basedate, startdate))
                 adj_window = DATES[sdi: bdi+1]
-        return adj_window
+        return basedate, adj_window
 
     def fetch(self, dname, startdate, enddate=None, backdays=None, basedate=None, **kwargs):
         """
         :param basedate: Date on which the data adjusting is based. Default: None, defaults to ``enddate``
         :type basedate: str, None
         """
-        if dname[:4] in self._noadjust:
-            return self.quote.fetch(dname, startdate, enddate, **kwargs)
+        if dname[4:] in self._noadjust:
+            return self.quote.fetch(dname, startdate, enddate=enddate, backdays=backdays, **kwargs)
 
         date_check = kwargs.get('date_check', self.date_check)
         window = dateutil.cut_window(
@@ -90,9 +90,7 @@ class AdjQuoteFetcher(KDayFetcher):
         if dname in self._noadjust:
             return self.quote.fetch_window(dname, window, **kwargs)
 
-        adj_window = self._get_adjust_window(window, basedate=basedate, **kwargs)
-        if basedate is None:
-            basedate = window[0] if self.mode == AdjQuoteFetcher.FORWARD else window[-1]
+        basedate, adj_window = self._get_adjust_window(window, basedate=basedate, **kwargs)
 
         df = self.quote.fetch_window(dname, window, **kwargs)
         if dname in self._prices:
@@ -102,7 +100,7 @@ class AdjQuoteFetcher(KDayFetcher):
             adj = self.cax.fetch_window('volfactor', adj_window, **kwargs)
             return self._adjust_volume(df, adj, basedate)
         else:
-            raise ValueError('%s is not a valid data name' % repr(dname))
+            raise ValueError('{!r} is not a valid data name'.format(dname))
 
     def fetch_history(self, dname, date, backdays, **kwargs):
         """This will always use ``AdjQuoteFetcher.BACKWARD`` mode with ``basedate`` equal to ``date``."""
