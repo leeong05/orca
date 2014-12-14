@@ -132,9 +132,14 @@ class BacktestingAlpha(AlphaBase):
             self.warning('{0!r} already exists as a key'.format(key))
         self.alphas[key] = value
 
-    def dump(self, fpath):
+    def dump(self, fpath, ftype='csv'):
         with open(fpath, 'w') as file:
-            self.get_alphas().to_csv(file)
+            if ftype == 'csv':
+                self.get_alphas().to_csv(file)
+            elif ftype == 'pickle':
+                self.get_alphas().to_pickle(file)
+            elif ftype == 'msgpack':
+                self.get_alphas().to_msgpack(file)
 
     def run(self, startdate=None, enddate=None, parallel=False, dates=None):
         """Main interface to an alpha.
@@ -189,9 +194,14 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
             self.warning('{0!r} already exists as a key'.format(key))
         self.alphas[key] = value
 
-    def dump(self, fpath):
+    def dump(self, fpath, ftype='csv'):
         with open(fpath, 'w') as file:
-            self.get_alphas().to_csv(file)
+            if ftype == 'csv':
+                self.get_alphas().to_csv(file)
+            elif ftype == 'pickle':
+                self.get_alphas().to_pickle(file)
+            elif ftype == 'msgpack':
+                self.get_alphas().to_msgpack(file)
 
     def run(self, startdate=None, enddate=None, parallel=False, dates=None):
         """Main interface to an alpha.
