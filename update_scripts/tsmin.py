@@ -21,7 +21,7 @@ def worker(args):
 
 
 class TSMinUpdater(UpdaterBase):
-    """The updater class for collections 'ts_1min', 'ts_5min'."""
+    """The updater class for collections 'ts_1min', 'ts_5min', 'ts_min30'."""
 
     def __init__(self, bar='1min', timeout=300, threads=cpu_count()):
         UpdaterBase.__init__(self, timeout)
@@ -81,12 +81,17 @@ class TSMinUpdater(UpdaterBase):
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
 
 if __name__ == '__main__':
+    ts_30min = TSMinUpdater(bar='30min')
     ts_5min = TSMinUpdater(bar='5min')
     ts_1min = TSMinUpdater(bar='1min')
 
     ts_5min.connect_mongo()
     COLLECTION = ts_5min.db.ts_5min
     ts_5min.run()
+
+    ts_30min.connect_mongo()
+    COLLECTION = ts_30min.db.ts_30min
+    ts_30min.run()
 
     ts_1min.connect_mongo()
     COLLECTION = ts_1min.db.ts_1min
