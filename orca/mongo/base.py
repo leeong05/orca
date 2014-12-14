@@ -290,7 +290,7 @@ class KMinFetcher(FetcherBase):
             res.append((date, time))
         return res[::-1]
 
-    def fetch_intervals(self, dname, date, time, num, offset=0, **kwargs):
+    def fetch_intervals(self, dname, date, time, num=None, offset=0, **kwargs):
         """Return a consecutive interval data
         ``offset`` is to set offset of ``time``; along with ``date``, they determine the ending datetime.
         """
@@ -300,7 +300,7 @@ class KMinFetcher(FetcherBase):
         date = dateutil.compliment_datestring(date, -1, date_check)
         date = dateutil.parse_date(DATES, date, -1)[1]
 
-        dateintervals = self.generate_dateintervals(date, time, num, offset=offset)
+        dateintervals = self.generate_dateintervals(date, time, num=1 if num is None else num, offset=offset)
         dateindex = pd.to_datetime([dis[0]+' '+dis[1] for dis in dateintervals])
         window = [dis[0] for dis in dateintervals]
 
@@ -314,4 +314,4 @@ class KMinFetcher(FetcherBase):
         df = df.ix[dateindex]
         if reindex:
             df = df.reindex(columns=SIDS)
-        return df
+        return df.iloc[0] if num is None else df

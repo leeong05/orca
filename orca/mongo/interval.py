@@ -18,21 +18,24 @@ from kday import CaxFetcher
 class IntervalFetcher(KMinFetcher):
     """Class to fetch TinySoft minute-bar data.
 
-    :param str freq: Frequency of minute-bar data, currently only supports: ('5min', '1min')
+    :param str freq: Frequency of minute-bar data, currently only supports: ('30min', '5min', '1min')
     """
 
     collections = {
+            '30min': DB.ts_30min,
             '5min': DB.ts_5min,
             '1min': DB.ts_1min,
             }
     intervals = {
+            '30min': dateutil.generate_intervals(1800),
             '5min': dateutil.generate_intervals(300),
             '1min': dateutil.generate_intervals(60),
             }
-    dnames = DB.ts_5min.distinct('dname')
+    dnames = DB.ts_30min.distinct('dname')
+    freqs = ('30min', '5min', '1min')
 
     def __init__(self, freq, **kwargs):
-        if freq not in ('5min', '1min'):
+        if freq not in IntervalFetcher.freqs:
             raise ValueError('No minute-bar data of frequency {0!r} exists'.format(freq))
         self._freq = freq
         self.collection = IntervalFetcher.collections[freq]
@@ -46,7 +49,7 @@ class IntervalFetcher(KMinFetcher):
 
     @freq.setter
     def freq(self, freq):
-        if freq not in ('5min', '1min'):
+        if freq not in IntervalFetcher.freqs:
             self.warning('No minute-bar data of frequency {0!r} exists. Nothing has changed'.format(freq))
             return
         self._freq = freq
@@ -134,11 +137,11 @@ class AdjIntervalFetcher(KMinFetcher):
 
     _prices = ('ask1', 'ask2', 'ask3', 'ask4', 'ask5',
                'bid1', 'bid2', 'bid3', 'bid4', 'bid5',
-               'close', 'high', 'low', 'open', 'vwap')
+               'close', 'high', 'low', 'open', 'vwap')  # 15
     _volumes = ('aks1', 'aks2', 'aks3', 'aks4', 'aks5',
                 'bds1', 'bds2', 'bds3', 'bds4', 'bds5',
-                'bvolume', 'svolume', 'volume')
-    _noadjust = ('returns', 'bamount', 'samount', 'amount')
+                'bvolume', 'svolume', 'volume', 'iwbds', 'iwaks')   # 15
+    _noadjust = ('returns', 'bamount', 'samount', 'amount') # 4
 
     dnames = ['adj_' + dname for dname in _prices+_volumes+_noadjust]
 
@@ -267,19 +270,19 @@ class AdjIntervalFetcher(KMinFetcher):
         """
         raise NotImplementedError
 
-    def fetch_intervals(self, dname, date, time, num, offset=0, basedate=None, **kwargs):
+    def fetch_intervals(self, dname, date, time, num=None, offset=0, basedate=None, **kwargs):
         dname = dname[4:]
         if dname in self._noadjust:
             if dname == 'returns':
-                return self.returns.fetch_intervals(date, time, num, offset=offset, **kwargs)
+                return self.returns.fetch_intervals(date, time, num=num, offset=offset, **kwargs)
             else:
-                return self.quote.fetch_intervals(dname, date, time, num, offset=offset, **kwargs)
+                return self.quote.fetch_intervals(dname, date, time, num=num, offset=offset, **kwargs)
 
         date_check = kwargs.get('date_check', self.date_check)
         date = dateutil.compliment_datestring(date, -1, date_check)
         if basedate is None:
             basedate = date
-        res = self.quote.fetch_intervals(dname, date, time, num, offset=offset, **kwargs)
+        res = self.quote.fetch_intervals(dname, date, time, num=1 if num is None else num, offset=offset, **kwargs)
 
         window = sorted(list(set([dt.strftime('%Y%m%d') for dt in res.index])))
         index = res.iloc[:, 0].resample('D', how=lambda x: x.index[0]).values
@@ -301,4 +304,4 @@ class AdjIntervalFetcher(KMinFetcher):
         adj = adj.reindex(index=res.index).fillna(method='ffill')
         res = res * adj
         res = res.div(base, axis=1)
-        return res
+        return res.iloc[0] if num is None else res
