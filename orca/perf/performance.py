@@ -190,7 +190,7 @@ class IntPerformance(object):
 
     @classmethod
     def get_returns(cls, startdate, freq):
-        if cls.returns[freq] is None or startdate < cls.returns[freq].index[0]:
+        if cls.returns[freq] is None or startdate < cls.returns[freq].index[0].date():
             with cls.mongo_lock:
                 returns_fetcher = IntervalReturnsFetcher(freq, datetime_index=True, reindex=True)
                 cls.returns[freq] = returns_fetcher.fetch([], startdate=startdate.strftime('%Y%m%d'), as_frame=True)
@@ -198,7 +198,7 @@ class IntPerformance(object):
 
     @classmethod
     def get_index_returns(cls, startdate, freq, index='HS300'):
-        if index not in cls.index_returns or cls.index_returns[index][freq] is None or startdate < cls.index_returns[index][freq].index[0]:
+        if index not in cls.index_returns or cls.index_returns[index][freq] is None or startdate < cls.index_returns[index][freq].index[0].date():
             with cls.mongo_lock:
                 index_returns_fetcher = IndexIntervalReturnsFetcher(freq, datetime_index=True, reindex=True)
                 cls.index_returns[index] = index_returns_fetcher.fetch('returns', startdate=startdate.strftime('%Y%m%d'))
@@ -223,7 +223,7 @@ class IntPerformance(object):
         else:
             self.alpha = api.format(alpha)
         self.dates = np.unique(self.alpha.index.date)
-        self.startdate = self.dates[0].strftime('%Y%m%d')
+        self.startdate = self.dates[0]
         self.freq = len(self.alpha) / len(self.dates)
         self.freq = str(240 / self.freq) + 'min'
 

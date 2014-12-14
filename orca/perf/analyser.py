@@ -329,7 +329,8 @@ class IntAnalyser(object):
 
     def __init__(self, alpha, data, index_data=None):
         self.alpha = api.scale(alpha)
-        self.intervals = len(self.alpha) / len(np.unique(self.alpha.index.date))
+        self.dates = np.unique(self.alpha.index.date)
+        self.intervals = len(self.alpha) / len(self.dates)
 
         self.IC_t, self.rIC_t = None, None
         self.IC_h, self.rIC_h = None, None
@@ -346,39 +347,38 @@ class IntAnalyser(object):
 
     def get_turnover(self):
         if self.turnover is not None:
-            return (self.turnover_t, self.turnover_h, self.turnover)
+            return (self.turnover_t, self.turnover_h, self.turnover_d)
 
         change = self.alpha.fillna(0) - self.alpha.shift(1).fillna(0)
         tvr = np.abs(change).sum(axis=1)
         self.turnover = tvr.copy()
-        self.turnover_d = tvr.resample('D', how='sum')
+        self.turnover_d = tvr.resample('D', how='mean').ix[self.dates]
         tvr_h = tvr[::self.intervals].copy()
         tvr_h.index = tvr_h.index.date
         self.turnover_h = tvr_h.iloc[1:]
-        tvr[::self.intervals] = 0
-        self.turnover_t = tvr.resample('D', how='sum')
+        tvr[::self.intervals] = np.nan
+        self.turnover_t = tvr.resample('D', how='mean').ix[self.dates]
         return (self.turnover_t, self.turnover_h, self.turnover_d)
 
     def get_ic(self, rank=False):
-        if rank and self.rIC_t:
-            return (self.rIC_t, self.rIC_h)
-        if not rank and self.IC_t:
-            return (self.IC_t, self.IC_h)
+        if rank and self.rIC_t is not None:
+            return (self.rIC_t, self.rIC_h, self.rIC_d)
+        if not rank and self.IC_t is not None:
+            return (self.IC_t, self.IC_h, self.IC_d)
 
         shifted = self.alpha.shift(1)
         returns = self.data
         if rank:
             ic = returns.rank(axis=1).corrwith(shifted.rank(axis=1), axis=1)
-            self.rIC_d = ic.resample('D', how='mean')
         else:
             ic = returns.corrwith(shifted, axis=1)
-        ic_d = ic.resample('D', how='mean')
+        ic_d = ic.resample('D', how='mean').ix[self.dates]
         ic_h = ic[::self.intervals].copy()
         ic_h.index = ic_h.index.date
         ic_h = ic_h.iloc[1:]
 
-        ic[::self.intervals] = 0
-        ic_t = ic.resample('D', how='sum') / (self.intervals-1)
+        ic[::self.intervals] = np.nan
+        ic_t = ic.resample('D', how='mean').ix[self.dates]
         if rank:
             self.rIC_t = ic_t
             self.rIC_h = ic_h
@@ -394,10 +394,10 @@ class IntAnalyser(object):
         return util.resample(ic_t, how='ir', by=by), util.resample(ic_h, how='ir', by=by), util.resample(ic_d, how='ir', by=by)
 
     def get_ac(self, rank=False):
-        if rank and self.rAC:
-            return self.rAC_t
-        if not rank and self.AC:
-            return self.AC_t
+        if rank and self.rAC_t is not None:
+            return (self.rAC_t, self.rAC_h, self.rAC_d)
+        if not rank and self.AC_t is not None:
+            return (self.AC_t, self.AC_h, self.AC_d)
 
         shifted = self.alpha.shift(1)
         alpha = self.alpha.copy()
@@ -407,13 +407,13 @@ class IntAnalyser(object):
             ac = alpha.rank(axis=1).corrwith(shifted.rank(axis=1), axis=1)
         else:
             ac = alpha.corrwith(shifted, axis=1)
-        ac_d = ac.resample('D', how='mean')
+        ac_d = ac.resample('D', how='mean').ix[self.dates]
         ac_h = ac[::self.intervals].copy()
         ac_h.index = ac_h.index.date
         ac_h = ac_h.iloc[1:]
 
-        ac[::self.intervals] = 0
-        ac_t = ac.resample('D', how='sum') / (self.intervals-1)
+        ac[::self.intervals] = np.nan
+        ac_t = ac.resample('D', how='mean').ix[self.dates]
         if rank:
             self.rAC_t = ac_t
             self.rAC_h = ac_h
@@ -440,11 +440,12 @@ class IntAnalyser(object):
             ret = self.returns-self.index_data if index else self.returns
 
         ret = ret.copy()
-        ret_d = ret.resample('D', how='sum')
+        ret_d = ret.resample('D', how='sum').ix[self.dates]
         ret_h = ret[::self.intervals].copy()
         ret_h.index = ret_h.index.date
+        ret_h = ret_h.iloc[1:]
         ret[::self.intervals] = 0
-        ret_t = ret.resample('D', how='sum')
+        ret_t = ret.resample('D', how='sum').ix[self.dates]
         return (ret_t, ret_h, ret_d)
 
     def get_returns_metric(self, how, cost=0, by=None, index=False):

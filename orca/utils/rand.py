@@ -25,3 +25,14 @@ def random_alpha(startdate='20140103', n=None):
                                    n)
     df = pd.DataFrame(np.random.randn(n, len(SIDS)), index=dates, columns=SIDS)
     return df
+
+def rand_intalpha(startdate='20140103', freq='30min', n=None):
+    if not n >= 0:
+        n = np.random.randint(10, 20)
+    dates = dateutil.get_startfrom(DATES,
+                                   dateutil.compliment_datestring(str(startdate), -1, True),
+                                   n)
+    times = dateutil.generate_intervals(int(freq[:-3])*60)
+    dts = pd.to_datetime([d+' '+t for d in dates for t in times])
+    df = pd.DataFrame(np.random.randn(len(dts), len(SIDS)), index=dts, columns=SIDS)
+    return df
