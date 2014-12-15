@@ -19,3 +19,9 @@ data.hdf
 
 .. automodule:: orca.data.hdf
    :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
+
+data.serial
+-----------
+
+.. automodule:: orca.data.serial
+   :exclude-members: __weakref__, __module__, __dict__, __abstractmethods__
