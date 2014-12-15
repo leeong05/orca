@@ -23,6 +23,18 @@ def isin(x):
         return lambda df: df.isin(x)
     return func
 
+def avg_abs_lt(x):
+    """Returns a function that returns a function to check if the absolute value of rolling_mean < x."""
+    def func(window):
+        return lambda df: np.abs(pd.rolling_mean(df, window)) < x
+    return func
+
+def avg_abs_lte(x):
+    """Returns a function that returns a function to check if the absolute value of rolling_mean <= x."""
+    def func(window):
+        return lambda df: np.abs(pd.rolling_mean(df, window)) <= x
+    return func
+
 def min_gt(x):
     """Returns a function that returns a function to check if rolling minimal > x."""
     def func(window):

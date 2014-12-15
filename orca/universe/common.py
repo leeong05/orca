@@ -51,6 +51,10 @@ NONFIN = NegateFilter(FINANCE)
 BANK = IndustryFilter(['480000'])
 NONBANK = NegateFilter(BANK)
 
+"""returns filter"""
+ReturnsFilter = create_quote_filter('ReturnsFilter', 'returns')
+ZDT = ReturnsFilter(1, rules.avg_abs_lte(0.098))
+
 """cap filters"""
 TotalCapFilter = create_cap_filter('TotalCapFilter', 'a_shares')
 TotalCap70Q = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(70))
