@@ -27,11 +27,20 @@ def get_pairwise_corr(name_series, days):
     df = df.ix[index]
     return df.corr()
 
+def read_alpha(fname, ftype='csv'):
+    if ftype == 'csv':
+        return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
+    elif ftype == 'pickle':
+        return pd.read_pickle(fname)
+    elif ftype == 'msgpack':
+        return pd.read_msgpack(fname)
+
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file', nargs='*')
+    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
     parser.add_argument('-q', '--quantile', help='Sets threshold for tail quantiles to calculate returns', type=float)
     parser.add_argument('--db', help='Check correlation with alphas in alphadb', action='store_true')
     parser.add_argument('-m', '--method', choices=('ic', 'returns', 'both'), default='both', help='What type of correlations is of interest?')
@@ -45,11 +54,11 @@ if __name__ == '__main__':
         with open(args.file) as file:
             for line in file:
                 name, fpath = line.split('\s+')
-                ext_alphas[name] = format(pd.read_csv(fpath, header=0, parse_dates=[0], index_col=0))
+                ext_alphas[name] = read_alpha(fpath)
     if args.dir:
         assert os.path.exists(args.dir)
         for name in os.listdir(args.dir):
-            ext_alphas[name] = format(pd.read_csv(os.path.join(args.dir, name), header=0, parse_dates=[0], index_col=0))
+            ext_alphas[name] = read_alpha(os.path.join(args.dir, name), args.ftype)
     for name, alpha in ext_alphas:
         perf = Performance(alpha)
         if args.quantile:
@@ -77,8 +86,8 @@ if __name__ == '__main__':
     else:
         alpha_analyser = None
         for i, name in enumerate(args.alpha):
-            df = pd.read_csv(name, header=0, parse_dates=[0], index_col=0)
-            perf = Performance(format(df))
+            df = read_alpha(name)
+            perf = Performance(df)
             if args.quantile:
                 analyser = perf.get_qtail(args.quantile)
             else:

@@ -12,11 +12,20 @@ from orca.perf.performance import Performance
 from orca.perf.plotter import QuantilesPlotter
 from orca.operation.api import format
 
+def read_alpha(fname, ftype='csv'):
+    if ftype == 'csv':
+        return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
+    elif ftype == 'pickle':
+        return pd.read_pickle(fname)
+    elif ftype == 'msgpack':
+        return pd.read_msgpack(fname)
+
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
+    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
     parser.add_argument('-q', '--quantile', help='Number of quantiles', type=int, required=True)
     parser.add_argument('-p', '--plot', default=['pnl'], nargs='+',
             help='What to plot? Could by any combination of ("pnl", "returns")')
@@ -26,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--end', type=str, help='Ending date')
     args = parser.parse_args()
 
-    alpha = format(pd.read_csv(args.alpha, parse_dates=[0], header=0, index_col=0))
+    alpha = read_alpha(args.alpha, args.ftype)
     perf = Performance(alpha)
     plotter = QuantilesPlotter(perf.get_quantiles(args.quantile))
 

@@ -20,7 +20,8 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--end', type=str, help='Simulation ending date')
     parser.add_argument('--param', type=str, help='A quoted string to supply keyword parameters; for example: --param=\'p1=p1v1,p1v2;p2=p2v1,p2v2.p3v3\'')
     parser.add_argument('--file', type=str, help='A file containing configuration parameters(A .py file is recommended)')
-    parser.add_argument('--csvdir', type=str, help='Diretory to dump generated DataFrames')
+    parser.add_argument('--outdir', type=str, help='Diretory to dump generated DataFrames')
+    parser.add_argument('--ftype', help='File type to save DataFrames', choices=('csv', 'pickle', 'msgpack'), default='csv')
     parser.add_argument('--hdf', type=str, help='HDF5 file name to save generated DataFrames')
     args = parser.parse_args()
 
@@ -67,8 +68,13 @@ if __name__ == '__main__':
         if args.hdf:
             parallel.run_hdf(args.hdf, alpha, gen, args.start, args.end)
         else:
-            assert args.csvdir is not None
-            parallel.run_csv(args.csvdir, alpha, gen, args.start, args.end)
+            assert args.outdir is not None
+            if args.ftype == 'csv':
+                parallel.run_csv(args.outdir, alpha, gen, args.start, args.end)
+            elif args.ftype == 'pickle':
+                parallel.run_pickle(args.outdir, alpha, gen, args.start, args.end)
+            elif args.ftype == 'msgpack':
+                parallel.run_msgpack(args.outdir, alpha, gen, args.start, args.end)
     else:
         alpha = alpha()
         alpha.run(args.start, args.end)

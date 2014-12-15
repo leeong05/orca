@@ -8,11 +8,20 @@ pd.set_option('display.precision', 3)
 from orca.perf.performance import Performance
 from orca.operation.api import format
 
+def read_alpha(fname, ftype='csv'):
+    if ftype == 'csv':
+        return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
+    elif ftype == 'pickle':
+        return pd.read_pickle(fname)
+    elif ftype == 'msgpack':
+        return pd.read_msgpack(fname)
+
 if __name__ == '__main__':
     import argparse
 
     parser= argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
+    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
     parser.add_argument('-i', '--index', default='HS300', type=str,
         help='Index name; se this only when option --longonly is turned on')
     parser.add_argument('-q', '--quantile', type=float,
@@ -28,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--cost', type=float, default=0.001, help='Linear trading cost')
     args = parser.parse_args()
 
-    alpha = format(pd.read_csv(args.alpha, parse_dates=[0], header=0, index_col=0))
+    alpha = read_alpha(args.alpha, args.ftype)
     perf = Performance(alpha)
     if args.longonly:
         if args.quantile:

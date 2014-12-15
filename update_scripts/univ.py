@@ -15,8 +15,7 @@ from base import UpdaterBase
 class UnivUpdater(UpdaterBase):
     """The updater class for collection 'universe'."""
 
-    def __init__(self, source=None, timeout=900):
-        self.source = source
+    def __init__(self, timeout=900):
         self.univs = OrderedDict()
         super(UnivUpdater, self).__init__(timeout=timeout)
 
