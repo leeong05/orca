@@ -74,8 +74,6 @@ class UnivUpdater(UpdaterBase):
         self.update_universe(date, 'Liq70S', Liq70S)
         self.update_universe(date, 'Liq70Y', Liq70Y)
 
-        self.update_universe(date, 'Tradable', common.ACTIVE)
-        self.update_universe(date, 'Active', common.ACTIVE)
         self.update_universe(date, 'ZDT', common.ZDT)
 
         Cap70Liq70Q = common.create_topliquid_filter(70, 70, window=common.DAYS_IN_QUARTER)
@@ -87,16 +85,6 @@ class UnivUpdater(UpdaterBase):
         self.update_universe(date, 'TOP70Q', Cap70Liq70Q)
         self.update_universe(date, 'TOP70S', Cap70Liq70S)
         self.update_universe(date, 'TOP70Y', Cap70Liq70Y)
-
-        BCap70Liq70Q = common.create_backtesting_topliquid_filter(70, 70, window=common.DAYS_IN_QUARTER)
-        BCap70Liq70S = common.create_backtesting_topliquid_filter(70, 70, window=common.DAYS_IN_QUARTER*2)
-        BCap70Liq70Y = common.create_backtesting_topliquid_filter(70, 70, window=common.DAYS_IN_YEAR)
-        self.update_universe(date, 'BCap70Liq70Q', BCap70Liq70Q)
-        self.update_universe(date, 'BCap70Liq70S', BCap70Liq70S)
-        self.update_universe(date, 'BCap70Liq70Y', BCap70Liq70Y)
-        self.update_universe(date, 'BTOP70Q', BCap70Liq70Q)
-        self.update_universe(date, 'BTOP70S', BCap70Liq70S)
-        self.update_universe(date, 'BTOP70Y', BCap70Liq70Y)
 
         self.logger.info('UPSERT {} universes into (c: [{}]) of (d: [{}]) on {}', len(self.univs), self.collection.name, self.db.name, date)
         self.logger.info('Detailed information:\n{}', self.univs)
