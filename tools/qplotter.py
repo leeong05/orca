@@ -12,7 +12,7 @@ from orca.perf.performance import Performance
 from orca.perf.plotter import QuantilesPlotter
 from orca.operation.api import format
 
-def read_alpha(fname, ftype='csv'):
+def read_frame(fname, ftype='csv'):
     if ftype == 'csv':
         return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
     elif ftype == 'pickle':
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--end', type=str, help='Ending date')
     args = parser.parse_args()
 
-    alpha = read_alpha(args.alpha, args.ftype)
+    alpha = read_frame(args.alpha, args.ftype)
     perf = Performance(alpha)
     plotter = QuantilesPlotter(perf.get_quantiles(args.quantile))
 

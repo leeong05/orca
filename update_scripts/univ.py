@@ -76,6 +76,7 @@ class UnivUpdater(UpdaterBase):
 
         self.update_universe(date, 'Tradable', common.ACTIVE)
         self.update_universe(date, 'Active', common.ACTIVE)
+        self.update_universe(date, 'ZDT', common.ZDT)
 
         Cap70Liq70Q = common.create_topliquid_filter(70, 70, window=common.DAYS_IN_QUARTER)
         Cap70Liq70S = common.create_topliquid_filter(70, 70, window=common.DAYS_IN_QUARTER*2)

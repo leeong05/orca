@@ -27,7 +27,7 @@ def get_pairwise_corr(name_series, days):
     df = df.ix[index]
     return df.corr()
 
-def read_alpha(fname, ftype='csv'):
+def read_frame(fname, ftype='csv'):
     if ftype == 'csv':
         return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
     elif ftype == 'pickle':
@@ -54,11 +54,11 @@ if __name__ == '__main__':
         with open(args.file) as file:
             for line in file:
                 name, fpath = line.split('\s+')
-                ext_alphas[name] = read_alpha(fpath)
+                ext_alphas[name] = read_frame(fpath)
     if args.dir:
         assert os.path.exists(args.dir)
         for name in os.listdir(args.dir):
-            ext_alphas[name] = read_alpha(os.path.join(args.dir, name), args.ftype)
+            ext_alphas[name] = read_frame(os.path.join(args.dir, name), args.ftype)
     for name, alpha in ext_alphas:
         perf = Performance(alpha)
         if args.quantile:
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     else:
         alpha_analyser = None
         for i, name in enumerate(args.alpha):
-            df = read_alpha(name)
+            df = read_frame(name)
             perf = Performance(df)
             if args.quantile:
                 analyser = perf.get_qtail(args.quantile)

@@ -8,7 +8,7 @@ pd.set_option('display.precision', 3)
 from orca.perf.performance import Performance
 from orca.operation.api import format
 
-def read_alpha(fname, ftype='csv'):
+def read_frame(fname, ftype='csv'):
     if ftype == 'csv':
         return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
     elif ftype == 'pickle':
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--cost', type=float, default=0.001, help='Linear trading cost')
     args = parser.parse_args()
 
-    alpha = read_alpha(args.alpha, args.ftype)
+    alpha = read_frame(args.alpha, args.ftype)
     perf = Performance(alpha)
     if args.longonly:
         if args.quantile:

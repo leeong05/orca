@@ -3,6 +3,8 @@
 """
 
 import json
+import cPickle
+import msgpack
 from collections import OrderedDict
 from datetime import datetime
 import logging
@@ -14,7 +16,16 @@ import statsmodels.api as sm
 from orca import logger
 from orca import DATES
 from orca.mongo.quote import QuoteFetcher
+from orca.mongo.industry import IndustryFetcher
 from orca.operation import api
+
+def read_frame(fname, ftype='csv'):
+    if ftype == 'csv':
+        return pd.read_csv(fname, header=0, parse_dates=[0], index_col=0)
+    elif ftype == 'pickle':
+        return pd.read_pickle(fname)
+    elif ftype == 'msgpack':
+        return pd.read_msgpack(fname)
 
 
 class AlphaCombiner(object):
@@ -47,15 +58,6 @@ class AlphaCombiner(object):
         self.oX, self.oY = None, None
         self.result = None
 
-    @staticmethod
-    def read_alpha(fname, ftype='csv'):
-        if ftype == 'csv':
-            return pd.read_csv(fname, header=0, parse_dates=[0], index_col=0)
-        elif ftype == 'pickle':
-            return pd.read_pickle(fname)
-        elif ftype == 'msgpack':
-            return pd.read_msgpack(fname)
-
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level message in data fetchers.
         This is enabled by default."""
@@ -65,18 +67,28 @@ class AlphaCombiner(object):
     def dump(self, fpath, ftype='csv'):
         """Save predicted result in file."""
         with open(fpath, 'w') as file:
-            self.oY.to_csv(file)
+            if ftype == 'csv':
+                self.oY.to_csv(file)
+            elif ftype == 'pickle':
+                self.oY.to_pickle(file)
+            elif ftype == 'msgpack':
+                self.oY.to_msgpack(file)
         self.logger.info('Predicted alphas is saved in %s', fpath)
-        with open(fpath+'.json', 'w') as file:
-            json.dump(self.result.params.to_dict(), file)
-        self.logger.info('Parameters is saved in %s', fpath+'.json')
+        with open(fpath+'.param', 'w') as file:
+            if ftype == 'csv':
+                json.dump(self.result.params.to_dict(), file)
+            elif ftype == 'pickle':
+                cPickle.dump(self.result.params.to_dict(), file)
+            elif ftype == 'msgpack':
+                msgpack.dump(self.result.params.to_dict(), file)
+        self.logger.info('Parameters is saved in %s', fpath+'.param')
 
     def add_alpha(self, name, alpha, ftype='csv'):
         """
         :param DataFrame alpha: Alpha to be added
         """
         if isinstance(alpha, str):
-            alpha = self.read_alpha(alpha, ftype)
+            alpha = read_frame(alpha, ftype)
         self.name_alpha[name] = api.format(alpha)
 
     def __setitem__(self, name, alpha):
@@ -85,7 +97,7 @@ class AlphaCombiner(object):
 
     def set_weight(self, weight):
         if isinstance(weight, str):
-            weight = self.read_csv(weight)
+            weight = read_frame(weight)
         W = api.format(weight)
         self.weight = W[np.isfinite(W) & (W > 0)]
 
@@ -188,6 +200,109 @@ class AlphaCombiner(object):
         self.predict()
         self.dump(fpath)
 
+
+class IndustryAlphaCombiner(object):
+    """Class to combine alphas industry-by-industry.
+
+    :param int level: Which level of industry to be used for grouping? Must be one of (1, 2, 3)
+    """
+
+    fetcher = IndustryFetcher(datetime_index=True, reindex=True)
+    industry = {
+            'level1': None,
+            'level2': None,
+            'level3': None,
+            }
+
+    @classmethod
+    def fetch_industry(cls, startdate, level):
+        level = 'level%d' % int(level)
+        if cls.industry[level] is None or startdate < cls.industry[level].index[0]:
+            cls.industry[level] = cls.fetcher.fetch(level, startdate)
+        return cls.industry[level]
+
+    def __init__(self, *args, **kwargs):
+        self.level = kwargs.pop('level', 1)
+        self.industries = IndustryAlphaCombiner.fetcher.fetch_info('name', level=self.level).keys()
+        self.combos = {industry: AlphaCombiner(*args, **kwargs) for industry in self.industries}
+        self.oY, self.params = None, {}
+
+    def dump(self, fpath, ftype='csv', dump_all=False):
+        if dump_all:
+            for ind, combo in self.combos:
+                combo.dump(fpath+'_'+ind, ftype=ftype)
+        with open(fpath, 'w') as file:
+            if ftype == 'csv':
+                self.oY.to_csv(file)
+            elif ftype == 'pickle':
+                self.oY.to_pickle(file)
+            elif ftype == 'msgpack':
+                self.oY.to_msgpack(file)
+        self.logger.info('Predicted alphas is saved in %s', fpath)
+        with open(fpath+'.param', 'w') as file:
+            if ftype == 'csv':
+                json.dump(self.result.params.to_dict(), file)
+            elif ftype == 'pickle':
+                cPickle.dump(self.result.params.to_dict(), file)
+            elif ftype == 'msgpack':
+                msgpack.dump(self.result.params.to_dict(), file)
+        self.logger.info('Parameters is saved in %s', fpath+'.param')
+
+    def add_alpha(self, name, alpha, ftype='csv'):
+        if isinstance(alpha, str):
+            alpha = read_frame(alpha, ftype)
+        alpha = api.format(alpha)
+        industry = IndustryAlphaCombiner.fetch_industry(alpha.index[0], self.level).ix[alpha.index]
+        for ind, combo in self.combos.iteritems():
+            combo.add_alpha(alpha[industry == ind])
+
+    def __setitem__(self, name, alpha):
+        self.add_alpha(name, alpha)
+
+    def set_weight(self, weight):
+        if isinstance(weight, str):
+            weight = read_frame(weight)
+        weight = api.format(weight)
+        industry = IndustryAlphaCombiner.fetch_industry(weight.index[0], self.level).ix[weight.index]
+        for ind, combo in self.combos.iteritems():
+            combo.set_weight(weight[industry == ind])
+
+    def add_isdates(self, start=None, end=None):
+        for _, combo in self.combos.iteritems():
+            combo.add_isdates(start, end)
+
+    def set_osdates(self, start=None, end=None):
+        for _, combo in self.combos.iteritems():
+            combo.set_osdates(start, end)
+
+    def prepare_XYW(self):
+        for _, combo in self.combos.iteritems():
+            combo.prepare_XYW()
+
+    def fit(self):
+        for ind, combo in self.combos.iteritems():
+            combo.fit()
+            self.params[ind] = combo.result.params.to_dict()
+
+    def predict(self):
+        oYs = []
+        for _, combo in self.combos.iteritems():
+            combo.predict()
+            oY = combo.oY.dropna(how='all', axis=1)
+            oYs.append(oY)
+        self.oY = api.format(pd.concat(oYs, axis=1))
+
+    def run(self, fpath, dump_all=False):
+        """Main interface.
+
+        :param str fpath: Valid file path.
+        """
+        self.prepare_XYW()
+        self.fit()
+        self.predict()
+        self.dump(fpath, dump_all)
+
+
 if __name__ == '__main__':
     import os
     import argparse
@@ -206,9 +321,14 @@ if __name__ == '__main__':
     parser.add_argument('--dir', help='Input directory, each file contained is assumed to be an alpha file', type=str)
     parser.add_argument('--file', help='Input file, each row in the format: name path_to_a_csv_file', type=str)
     parser.add_argument('--dump', help='The output file name', type=str, default='combo')
+    parser.add_argument('--industry', action='store_true')
+    parser.add_argument('--level', choices=(1, 2, 3), default=1)
     args = parser.parse_args()
 
-    combiner = AlphaCombiner(args.periods, args.threshold, args.quantile, args.multiplier, debug_on=args.debug_on)
+    if args.industry:
+        combiner = IndustryAlphaCombiner(args.periods, args.threshold, args.quantile, args.multiplier, debug_on=args.debug_on, level=args.level)
+    else:
+        combiner = AlphaCombiner(args.periods, args.threshold, args.quantile, args.multiplier, debug_on=args.debug_on)
 
     if args.file:
         with open(args.file) as file:
