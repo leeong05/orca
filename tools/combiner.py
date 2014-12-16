@@ -218,7 +218,7 @@ class IndustryAlphaCombiner(object):
     def fetch_industry(cls, startdate, level):
         level = 'level%d' % int(level)
         if cls.industry[level] is None or startdate < cls.industry[level].index[0]:
-            cls.industry[level] = cls.fetcher.fetch(level, startdate)
+            cls.industry[level] = cls.fetcher.fetch(level, startdate).fillna('')
         return cls.industry[level]
 
     def __init__(self, *args, **kwargs):
@@ -314,8 +314,8 @@ if __name__ == '__main__':
     parser.add_argument('--quantile', help='Returns in this top quantile considered to be positive', type=float)
     parser.add_argument('--multiplier', help='Multiplier weight given on positive cases', type=float, default=4)
     parser.add_argument('--debug_on', help='Whether display debug log message', action='store_true')
-    parser.add_argument('--is_starts', help='IS startdate', type=str)
-    parser.add_argument('--is_ends', help='IS enddate', type=str)
+    parser.add_argument('--is_starts', help='IS startdate', nargs='+')
+    parser.add_argument('--is_ends', help='IS enddate', nargs='+')
     parser.add_argument('--os_start', help='OS startdate', type=str)
     parser.add_argument('--os_end', help='OS enddate', type=str)
     parser.add_argument('--dir', help='Input directory, each file contained is assumed to be an alpha file', type=str)
@@ -350,8 +350,7 @@ if __name__ == '__main__':
     if args.is_end and args.os_start is None:
         args.os_start = args.is_end
 
-    is_starts, is_ends = args.is_starts.split(','), args.is_ends.split(',')
-    for is_start, is_end in zip(is_starts, is_ends):
+    for is_start, is_end in zip(args.is_starts, args.is_ends):
         combiner.add_isdates(start=is_start, end=is_end)
     combiner.set_osdates(start=args.os_start, end=args.os_end)
 

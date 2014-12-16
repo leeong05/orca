@@ -47,12 +47,13 @@ class IndexQuoteFetcher(KDayFetcher):
             dname = IndexQuoteFetcher.dnames
 
         query = {'index': index, 'date': {'$gte': window[0], '$lte': window[-1]}}
-        proj = {'_id': 0}
+        proj = {'_id': 0, 'date': 1}
         _dname = [dname] if isinstance(dname, str) else dname
         for d in _dname:
             proj.update({d: 1})
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame(list(cursor))
+        df.index = df.date
         if datetime_index:
             df.index = pd.to_datetime(df.index)
         return df[dname]

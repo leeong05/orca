@@ -94,5 +94,5 @@ if __name__ == '__main__':
         for fig in figs:
             pp.savefig(fig)
         pp.close()
-
-    plt.show()
+    else:
+        plt.show()

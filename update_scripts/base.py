@@ -133,15 +133,19 @@ class UpdaterBase(object):
                 self.logger.info('START')
                 iterates = self.iterates
                 while iterates:
-                    p = Process(target=self.update, args=(date,))
-                    p.start()
-                    p.join(self.timeout)
-                    if p.is_alive():
-                        self.logger.warning('Timeout on date: {}', date)
-                        p.terminate()
-                        iterates -= 1
-                    else:
-                        iterates = 0
+                    try:
+                        p = Process(target=self.update, args=(date,))
+                        p.start()
+                        p.join(self.timeout)
+                        if p.is_alive():
+                            self.logger.warning('Timeout on date: {}', date)
+                            p.terminate()
+                            iterates -= 1
+                        else:
+                            iterates = 0
+                    except Exception, e:
+                        self.logger.error('\n{}', e)
+                        break
                 self.logger.info('END\n')
             self.pro_update()
             self.disconnect_mongo()
