@@ -28,9 +28,10 @@ def intersect_interval(df, univ):
     univ = univ.copy().ix[dates]
     index = df.index[::len(df)/len(dates)]
     univ.index = index
-    univ = univ.reindex(index=df.index).fillna(False)
+    univ = univ.reindex(index=df.index).fillna(method='ffill')
     df = df.copy()
     df[~univ] = np.nan
+    return df
 
 def neutralize(df):
     """Make DataFrame with mean 0 for each row."""

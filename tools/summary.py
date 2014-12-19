@@ -2,10 +2,14 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import numpy as np
 import pandas as pd
 pd.set_option('display.precision', 3)
 
-from orca.perf.performance import Performance
+from orca.perf.performance import (
+        Performance,
+        IntPerformance,
+        )
 from orca.operation.api import format
 
 def read_frame(fname, ftype='csv'):
@@ -18,10 +22,12 @@ def read_frame(fname, ftype='csv'):
 
 if __name__ == '__main__':
     import argparse
+    import cPickle
 
     parser= argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
     parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
+    parser.add_argument('--atype', help='Alpha type', choices=('daily', 'intraday', 'perf'))
     parser.add_argument('-i', '--index', default='HS300', type=str,
         help='Index name; se this only when option --longonly is turned on')
     parser.add_argument('-q', '--quantile', type=float,
@@ -37,8 +43,28 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--cost', type=float, default=0.001, help='Linear trading cost')
     args = parser.parse_args()
 
-    alpha = read_frame(args.alpha, args.ftype)
-    perf = Performance(alpha)
+    if args.atype == 'perf':
+        with open(args.alpha) as file:
+            perf = cPickle.load(file)
+            if hasattr(perf, 'freq'):
+                args.atype = 'intraday'
+            else:
+                args.atype = 'daily'
+    else:
+        alpha = read_frame(args.alpha, args.ftype)
+        if args.atype is None:
+            if len(alpha.index) == len(np.unique(alpha.index.date)):
+                args.atype = 'daily'
+            else:
+                args.atype = 'intraday'
+
+        if args.atype == 'intraday':
+            perf = IntPerformance(alpha)
+        else:
+            perf = Performance(alpha)
+        with open(args.alpha+'.pickle', 'w') as file:
+            cPickle.dump(perf, file)
+
     if args.longonly:
         if args.quantile:
             if args.quantile > 0:
@@ -58,5 +84,8 @@ if __name__ == '__main__':
         else:
             analyser = perf.get_longshort()
 
-    summary = analyser.summary(cost=args.cost, by=args.by, group=args.group, freq=args.freq)
+    if args.atype == 'intraday':
+        summary = analyser.summary(cost=args.cost, by=args.by, group=args.group)
+    else:
+        summary = analyser.summary(cost=args.cost, by=args.by, group=args.group, freq=args.freq)
     print summary

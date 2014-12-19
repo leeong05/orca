@@ -183,9 +183,10 @@ class IntPerformance(object):
     returns = {
             '1min': None,
             '5min': None,
+            '30min': None,
             }
     index_returns = {
-            'HS300': {'1min': None, '5min': None,},
+            'HS300': {'1min': None, '5min': None, '30min': None,},
             }
 
     @classmethod

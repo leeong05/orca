@@ -379,6 +379,10 @@ class IntAnalyser(object):
 
         ic[::self.intervals] = np.nan
         ic_t = ic.resample('D', how='mean').ix[self.dates]
+
+        ic_d.index = pd.to_datetime(ic_d.index)
+        ic_t.index = pd.to_datetime(ic_t.index)
+        ic_h.index = pd.to_datetime(ic_h.index)
         if rank:
             self.rIC_t = ic_t
             self.rIC_h = ic_h
@@ -414,6 +418,10 @@ class IntAnalyser(object):
 
         ac[::self.intervals] = np.nan
         ac_t = ac.resample('D', how='mean').ix[self.dates]
+
+        ac_d.index = pd.to_datetime(ac_d.index)
+        ac_t.index = pd.to_datetime(ac_t.index)
+        ac_h.index = pd.to_datetime(ac_h.index)
         if rank:
             self.rAC_t = ac_t
             self.rAC_h = ac_h
@@ -446,6 +454,10 @@ class IntAnalyser(object):
         ret_h = ret_h.iloc[1:]
         ret[::self.intervals] = 0
         ret_t = ret.resample('D', how='sum').ix[self.dates]
+
+        ret_d.index = pd.to_datetime(ret_d.index)
+        ret_t.index = pd.to_datetime(ret_t.index)
+        ret_h.index = pd.to_datetime(ret_h.index)
         return (ret_t, ret_h, ret_d)
 
     def get_returns_metric(self, how, cost=0, by=None, index=False):

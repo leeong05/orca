@@ -25,8 +25,9 @@ class AlphaBase(object):
 
     LOGGER_NAME = 'alpha'
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.logger = logbook.Logger(AlphaBase.LOGGER_NAME)
+        self.__dict__.update(kwargs)
 
     @abc.abstractmethod
     def generate(self, date):
@@ -78,7 +79,8 @@ class IntervalAlphaBase(AlphaBase):
 
     freqs = ('1min', '5min', '15min', '30min', '60min', '120min')
 
-    def __init__(self, freq):
+    def __init__(self, freq, **kwargs):
+        super(IntervalAlphaBase, self).__init__(**kwargs)
         if freq not in IntervalAlphaBase.freqs:
             raise ValueError('Frequency {0!r} is currently not supported'.format(freq))
         self.freq = 60 * int(freq[:-3])
@@ -111,7 +113,7 @@ class BacktestingAlpha(AlphaBase):
     """
 
     def __init__(self, *args, **kwargs):
-        super(BacktestingAlpha, self).__init__()
+        super(BacktestingAlpha, self).__init__(**kwargs)
         self.alphas = {}
         self._alphas = None
 
@@ -172,7 +174,7 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
     """
 
     def __init__(self, freq, *args, **kwargs):
-        super(BacktestingIntervalAlpha, self).__init__(freq)
+        super(BacktestingIntervalAlpha, self).__init__(freq, **kwargs)
         self.alphas = {}
         self._alphas = None
 

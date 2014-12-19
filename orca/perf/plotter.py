@@ -50,10 +50,11 @@ class Plotter(object):
         else:
             for col, ser in pdobj.iteritems():
                 ax.plot(ser.index, ser, label=col)
-                if col in drawdown:
-                    start, end = drawdown[col]
-                    dd_slice = pdobj.ix[start: end]
-                    ax.plot(dd_slice.index, dd_slice, 'r', lw=3, alpha=0.7)
+                if drawdown is not None:
+                    if col in drawdown:
+                        start, end = drawdown[col]
+                        dd_slice = ser.ix[start: end]
+                        ax.plot(dd_slice.index, dd_slice, 'r', lw=3, alpha=0.7)
             ax.legend()
 
         ax.set_title(title)
@@ -166,19 +167,22 @@ class Plotter(object):
             ret_i = self.cut(self.analyser.index_data.ix[ret.index], startdate, enddate)
 
         if cost is not None:
-            ret_c = self.cut(self.analyser.get_returns(cost=cost, index=index), startdate, enddate)
+            if isinstance(self.analyser, IntAnalyser):
+                ret_c = self.cut(self.analyser.get_returns(cost=cost, index=index)[Plotter.whiches[which]], startdate, enddate)
+            else:
+                ret_c = self.cut(self.analyser.get_returns(cost=cost, index=index), startdate, enddate)
             if drawdown:
                 start_c, end_c = util.drawdown(ret_c)[:2]
             if plot_index:
-                pnl = pd.concat([ret, ret_c, ret_i], axis=1, keys=['returns', 'cost(%.4f)' % cost, 'index']).cumsum()
+                pnl = pd.concat([ret, ret_c, ret_i], axis=1, keys=['pnl', 'cost(%.4f)' % cost, 'index']).cumsum()
             else:
-                pnl = pd.concat([ret, ret_c], axis=1, keys=['returns', 'cost(%.4f)' % cost]).cumsum()
+                pnl = pd.concat([ret, ret_c], axis=1, keys=['pnl', 'cost(%.4f)' % cost]).cumsum()
             return self._plot1(pnl, title,
                     {pnl.columns[0]: [start, end], pnl.columns[1]: [start_c, end_c]}) if drawdown else \
                    self._plot1(pnl, title)
 
         if plot_index:
-            pnl = pd.concat([ret, ret_i], axis=1, keys=['returns', 'index']).cumsum()
+            pnl = pd.concat([ret, ret_i], axis=1, keys=['pnl', 'index']).cumsum()
         else:
             pnl = ret.cumsum()
         return self._plot1(pnl, title, [start, end]) if drawdown else self._plot1(pnl, title)
