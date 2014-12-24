@@ -142,8 +142,9 @@ class BacktestingAlpha(AlphaBase):
                 self.get_alphas().to_pickle(file)
             elif ftype == 'msgpack':
                 self.get_alphas().to_msgpack(file)
+        self.info('Saved in {}'.format(fpath))
 
-    def run(self, startdate=None, enddate=None, parallel=False, dates=None):
+    def run(self, startdate=None, enddate=None, dates=None):
         """Main interface to an alpha.
 
         :param dates list: One can supply this keyword argument with a list to omit ``startdate`` and ``enddate``
@@ -158,11 +159,9 @@ class BacktestingAlpha(AlphaBase):
                         dateutil.compliment_datestring(str(startdate), -1, True),
                         dateutil.compliment_datestring(str(enddate), 1, True))
 
-        if not parallel:
-            for date in dates:
-                self.generate(date)
-            return
-        #TODO
+        for date in dates:
+            self.generate(date)
+            self.debug('Generated alpha for {}'.format(date))
 
 
 class BacktestingIntervalAlpha(IntervalAlphaBase):
@@ -191,10 +190,17 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
         return self.alphas[self.make_datetime(date, time)]
 
     def __setitem__(self, key, value):
-        key = self.make_datetime(*key)
+        if isinstance(key, tuple):
+            key = self.make_datetime(*key)
         if key in self.alphas:
             self.warning('{0!r} already exists as a key'.format(key))
         self.alphas[key] = value
+
+    def push(self, key, value):
+        if isinstance(key, tuple):
+            key = self.make_datetime(*key)
+        for sid, val in value.dropna.iteritems():
+            self.cursor.execute("""INSERT INTO alpha VALUES (?, ?, ?)""", key, sid, val)
 
     def dump(self, fpath, ftype='csv'):
         with open(fpath, 'w') as file:
@@ -204,8 +210,9 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
                 self.get_alphas().to_pickle(file)
             elif ftype == 'msgpack':
                 self.get_alphas().to_msgpack(file)
+        self.info('Saved in {}'.format(fpath))
 
-    def run(self, startdate=None, enddate=None, parallel=False, dates=None):
+    def run(self, startdate=None, enddate=None, dates=None):
         """Main interface to an alpha.
 
         :param dates list: One can supply this keyword argument with a list to omit ``startdate`` and ``enddate``
@@ -220,12 +227,10 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
                         dateutil.compliment_datestring(str(startdate), -1, True),
                         dateutil.compliment_datestring(str(enddate), 1, True))
 
-        if not parallel:
-            for date in dates:
-                for time in self.times:
-                    self.generate(date, time)
-            return
-        #TODO
+        for date in dates:
+            for time in self.times:
+                self.generate(date, time)
+            self.debug('Generated alpha for {}'.format(date))
 
 
 class ProductionAlpha(AlphaBase):

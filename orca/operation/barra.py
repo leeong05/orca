@@ -2,6 +2,8 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import multiprocessing
+
 import numpy as np
 import pandas as pd
 
@@ -87,56 +89,129 @@ class BarraOperation(OperationBase):
         self.factor = BarraFactorFetcher(model, **self.kwargs)
 
 
+def worker1(args):
+    obj, alpha, factor, date, dt = args
+    try:
+        date = date.strftime('%Y%m%d')
+    except:
+        pass
+
+    if isinstance(factor, str):
+        if factor == 'industry':
+            factor = obj.industry_factors
+        elif factor == 'style':
+            factor = obj.style_factors
+        else:
+            factor = obj.all_factors
+
+    finite_alpha = alpha[np.isfinite(alpha)]
+    exposure = obj.exposure.fetch_daily(date, offset=1)[factor]
+    exposure = exposure.dropna(axis=0, how='all').fillna(0)
+    sids = exposure.index.intersection(finite_alpha.index)
+
+    nalpha, exposure = alpha[sids], exposure.ix[sids]
+    a, b = exposure.T.dot(exposure), exposure.T.dot(nalpha)
+    try:
+        lamb = np.linalg.solve(a, b)
+    except np.linalg.linalg.LinAlgError:
+        obj.warning('Singular matrix, neutralization failed')
+        return dt, alpha
+    nalpha = pd.Series(nalpha.values - exposure.dot(lamb), index=sids)
+    return dt, nalpha.reindex(index=alpha.index)
+
+
 class BarraFactorNeutOperation(BarraOperation):
     """Class to neutralize alpha along some Barra factors."""
 
-    def __init__(self, model, **kwargs):
+    def __init__(self, model, threads=multiprocessing.cpu_count(), **kwargs):
         super(BarraFactorNeutOperation, self).__init__(model, **kwargs)
+        self.threads = threads
 
-    def _operate(self, alpha, factor, date):
-        """
-        :param Series alpha: Row extracted from an alpha DataFrame
-        :param factor: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
-        :type factor: str, list
-        """
-        try:
-            date = date.strftime('%Y%m%d')
-        except:
-            pass
-
-        if isinstance(factor, str):
-            if factor == 'industry':
-                factor = self.industry_factors
-            elif factor == 'style':
-                factor = self.style_factors
-            else:
-                factor = self.all_factors
-
-        finite_alpha = alpha.dropna()
-
-        exposure = self.exposure.fetch_daily(date, offset=1)[factor]
-        exposure = exposure.dropna(axis=0, how='all').fillna(0)
-        sids = exposure.index.intersection(finite_alpha.index)
-
-        nalpha, exposure = alpha[sids], exposure.ix[sids]
-        a, b = exposure.T.dot(exposure), exposure.T.dot(nalpha)
-        try:
-            lamb = np.linalg.solve(a, b)
-        except np.linalg.linalg.LinAlgError:
-            self.warning('Singular matrix, neutralization failed')
-            return alpha
-        nalpha = pd.Series(nalpha.values - exposure.dot(lamb), index=sids)
-        return nalpha.reindex(index=alpha.index)
+#    def _operate(self, alpha, factor, date):
+#        """
+#        :param Series alpha: Row extracted from an alpha DataFrame
+#        :param factor: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
+#        :type factor: str, list
+#        """
+#        try:
+#            date = date.strftime('%Y%m%d')
+#        except:
+#            pass
+#
+#        if isinstance(factor, str):
+#            if factor == 'industry':
+#                factor = self.industry_factors
+#            elif factor == 'style':
+#                factor = self.style_factors
+#            else:
+#                factor = self.all_factors
+#
+#        finite_alpha = alpha.dropna()
+#
+#        exposure = self.exposure.fetch_daily(date, offset=1)[factor]
+#        exposure = exposure.dropna(axis=0, how='all').fillna(0)
+#        sids = exposure.index.intersection(finite_alpha.index)
+#
+#        nalpha, exposure = alpha[sids], exposure.ix[sids]
+#        a, b = exposure.T.dot(exposure), exposure.T.dot(nalpha)
+#        try:
+#            lamb = np.linalg.solve(a, b)
+#        except np.linalg.linalg.LinAlgError:
+#            self.warning('Singular matrix, neutralization failed')
+#            return alpha
+#        nalpha = pd.Series(nalpha.values - exposure.dot(lamb), index=sids)
+#        return nalpha.reindex(index=alpha.index)
 
     def operate(self, alpha, factor):
         """
         :param factor: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factor: str, list
         """
-        res = {}
-        for date, row in alpha.iterrows():
-            res[date] = self._operate(row, factor, date)
-        return pd.DataFrame(res).T
+        pool = multiprocessing.Pool(self.threads)
+        res = pool.imap_unordered(worker1, [(self, row, factor, date, date) for date, row in alpha.iterrows()])
+        pool.close()
+        pool.join()
+
+        df = {}
+        for dt, row in res:
+            df[dt] = row
+        return pd.DataFrame(df).T
+
+
+def worker2(args):
+    obj, alpha, factor, date, dt = args
+    try:
+        date = date.strftime('%Y%m%d')
+    except:
+        pass
+
+    if isinstance(factor, str):
+        if factor == 'industry':
+            factor = obj.industry_factors
+        elif factor == 'style':
+            factor = obj.style_factors
+        else:
+            factor = obj.all_factors
+
+    finite_alpha = alpha[np.isfinite(alpha)]
+
+    exposure = obj.exposure.fetch_daily(date, offset=1)[factor]
+    exposure = exposure.dropna(axis=0, how='all').fillna(0)
+    sids = exposure.index.intersection(finite_alpha.index)
+
+    covariance = obj.covariance.fetch_daily(date, offset=1, sids=sids)
+    sids = sids.intersection(covariance.index)
+
+    nalpha, exposure, covariance = alpha[sids], exposure.ix[sids], covariance.ix[sids, sids]
+
+    a, b = exposure.T.dot(covariance).dot(exposure), exposure.T.dot(covariance).dot(nalpha)
+    try:
+        lamb = np.linalg.solve(a, b)
+    except np.linalg.linalg.LinAlgError:
+        obj.warning('Singular matrix, neutralization failed')
+        return dt, alpha
+    nalpha = pd.Series(nalpha.values - exposure.dot(lamb), index=sids)
+    return dt, nalpha.reindex(index=alpha.index)
 
 
 class BarraFactorCorrNeutOperation(BarraOperation):
@@ -185,13 +260,17 @@ class BarraFactorCorrNeutOperation(BarraOperation):
         nalpha = pd.Series(nalpha.values - exposure.dot(lamb), index=sids)
         return nalpha.reindex(index=alpha.index)
 
-    def operate(self, alpha, factors):
+    def operate(self, alpha, factor):
         """
-        :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
+        :param factor: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str, list
         """
-        res = {}
-        for _, row in alpha.iterrows():
-            date = row.name
-            res[date] = self._operate(row, factors, date)
-        return pd.DataFrame(res).T
+        pool = multiprocessing.Pool(self.threads)
+        res = pool.imap_unordered(worker2, [(self, row, factor, date, date) for date, row in alpha.iterrows()])
+        pool.close()
+        pool.join()
+
+        df = {}
+        for dt, row in res:
+            df[dt] = row
+        return pd.DataFrame(df).T

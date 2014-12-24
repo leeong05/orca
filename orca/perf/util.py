@@ -17,7 +17,7 @@ def drawdown(ser):
 
 def annualized_returns(ser):
     """``ser`` is a daily returns Series instead of a cumulative returns Series."""
-    return ser.mean() * DAYS_IN_YEAR / ser.count()
+    return ser.mean() * DAYS_IN_YEAR
 
 def perwin(ser):
     """``ser`` is a daily returns Series instead of a cumulative returns Series."""

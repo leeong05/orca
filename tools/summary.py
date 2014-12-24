@@ -6,6 +6,9 @@ import numpy as np
 import pandas as pd
 pd.set_option('display.precision', 3)
 
+from orca.mongo.kday import UnivFetcher
+univ_fetcher = UnivFetcher(datetime_index=True, reindex=True)
+
 from orca.perf.performance import (
         Performance,
         IntPerformance,
@@ -28,6 +31,7 @@ if __name__ == '__main__':
     parser.add_argument('alpha', help='Alpha file')
     parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
     parser.add_argument('--atype', help='Alpha type', choices=('daily', 'intraday', 'perf'))
+    parser.add_argument('--univ', help='Universe name', type=str)
     parser.add_argument('-i', '--index', default='HS300', type=str,
         help='Index name; se this only when option --longonly is turned on')
     parser.add_argument('-q', '--quantile', type=float,
@@ -64,6 +68,12 @@ if __name__ == '__main__':
             perf = Performance(alpha)
         with open(args.alpha+'.pickle', 'w') as file:
             cPickle.dump(perf, file)
+
+    if args.univ:
+        assert args.univ in univ_fetcher.dnames
+        dates = np.unique([dt.strftime('%Y%m%d') for dt in perf.alpha.index])
+        univ = univ_fetcher.fetch_window(args.univ, dates)
+        perf = perf.get_universe(univ)
 
     if args.longonly:
         if args.quantile:

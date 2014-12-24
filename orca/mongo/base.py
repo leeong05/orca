@@ -210,8 +210,9 @@ class KMinFetcher(FetcherBase):
         query = {'dname': dname,
                  'date': {'$gte': window[0], '$lte': window[-1]},
                  }
-        if times:
-            query.update({'time': {'$in': [times] if isinstance(times, str) else times}})
+        if not times:
+            times = self.intervals
+        query.update({'time': {'$in': [times] if isinstance(times, str) else times}})
         proj = {'_id': 0, 'dvalue': 1, 'date': 1, 'time': 1}
         cursor = self.collection.find(query, proj)
         dfs = pd.DataFrame({(row['date'], row['time']): row['dvalue'] for row in cursor}).T

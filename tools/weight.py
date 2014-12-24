@@ -25,8 +25,12 @@ def read_frame(fname, ftype='csv'):
 class Weight(object):
     """Class to analyse portfolio weight decomposition through time."""
 
-    def __init__(self, alpha):
+    def __init__(self, alpha, n):
         self.alpha = api.format(read_frame(alpha))
+        self.alpha = self.alpha.rank(axis=1, ascending=False)
+        self.rank_alpha = self.alpha[self.alpha <= n]
+        self.alpha = n+1 - self.rank_alpha
+        self.alpha = api.scale(self.alpha)
         self.dates = dateutil.to_datestr(self.alpha.index)
         self.index_fetcher = IndexQuoteFetcher(datetime_index=True)
         industry_fetcher = IndustryFetcher(datetime_index=True, reindex=True)
@@ -43,36 +47,40 @@ class Weight(object):
         data.name = index+'_'+dname
         self.index_data[index+'_'+dname] = data
 
-    def plot(self, industry=[], name='', index_data='', startdate=None, enddate=None, delay=1):
+    def plot(self, industry=[], name='', index_data='', startdate=None, enddate=None, delay=1, sumweight=True):
         dates = self.dates[:]
         if startdate:
             dates = [date for date in dates if date >= startdate]
         if enddate:
             dates = [date for date in dates if date <= enddate]
         dates = pd.to_datetime(dates)
-        series = self.industry_weight[industry].sum(axis=1).shift(delay).ix[dates]
-        if name:
-            series.name = name
-        if len(self.index_data) == 1:
-            index = self.index_data[self.index_data.keys()[0]]
-        else:
-            index = self.index_data[index_data]
-        index = index.ix[dates]
-        x, y1, y2 = dates[delay:], series.iloc[delay:], index.iloc[delay:]
-        corr = y1.corr(y2)
+        indweight = self.industry_weight[industry].shift(delay).ix[dates]
+        if sumweight:
+            indweight = indweight.sum(axis=1)
+            if name:
+                indweight.name = name
+            indweight = pd.DataFrame({indweight.name: indweight})
+        x, y1 = dates[delay:], indweight.iloc[delay:]
 
         fig, ax1 = plt.subplots()
-        ax1.plot(x, y1)
+        for name, y in y1.iteritems():
+            ax1.plot(x, y, label=name)
+        ax1.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05), ncol=3, fancybox=True, shadow=True)
         ax1.format_xdata = datefmt
         ax1.xaxis.set_major_formatter(datefmt)
-        ax1.set_ylabel(y1.name)
-        ax1.set_title('Correlation: %.2f' % corr)
 
-        ax2 = ax1.twinx()
-        ax2.plot(x, y2, 'r')
-        ax2.format_xdata = datefmt
-        ax2.xaxis.set_major_formatter(datefmt)
-        ax2.set_ylabel(y2.name)
+        if index_data:
+            if len(self.index_data) == 1:
+                index = self.index_data[self.index_data.keys()[0]]
+            else:
+                index = self.index_data[index_data]
+            index = index.ix[dates]
+            y2 = index.iloc[delay:]
+            ax2 = ax1.twinx()
+            ax2.plot(x, y2, 'r')
+            ax2.format_xdata = datefmt
+            ax2.xaxis.set_major_formatter(datefmt)
+            ax2.set_ylabel(y2.name)
 
         fig.autofmt_xdate()
         return fig
@@ -85,10 +93,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
     parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
-    parser.add_argument('-i', '--index', type=str, help='Name of the index', default='HS300')
+    parser.add_argument('--ntop', type=int, required=True)
+    parser.add_argument('-i', '--index', type=str, help='Name of the index')
     parser.add_argument('--dname', type=str, help='Name of the index data', default='close')
-    parser.add_argument('--industry', help='List of industries to be summed up', default='HS300', nargs='+')
+    parser.add_argument('--industry', help='List of industries', nargs='+')
     parser.add_argument('--name', help='Name of the summed up industries', type=str)
+    parser.add_argument('--sum', help='Whether to sum up these industries weight', action='store_true')
     parser.add_argument('--starts', help='IS startdate', nargs='*')
     parser.add_argument('--ends', help='IS enddate', nargs='*')
     parser.add_argument('--delay', help='Delay of index data w.r.t. weight', default=1, type=int)
@@ -102,26 +112,53 @@ if __name__ == '__main__':
     else:
         args.starts, args.ends = [None], [None]
 
-    weight = Weight(args.alpha)
-    weight.overlap(index=args.index, dname=args.dname)
+    weight = Weight(args.alpha, args.ntop)
+    if args.index:
+        weight.overlap(index=args.index, dname=args.dname)
+
+    _industry = args.industry[:]
+    args.industry = []
+    args.industries = {}
+    for industry in _industry:
+        if not os.path.isfile(industry):
+            args.industry.append(industry)
+            last = weight.industry.iloc[-1]
+            args.industries[industry] = list(last[last == industry].index)
+            continue
+        industries = {}
+        with open(industry) as file:
+            for line in file:
+                try:
+                    sid, ind = line.strip().split()
+                    assert len(sid) == 6 and sid[:2] in ('00', '30', '60')
+                    if ind not in industries:
+                        industries[ind] = set()
+                    industries[ind].add(sid)
+                except:
+                    pass
+        args.industry = []
+        for ind, sids in industries.iteritems():
+            weight.industry_weight[ind] = weight.alpha.ix[:, list(sids)].sum(axis=1)
+            args.industry.append(ind)
+            args.industries[ind] = list(sids)
+
     if not args.name:
         if len(args.industry) == 1:
             args.name = args.industry[0]
-    if not args.name:
-        print 'Please provide name for the industries'
-        parser.print_usage()
-        exit(0)
-
+        elif args.sum:
+            parser.print_help()
+            exit(0)
 
     figs = []
     for start, end in zip(args.starts, args.ends):
         fig = weight.plot(
                 industry=args.industry,
                 name=args.name,
-                index_data=args.index+'_'+args.dname,
+                index_data=args.index+'_'+args.dname if args.index else None,
                 startdate=start,
                 enddate=end,
-                delay=args.delay)
+                delay=args.delay,
+                sumweight=args.sum)
         figs.append(fig)
 
     if args.pdf:
@@ -134,3 +171,11 @@ if __name__ == '__main__':
         pp.close()
     else:
         plt.show()
+
+    last_alpha = weight.rank_alpha.iloc[-1]
+    for industry, sids in args.industries.iteritems():
+        print industry
+        alpha = last_alpha.ix[sids].dropna()
+        alpha.sort()
+        print alpha
+

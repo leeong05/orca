@@ -64,6 +64,8 @@ class MiscFetcher(KDayFetcher):
 class UnivFetcher(KDayFetcher):
     """Class to fetch some common universes."""
 
+    dnames = DB.universe.distinct('dname')
+
     def __init__(self, **kwargs):
         self.collection = DB.universe
         super(UnivFetcher, self).__init__(**kwargs)

@@ -263,7 +263,7 @@ class Analyser(object):
         return res
 
     def summary(self, cost=0, by=None, group='ir', freq='daily'):
-        """Returns a summary series(``by`` is None, default)/dataframe.
+        """Returns a summary Dataframe.
 
         :param str group: Which aspect to be summarized. 'ir'(default): IR-related metrics; 'turnover': Turnover-related metrics; 'returns': Returns/PNL-related metrics; 'all': All metrics in the above 3 groups
         :param str freq: Which frequency of statistics is of interest? Default: 'daily'
@@ -358,6 +358,10 @@ class IntAnalyser(object):
         self.turnover_h = tvr_h.iloc[1:]
         tvr[::self.intervals] = np.nan
         self.turnover_t = tvr.resample('D', how='mean').ix[self.dates]
+
+        self.turnover_d.index = pd.to_datetime(self.turnover_d.index)
+        self.turnover_t.index = pd.to_datetime(self.turnover_t.index)
+        self.turnover_h.index = pd.to_datetime(self.turnover_h.index)
         return (self.turnover_t, self.turnover_h, self.turnover_d)
 
     def get_ic(self, rank=False):
@@ -490,8 +494,15 @@ class IntAnalyser(object):
         """Use :py:meth:`get_returns_metric` to calculate Sharpe ratio."""
         return self.get_returns_metric(util.Sharpe, cost=cost, by=by, index=index)
 
+    def get_bpmargin(self, by=None):
+        tvr_t = self.get_turnover()[0]
+        ret_t = self.get_returns()[0]
+        if by is None:
+            return ret_t.mean() / ((self.intervals-1)*tvr_t.mean()) * 10000
+        return ret_t.resample(by, how='mean') / ((self.intervals-1)*tvr_t.resample(by, how='mean')) * 10000
+
     def summary_ir(self, by=None, freq='daily'):
-        """Returns a IR-related metrics summary Series/Dataframe."""
+        """Returns a IR-related metrics summary Dataframe."""
         index = ['days', 'IR_t', 'rIR_t', 'IR_h', 'rIR_h', 'IR_d', 'rIR_d']
         ic_t, ic_h, ic_d = self.get_ic()
         ric_t, ric_h, ric_d = self.get_ic(rank=True)
@@ -506,10 +517,10 @@ class IntAnalyser(object):
                 }
         res = pd.Series(res) if by is None else pd.DataFrame(res).T
         res = res.reindex(index)
-        return res
+        return pd.DataFrame({'ALL': res}) if by is None else res
 
     def summary_turnover(self, by=None):
-        """Returns a turnover-related metrics summary Series/Dataframe."""
+        """Returns a turnover-related metrics summary Dataframe."""
         index = ['turnover_t', 'turnover_h', 'turnover_d']
         tvr_t, tvr_h, tvr_d = self.get_turnover()
         res = {
@@ -519,10 +530,10 @@ class IntAnalyser(object):
                 }
         res = pd.Series(res) if by is None else pd.DataFrame(res).T
         res = res.reindex(index)
-        return res
+        return pd.DataFrame({'ALL': res}) if by is None else res
 
     def summary_returns(self, cost=0, by=None, index=False, which='trading'):
-        """Returns a turnover-related metrics summary Series/Dataframe.
+        """Returns a turnover-related metrics summary Dataframe.
 
         :param str which: Which returns is of interest? Must be one of ('trading', 'holding', 'daily'). Default: 'trading'
 
@@ -563,14 +574,18 @@ class IntAnalyser(object):
                 'ddstart': ddstart,
                 'ddend': ddend,
                 }
+        if which == 0:
+            res.update({'bp_margin': self.get_bpmargin(by=by)})
         res = pd.Series(res) if by is None else pd.DataFrame(res).T
         index = ['annualized_returns_0', 'annualized_returns', 'SR_0', 'SR',
                 'drawdown', 'ddstart', 'ddend', 'perwin']
+        if which == 0:
+            index.append('bp_margin')
         res = res.reindex(index)
-        return res
+        return pd.DataFrame({'ALL': res}) if by is None else res
 
     def summary(self, cost=0, by=None, group='ir', which='trading'):
-        """Returns a summary Series/Dataframe.
+        """Returns a summary Dataframe.
 
         :param str group: Which aspect to be summarized. 'ir'(default): IR-related metrics; 'turnover': Turnover-related metrics; 'returns': Returns/PNL-related metrics; 'all': All metrics in the above 3 groups
         :param str which: Which returns is of interest? Only used when ``group`` is 'returns'; must be one of ('trading', 'holding', 'daily'). Default: 'trading'

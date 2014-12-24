@@ -144,12 +144,12 @@ class Performance(object):
 
     def get_qtail(self, q):
         """Long the top quantile and at the same time short the bottom quantile."""
-        return Analyser(api.qtop(self.alpha, q) - api.qbottom(self.alpha, q),
+        return Analyser(api.qtop(self.alpha, q).astype(int) - api.qbottom(self.alpha, q).astype(int),
                 Performance.get_returns(self.startdate))
 
     def get_ntail(self, n):
         """Long the top n stocks and at the same time short the bottom n stocks."""
-        return Analyser(api.top(self.alpha, n) - api.bottom(self.alpha, n),
+        return Analyser(api.top(self.alpha, n).astype(int) - api.bottom(self.alpha, n).astype(int),
                 Performance.get_returns(self.startdate))
 
     def get_quantiles(self, n):
@@ -280,12 +280,12 @@ class IntPerformance(object):
 
     def get_qtail(self, q):
         """Long the top quantile and at the same time short the bottom quantile."""
-        return IntAnalyser(api.qtop(self.alpha, q) - api.qbottom(self.alpha, q),
+        return IntAnalyser(api.qtop(self.alpha, q).astype(int) - api.qbottom(self.alpha, q).astype(int),
                 IntPerformance.get_returns(self.startdate, self.freq))
 
     def get_ntail(self, n):
         """Long the top n stocks and at the same time short the bottom n stocks."""
-        return IntAnalyser(api.top(self.alpha, n) - api.bottom(self.alpha, n),
+        return IntAnalyser(api.top(self.alpha, n).astype(int) - api.bottom(self.alpha, n).astype(int),
                 IntPerformance.get_returns(self.startdate, self.freq))
 
     def get_quantiles(self, n):

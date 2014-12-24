@@ -285,7 +285,9 @@ class AdjIntervalFetcher(KMinFetcher):
         res = self.quote.fetch_intervals(dname, date, time, num=1 if num is None else num, offset=offset, **kwargs)
 
         window = sorted(list(set([dt.strftime('%Y%m%d') for dt in res.index])))
-        index = res.iloc[:, 0].resample('D', how=lambda x: x.index[0]).values
+        index = []
+        for date in window:
+            index.append(res.ix[date].index[0])
         basedate, adj_window = self._get_adjust_window(window, basedate=basedate, date_check=False)
         if dname in self._prices:
             adj = self.cax.fetch_window('adjfactor', adj_window, **kwargs)

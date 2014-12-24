@@ -44,18 +44,20 @@ class Plotter(object):
         if isinstance(pdobj, pd.Series):
             ax.plot(pdobj.index, pdobj)
             if drawdown is not None:
-                start, end = drawdown
+                start, end, dd = drawdown
                 dd_slice = pdobj.ix[start: end]
                 ax.plot(dd_slice.index, dd_slice, 'r', lw=3, alpha=0.7)
+                ax.text(end, pdobj.ix[end], '%.2f%%' % dd)
         else:
             for col, ser in pdobj.iteritems():
                 ax.plot(ser.index, ser, label=col)
                 if drawdown is not None:
                     if col in drawdown:
-                        start, end = drawdown[col]
+                        start, end, dd = drawdown[col]
                         dd_slice = ser.ix[start: end]
                         ax.plot(dd_slice.index, dd_slice, 'r', lw=3, alpha=0.7)
-            ax.legend()
+                        ax.text(end, dd_slice.ix[end], '%.2f%%' % dd)
+            ax.legend(loc=2)
 
         ax.set_title(title)
         ax.format_xdata = Plotter.datefmt
@@ -162,30 +164,31 @@ class Plotter(object):
             ret = self.analyser.get_returns(index=index)
         ret = self.cut(ret, startdate, enddate)
         if drawdown:
-            start, end = util.drawdown(ret)[:2]
+            start, end, dd = util.drawdown(ret)
         if plot_index:
             ret_i = self.cut(self.analyser.index_data.ix[ret.index], startdate, enddate)
 
-        if cost is not None:
+        if cost > 0:
             if isinstance(self.analyser, IntAnalyser):
                 ret_c = self.cut(self.analyser.get_returns(cost=cost, index=index)[Plotter.whiches[which]], startdate, enddate)
             else:
                 ret_c = self.cut(self.analyser.get_returns(cost=cost, index=index), startdate, enddate)
             if drawdown:
-                start_c, end_c = util.drawdown(ret_c)[:2]
+                start_c, end_c, dd_c = util.drawdown(ret_c)
             if plot_index:
                 pnl = pd.concat([ret, ret_c, ret_i], axis=1, keys=['pnl', 'cost(%.4f)' % cost, 'index']).cumsum()
             else:
                 pnl = pd.concat([ret, ret_c], axis=1, keys=['pnl', 'cost(%.4f)' % cost]).cumsum()
             return self._plot1(pnl, title,
-                    {pnl.columns[0]: [start, end], pnl.columns[1]: [start_c, end_c]}) if drawdown else \
+                    {pnl.columns[0]: [start, end, dd], pnl.columns[1]: [start_c, end_c, dd_c]}) if drawdown else \
                    self._plot1(pnl, title)
 
         if plot_index:
             pnl = pd.concat([ret, ret_i], axis=1, keys=['pnl', 'index']).cumsum()
+            return self._plot1(pnl, title, {'pnl': [start, end, dd]}) if drawdown else self._plot1(pnl, title)
         else:
             pnl = ret.cumsum()
-        return self._plot1(pnl, title, [start, end]) if drawdown else self._plot1(pnl, title)
+            return self._plot1(pnl, title, [start, end, dd]) if drawdown else self._plot1(pnl, title)
 
     def plot_returns(self, by, index=False, plot_index=False, startdate=None, enddate=None, which='trading'):
         """Plot resampled returns using bars.
@@ -239,7 +242,7 @@ class QuantilesPlotter(object):
         for i, ser in df.iteritems():
             ax.plot(ser.index, ser, label='Q'+str(i+1))
 
-        ax.legend()
+        ax.legend(loc=2)
         ax.set_title(title)
         ax.format_xdata = Plotter.datefmt
         ax.xaxis.set_major_formatter(QuantilesPlotter.datefmt)

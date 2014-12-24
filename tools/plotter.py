@@ -9,6 +9,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
+from orca.mongo.kday import UnivFetcher
+univ_fetcher = UnivFetcher(datetime_index=True, reindex=True)
+
 from orca.perf.performance import (
         Performance,
         IntPerformance,
@@ -33,6 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('alpha', help='Alpha file')
     parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
     parser.add_argument('--atype', help='Alpha type', choices=('daily', 'intraday', 'perf'))
+    parser.add_argument('--univ', help='Universe name', type=str)
     parser.add_argument('--which', help='Only used for intraday alpha', choices=('daily', 'trading', 'holding'), default='trading')
     parser.add_argument('-i', '--index', type=str,
         help='Name of the index, for example: HS300. Set this only when --longonly is turned on')
@@ -50,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--ma', type=int,
         help='For "ic"/"ac"/"turnover" plot, use simple moving average to smooth')
     parser.add_argument('--periods', help='Periods used in calculation of IC and AC', type=int, default=1)
-    parser.add_argument('--pdf', help='Save plots in a PDF file')
+    parser.add_argument('--pdf', help='Save plots in a PDF file', type=str)
     parser.add_argument('-s', '--start', type=str, help='Starting date')
     parser.add_argument('-e', '--end', type=str, help='Ending date')
     args = parser.parse_args()
@@ -76,6 +80,11 @@ if __name__ == '__main__':
             perf = Performance(alpha)
         with open(args.alpha+'.pickle', 'w') as file:
             cPickle.dump(perf, file)
+
+    if args.univ:
+        dates = np.unique([dt.strftime('%Y%m%d') for dt in perf.alpha.index])
+        univ = univ_fetcher.fetch_window(args.univ, dates)
+        perf = perf.get_universe(univ)
 
     if args.longonly:
         if args.quantile:

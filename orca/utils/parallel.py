@@ -128,3 +128,35 @@ def run_pickle(outdir, alpha, params, startdate, enddate, predicate=None, thread
 
 def run_msgpack(outdir, alpha, params, startdate, enddate, predicate=None, threads=multiprocessing.cpu_count()):
     return run_separate_file(outdir, alpha, params, startdate, enddate, predicate=None, threads=multiprocessing.cpu_count(), ftype='msgpack')
+
+
+from orca import DATES
+from orca.utils import dateutil
+
+def worker_interval(args):
+    alpha, date = args
+    res = {}
+    for time in alpha.times:
+        dt_alpha = alpha.generate(date, time)
+        res[(date, time)] = dt_alpha
+    alpha.debug('Generated alpha for {}'.format(date))
+    return res
+
+def run_interval(alpha, startdate, enddate, dates=None, threads=multiprocessing.cpu_count()):
+    if dates is None:
+        startdate, enddate = str(startdate), str(enddate)
+        if enddate[:5].lower() == 'today':
+            enddate = DATES[-1-int(enddate[6:])]
+
+        dates = dateutil.cut_window(
+                    DATES,
+                    dateutil.compliment_datestring(str(startdate), -1, True),
+                    dateutil.compliment_datestring(str(enddate), 1, True))
+
+    pool = multiprocessing.Pool(threads)
+    res = pool.imap_unordered(worker_interval, ((alpha, date) for date in dates))
+    pool.close()
+    pool.join()
+    for kvs in res:
+        for k, v in kvs.iteritems():
+            alpha[k] = v
