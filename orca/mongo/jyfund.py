@@ -128,16 +128,17 @@ def myfunc3(args):
 class JYFundFetcher(KDayFetcher):
     """Class to fetch JYDB fundamental data.
 
-    :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow')
+    :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow', 'data')
     :param startyear: Fetch data starting from this year in advance, must be in the format 'YYYY'. Default: 2007
     :type startyear: str, int
     """
 
-    tables = ('balancesheet', 'income', 'cashflow')
+    tables = ('balancesheet', 'income', 'cashflow', 'data')
     collections = {
             'balancesheet': DB.jybs,
             'income': DB.jyis,
             'cashflow': DB.jycs,
+            'data': DB.jydt,
             }
 
     datas, startyears = {}, {}
@@ -198,7 +199,7 @@ class JYFundFetcher(KDayFetcher):
         """Call this method to instruct data preparation."""
         JYFundFetcher.get_data(self.table, self._startyear)
 
-    def prepare_frame(self, dnames=None, date=None, quarter_offset=0, rtype=QUARTER, quarter=None, delay=1, **kwargs):
+    def prepare_frame(self, dnames=None, date=None, quarter_offset=0, rtype=QUARTER, quarter=None, **kwargs):
         """Prepare cross-sectional data items and concatenate them into a DataFrame, using data with timestamps less than ``date`` minus ``delay``.
 
         :param list dnames: List of data names. Default: None, all data items will be included(**NOT** recommended)
@@ -218,7 +219,7 @@ class JYFundFetcher(KDayFetcher):
         reindex = kwargs.get('reindex', self.reindex)
         delay = kwargs.get('delay', self.delay)
 
-        di, date = dateutil.parse_date(DATES, dateutil.compliment_datestring(date, -1, date_check))
+        di, date = dateutil.parse_date(DATES, dateutil.compliment_datestring(str(date), -1, date_check))
         date = DATES[di-delay]
 
         qtrno = (int(date[:4]) - 2000) * 4 + np.floor((int(date[4:6])-1)/3) - quarter_offset - rtype
@@ -330,7 +331,7 @@ class JYFundFetcher(KDayFetcher):
         """
         raise NotImplementedError
 
-    def fetch_history(self, dname, date, delay=1, records=1, rtype=QUARTER, quarter=None, **kwargs):
+    def fetch_history(self, dname, date, records=1, rtype=QUARTER, quarter=None, **kwargs):
         """Prepare cross-sectional data historic records into a DataFrame, using data with timestamps less than ``date`` minus ``delay``.
 
         :param int quarter_offset: Offset in quarter numbers. Default: 0
@@ -382,7 +383,7 @@ class JYFundFetcher(KDayFetcher):
 
         :param int quarter_offset: Offset in quarter numbers. Default: 0
         :param enum rtype: Which type of reports to be considered
-        :param int quarter: Should only used when ``rtype`` is QUARTER(2). It will only fetch data for this particular quarter, thus also making ``quarter_offset`` not meaningful. Default: None, fetch whatever data is available as of ``date-offset``
+        :param int quarter: Should only used when ``rtype`` is QUARTER(1). It will only fetch data for this particular quarter, thus also making ``quarter_offset`` not meaningful. Default: None, fetch whatever data is available as of ``date-offset``
         """
         return self.prepare_frame(
                 [dname],

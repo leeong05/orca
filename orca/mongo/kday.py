@@ -42,6 +42,16 @@ class ZYYXConsensusFetcher(KDayFetcher):
         super(ZYYXConsensusFetcher, self).__init__(**kwargs)
 
 
+class EODValueFetcher(KDayFetcher):
+    """Class to fetch data from collection 'eod_value'."""
+
+    dnames = DB.eod_value.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.eod_value
+        super(EODValueFetcher, self).__init__(**kwargs)
+
+
 class MiscFetcher(KDayFetcher):
     """Class to fetch tradable and other miscellaneous data."""
 

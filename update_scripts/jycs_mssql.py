@@ -48,7 +48,7 @@ dnames = [
 # cash and equivalent
 'currency_conversion_effect', 'cae_other_items', 'cae_adjustment_items', 'cae_increase', 'cae_begin_period', 'caei_exceptional_items', 'caei_adjustment_items', 'cae_end_period',
 # ocf <--> net profit
-'net_profit', 'np_minority_interest', 'assets_impairment_reserve', 'fixed_asset_depreciation', 'intangible_assets_amortization', 'deferred_expense_amortization', 'deferred_expense_decrease', 'accrued_expense_increase', 'noncurrent_assets_deal_loss', 'fixed_assets_scrap_loss', 'fair_value_change_loss', 'financial_expense', 'investment_loss', 'deferred_tax_assets_decrease', 'deferred_tax_liability_increase', 'inventory_decrease', 'operating_receivable_decrease', 'operating_payable_increase', 'ocf_others', 'ocf_exceptional_items_notes', 'ocf_adjustment_items_notes', 'ocf_notes', 'ocf_contrast_adjustment_items',
+'net_profit', 'np_minority_interest', 'assets_impairment_reserve', 'fixed_assets_depreciation', 'intangible_assets_amortization', 'deferred_expense_amortization', 'deferred_expense_decrease', 'accrued_expense_increase', 'noncurrent_assets_deal_loss', 'fixed_assets_scrap_loss', 'fair_value_change_loss', 'financial_expense', 'investment_loss', 'deferred_tax_assets_decrease', 'deferred_tax_liability_increase', 'inventory_decrease', 'operating_receivable_decrease', 'operating_payable_increase', 'ocf_others', 'ocf_exceptional_items_notes', 'ocf_adjustment_items_notes', 'ocf_notes', 'ocf_contrast_adjustment_items',
 # other
 'debt_to_equity', 'convertible_bond_in_1y', 'fixed_assets_in_financial_lease']
-cols = [4, 5] + range(10, 119)
+cols = [4, 5] + range(10, 111)

@@ -24,7 +24,13 @@ db.jycs.ensureIndex({year: 1, quarter: 1, date: 1}, {background: true})
 db.jyis.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
 db.jyis.ensureIndex({year: 1, quarter: 1, date: 1}, {background: true})
 
+db.jydt.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
+db.jydt.ensureIndex({year: 1, quarter: 1, date: 1}, {background: true})
+
+db.jydata.ensureIndex({dtype: 1, date: 1, sid: 1}, {background: true}})
+
 db.quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.eod_value.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.index_quote.ensureIndex({index: 1, date: 1}, {unique: true, dropDups: true, background: true})
 

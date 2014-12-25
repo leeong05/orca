@@ -5,6 +5,7 @@
 import abc
 import os
 import sys
+import traceback
 from datetime import datetime
 import argparse
 from multiprocessing import Process
@@ -115,8 +116,8 @@ class UpdaterBase(object):
     def _update(self, date):
         try:
             self.update(date)
-        except Exception, e:
-            self.logger.error('\n{}', e)
+        except:
+            self.logger.error('\n{}', "".join(traceback.format_exception(*sys.exc_info())))
 
     def run(self):
         """Main interface. Workflow is:

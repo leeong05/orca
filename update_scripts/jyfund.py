@@ -34,12 +34,11 @@ def quarter(dstr):
 class JYFundUpdater(UpdaterBase):
     """The updater class for collections 'jybs', 'jycs', 'jyis', 'jyindex', 'jydata'."""
 
-    def __init__(self, source=None, timeout=30, table='balancesheet'):
-        self.source = source
+    def __init__(self, timeout=30, table='balancesheet'):
         self.table = table
         self.cutoff = '03:00'
         self.basedate = datetime(2000, 1, 1)
-        UpdaterBase.__init__(self, timeout)
+        super(JYFundUpdater, self).__init__(timeout)
 
     def get_milliseconds(self, date):
         date = datetime(int(date[:4]), int(date[4:6]), int(date[6:8]),
