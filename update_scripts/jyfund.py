@@ -12,12 +12,12 @@ import jybs_mssql
 import jycs_mssql
 import jyis_mssql
 import jyindex_mssql
-import jydata_mssql
+import jydt_mssql
 import jybs_oracle
 import jycs_oracle
 import jyis_oracle
 import jyindex_oracle
-import jydata_oracle
+import jydt_oracle
 
 def quarter(dstr):
     md = dstr[4:8]
@@ -32,7 +32,7 @@ def quarter(dstr):
 
 
 class JYFundUpdater(UpdaterBase):
-    """The updater class for collections 'jybs', 'jycs', 'jyis', 'jyindex', 'jydata'."""
+    """The updater class for collections 'jybs', 'jycs', 'jyis', 'jyindex', 'jydt'."""
 
     def __init__(self, timeout=30, table='balancesheet'):
         self.table = table
@@ -74,11 +74,11 @@ class JYFundUpdater(UpdaterBase):
             elif self.source == 'oracle':
                 self.sql = jyindex_oracle
         else:
-            self.collection = self.db.jydata
+            self.collection = self.db.jydt
             if self.source == 'mssql':
-                self.sql = jydata_mssql
+                self.sql = jydt_mssql
             elif self.source == 'oracle':
-                self.sql = jydata_oracle
+                self.sql = jydt_oracle
 
         self.cursor.execute(self.sql.CMD0)
         self.company_sid = {company: sid for company, sid in list(self.cursor)}
@@ -111,7 +111,7 @@ class JYFundUpdater(UpdaterBase):
         except:
             df.columns = [desc[0].lower() for desc in self.cursor.description]
         df = df.ix[[x in self.company_sid for x in df.sid]]
-        df.enddate = df.enddate.apply(lambda x: x.strftime('{}{}{}'))
+        df.enddate = df.enddate.apply(lambda x: x.strftime('%Y%m%d'))
         year = df.enddate.apply(lambda x: int(x[:4]))
         qtr = df.enddate.apply(lambda x: quarter(x))
         df = df.ix[qtr > 0]
@@ -159,7 +159,7 @@ class JYIndexUpdater(JYFundUpdater):
         JYFundUpdater.__init__(self, table=table, **kwargs)
 
 
-class JYDataUpdater(JYFundUpdater):
+class jydtUpdater(JYFundUpdater):
 
     def __init__(self, table='data', **kwargs):
         JYFundUpdater.__init__(self, table=table, **kwargs)
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     jycs = JYCashflowUpdater()
     jyis = JYIncomeUpdater()
     #jyix = JYIndexUpdater()
-    #jydt = JYDataUpdater()
+    #jydt = jydtUpdater()
 
     jybs.run()
     jycs.run()

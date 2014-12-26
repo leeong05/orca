@@ -16,18 +16,21 @@ db.industry_info.ensureIndex({standard: 1, dname: 1, date: 1}, {unique: true, dr
 db.index_components.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.jybs.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
-db.jybs.ensureIndex({year: 1, quarter: 1, date: 1}, {background: true})
+db.jybs.ensureIndex({sid: 1, date: 1}, {background: true})
 
 db.jycs.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
-db.jycs.ensureIndex({year: 1, quarter: 1, date: 1}, {background: true})
+db.jycs.ensureIndex({sid: 1, date: 1}, {background: true})
 
 db.jyis.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
-db.jyis.ensureIndex({year: 1, quarter: 1, date: 1}, {background: true})
+db.jyis.ensureIndex({sid: 1, date: 1}, {background: true})
 
-db.jydt.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
-db.jydt.ensureIndex({year: 1, quarter: 1, date: 1}, {background: true})
+db.jydata.ensureIndex({dtype: 1, date: 1}, {background: true})
+db.jydata.ensureIndex({sid: 1, dtype: 1, date: 1}, {background: true})
+db.jydata.ensureIndex({date: 1, dtype: 1, qtrno: 1}, {background: true})
 
-db.jydata.ensureIndex({dtype: 1, date: 1, sid: 1}, {background: true}})
+db.jyindex.ensureIndex({dtype: 1, date: 1}, {background: true})
+db.jyindex.ensureIndex({sid: 1, dtype: 1, date: 1}, {background: true})
+db.jyindex.ensureIndex({date: 1, dtype: 1, qtrno: 1}, {background: true})
 
 db.quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.eod_value.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
