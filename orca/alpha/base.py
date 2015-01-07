@@ -233,6 +233,92 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
             self.debug('Generated alpha for {}'.format(date))
 
 
+class IntradayFutAlpha(AlphaBase):
+    """Base class for backtesting intraday futures alphas.
+
+    .. note::
+
+       This is a base class and should not be used directly
+    """
+
+    def __init__(self, **kwargs):
+        super(IntradayFutAlpha, self).__init__(**kwargs)
+        self.position = 0
+        self.records = None
+        self.__record = None
+        self.data = None
+
+    def enter_position(self, dt, price, position):
+        self.__record = {'date': dt.date(), 'enter_dt': dt, 'enter_price': price, 'position': position}
+        self.position = position
+
+    def exit_position(self, dt, price):
+        self.__record.update({'exit_dt': dt, 'exit_price': price})
+        self.__record['duration'] = (self.__record['exit_dt'] - self.__record['enter_dt']).total_seconds()
+        self.__record['returns'] = (self.__record['exit_price'] / self.__record['enter_price'] - 1.) * self.position
+        if self.records is None:
+            self.records = pd.DataFrame(pd.Series(self.__record))
+        else:
+            self.records.ix[len(self.records)] = pd.Series(self.__record)
+        self.__record = None
+        self.position = 0
+
+    def enter_long(self, dt, price):
+        if self.position == 1:
+            return
+        elif self.position == -1:
+            self.exit_short(dt, price)
+            self.enter_position(dt, price, 1)
+        else:
+            self.enter_position(dt, price, 1)
+
+    def exit_long(self, dt, price):
+        if self.position == 1:
+            self.exit_position(dt, price)
+
+    def enter_short(self, dt, price):
+        if self.position == -1:
+            return
+        elif self.position == 1:
+            self.exit_long(dt, price)
+            self.enter_position(dt, price, -1)
+        else:
+            self.enter_position(dt, price, -1)
+
+    def exit_short(self, dt, price):
+        if self.position == -1:
+            self.exit_position(dt, price)
+
+    @abc.abstractmethod
+    def associate(self, date):
+        """For futures alpha simulation, this method must be called before anything can be done on ``date`` to *asscoiate* a DataFrame of tick data to :py:attr:`self.data`"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def generate(self, i, dt):
+        raise NotImplementedError
+
+    def run(self, startdate=None, enddate=None, dates=None):
+        """Main interface to an alpha.
+
+        :param dates list: One can supply this keyword argument with a list to omit ``startdate`` and ``enddate``
+        """
+        if dates is None:
+            startdate, enddate = str(startdate), str(enddate)
+            if enddate[:5].lower() == 'today':
+                enddate = DATES[-1-int(enddate[6:])]
+
+            dates = dateutil.cut_window(
+                        DATES,
+                        dateutil.compliment_datestring(str(startdate), -1, True),
+                        dateutil.compliment_datestring(str(enddate), 1, True))
+
+        for date in dates:
+            self.associate(date)
+            for i, dt in enumerate(self.data.index):
+                self.generate(i, dt)
+
+
 class ProductionAlpha(AlphaBase):
     """Base class for production alpha.
 

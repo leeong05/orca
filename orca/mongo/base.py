@@ -163,7 +163,7 @@ class KDayFetcher(FetcherBase):
         date_check = kwargs.get('date_check', self.date_check)
         delay = kwargs.get('delay', self.delay)
 
-        date = dateutil.compliment_datestring(date, -1, date_check)
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
         di, date = dateutil.parse_date(DATES, date, -1)
         di -= delay
         window = DATES[di-backdays+1: di+1]
@@ -234,7 +234,7 @@ class KMinFetcher(FetcherBase):
         date_check = kwargs.get('date_check', self.date_check)
         delay = kwargs.get('delay', self.delay)
 
-        date = dateutil.compliment_datestring(date, -1, date_check)
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
         di, date = dateutil.parse_date(DATES, date, -1)
         di -= delay
         window = DATES[di-backdays+1: di+1]
@@ -298,7 +298,7 @@ class KMinFetcher(FetcherBase):
         date_check = kwargs.get('date_check', self.date_check)
         reindex = kwargs.get('reindex', self.reindex)
 
-        date = dateutil.compliment_datestring(date, -1, date_check)
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
         date = dateutil.parse_date(DATES, date, -1)[1]
 
         dateintervals = self.generate_dateintervals(date, time, num=1 if num is None else num, offset=offset)
