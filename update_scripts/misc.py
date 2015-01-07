@@ -33,7 +33,6 @@ class MiscUpdater(UpdaterBase):
     def update_universe(self, date, univ_name, univ_filter):
         univ = univ_filter.filter_daily(date)
         univ = univ[univ].astype(int)
-        self.univs[univ_name] = len(univ)
         self.db.universe.update({'dname': univ_name, 'date': date}, {'$set': {'dvalue': univ.to_dict()}}, upsert=True)
 
     def update(self, date):

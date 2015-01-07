@@ -5,7 +5,6 @@
 import abc
 import os
 import sys
-import traceback
 from datetime import datetime
 import argparse
 from multiprocessing import Process
@@ -113,12 +112,6 @@ class UpdaterBase(object):
         self.logger.debug('Connected to Oracle Database zyyx/zyyx@zyyx')
         self.__dict__.update({'connection': connection, 'cursor': cursor})
 
-    def _update(self, date):
-        try:
-            self.update(date)
-        except:
-            self.logger.error('\n{}', "".join(traceback.format_exception(*sys.exc_info())))
-
     def run(self):
         """Main interface. Workflow is:
         * connect to mongodb
@@ -140,15 +133,19 @@ class UpdaterBase(object):
                 self.logger.info('START')
                 iterates = self.iterates
                 while iterates:
-                    p = Process(target=self._update, args=(date,))
-                    p.start()
-                    p.join(self.timeout)
-                    if p.is_alive():
-                        self.logger.warning('Timeout on date: {}', date)
-                        p.terminate()
-                        iterates -= 1
-                    else:
-                        iterates = 0
+                    try:
+                        p = Process(target=self.update, args=(date,))
+                        p.start()
+                        p.join(self.timeout)
+                        if p.is_alive():
+                            self.logger.warning('Timeout on date: {}', date)
+                            p.terminate()
+                            iterates -= 1
+                        else:
+                            iterates = 0
+                    except Exception, e:
+                        self.logger.error('\n{}', e)
+                        break
                 self.logger.info('END\n')
             self.pro_update()
             self.disconnect_mongo()

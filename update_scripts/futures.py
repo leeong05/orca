@@ -15,7 +15,7 @@ dnames = ['price', 'volume', 'open_interest', 'bid1', 'bds1', 'ask1', 'aks1']
 class IFUpdater(UpdaterBase):
     """The updater class for collection 'IF'."""
 
-    def __init__(self, timeout=60):
+    def __init__(self, timeout=240):
         super(IFUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
@@ -40,22 +40,25 @@ class IFUpdater(UpdaterBase):
             self.logger.warning('No data exists for date {}', date)
             return
 
+        sids = []
+        for fname in os.listdir(dirname):
+            sids.append(fname[:6])
+        sids = sorted(sids)[:2]
+
         for fname in os.listdir(dirname):
             sid = fname[:6]
             fname = os.path.join(dirname, fname)
             df = pd.read_csv(fname)
             df.columns = columns
+            if sid not in sids:
+                df = df.query('volume > 0')
             df['ms'] = (pd.to_datetime(df['dt']) - pd.to_datetime(date)).astype(int) / 1000000
+
             res = []
-            for dt, sdf in df.groupby('ms'):
-                if len(sdf) >= 3:
-                    sdf = sdf.iloc[-2:]
-                    self.logger.warning('Wrong records for {} @{}', fname, sdf['dt'].iloc[-1])
-                if len(sdf) == 2:
-                    sdf['ms'] += [0, 500]
-                else:
-                    sdf['ms'] += 0
+            for ms, sdf in df.groupby('ms'):
+                sdf['ms'] += [int(1000/len(sdf)) * i for i in range(0, len(sdf))]
                 res.append(sdf)
+
             df = pd.concat(res).sort('ms')
             df.index = df.ms.astype(int).astype(str)
 

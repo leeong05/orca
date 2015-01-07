@@ -39,7 +39,7 @@ class EODValueUpdater(UpdaterBase):
 
         df = df.ix[:, [1]+self.sql.cols+[27]]
         df.columns = ['sid'] + self.sql.dnames + ['adj_factor']
-        df.index = df.sid
+        df.index = [sid[:6] for sid in df.sid]
 
         for dname in self.sql.dnames:
             key = {'dname': dname, 'date': date}

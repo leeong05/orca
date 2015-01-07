@@ -181,7 +181,7 @@ class BarraUpdater(UpdaterBase):
 
 
 if __name__ == '__main__':
-    barra_daily = BarraUpdater(model='daily')
-    barra_daily.run()
-    barra_short = BarraUpdater(model='short', update_idmaps=False)
+    #barra_daily = BarraUpdater(model='daily')
+    #barra_daily.run()
+    barra_short = BarraUpdater(model='short', update_idmaps=True)
     barra_short.run()
