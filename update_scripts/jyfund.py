@@ -96,8 +96,8 @@ class JYFundUpdater(UpdaterBase):
     def update(self, date):
         """Update fundamental data for the **previous** day before market open."""
         prev_date = self.dates[self.dates.index(date)-1]
-        CMD = self.sql.CMD.format(date=self.get_milliseconds(date),
-                                  prev_date=self.get_milliseconds(prev_date))
+        #CMD = self.sql.CMD_u.format(date=self.get_milliseconds(date), prev_date=self.get_milliseconds(prev_date))
+        CMD = self.sql.CMD_h.format(date=date, prev_date=prev_date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))

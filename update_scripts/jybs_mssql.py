@@ -11,7 +11,22 @@ WHERE
   LEFT(SecuCode, 2) IN ('60', '00', '30')
 """
 
-CMD = """
+CMD_h = """
+SELECT
+  *
+FROM
+  LC_BalancesheetAll
+WHERE
+  IfAdjusted = 2
+  AND
+  IfMerged = 1
+  AND
+  AccountingStandards = 1
+  AND
+  InfoPublDate >= CONVERT(DATE, '{prev_date}') AND InfoPublDate < CONVERT(DATE, '{date}')
+"""
+
+CMD_u = """
 SELECT
   *
 FROM

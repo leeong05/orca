@@ -47,7 +47,6 @@ class JYDataUpdater(UpdaterBase):
             sids.add(row['sid'])
 
         if not sids:
-            self.logger.warning('No records found for {} on {}', self.collection.name, date)
             return
         self.update_jybs(date, sids)
         self.update_jycs(date, sids)
@@ -81,7 +80,7 @@ class JYDataUpdater(UpdaterBase):
 'total_operating_income', 'operating_income', 'net_interest_income', 'interest_income', 'interest_expense',
 'total_operating_expense', 'operating_payout', 'operating_expense', 'selling_expense', 'administration_expense', 'financial_expense',
 'nonrecurring_pnl', 'nonoperating_income', 'nonoperating_expense', 'noncurrent_assets_deal_loss',
-'operating_profit', 'total_profit', 'income_tax_expense', 'net_profit', 'np_shareholder', 'other_comprehensive_income', 'tci_shareholder', 'nps_cut', 'ebit', 'ebi', 'ebt',
+'operating_profit', 'total_profit', 'income_tax_expense', 'net_profit', 'np_shareholder', 'other_comprehensive_income', 'tci_shareholder', 'nps_cut', 'tax_rate', 'ebit', 'ebi', 'ebt',
 ]
         cursor = self.db.jyis.find({'date': {'$lte': date}, 'sid': {'$in': list(sids)}}, {'_id': 0})
         df = pd.DataFrame(list(cursor))
@@ -107,7 +106,7 @@ class JYDataUpdater(UpdaterBase):
                 for i, y in df1.year.iteritems():
                     if y <= -2:
                         continue
-                    key = {'date': date, 'sid': sid, 'dtype': 'Y'+str(int(y))}
+                    key = {'date': date, 'sid': sid, 'dtype': 'Y'+str(y)}
                     doc = {dname: df1[dname][i] for dname in dnames}
                     doc.update({'qtrno': df1.qtrno.iloc[-1]})
                     self.collection.update(key, {'$set': doc}, upsert=True)
@@ -120,14 +119,14 @@ class JYDataUpdater(UpdaterBase):
                     if (s-cs)/2 <= -4:
                         continue
                     if s % 4 == 2:
-                        key = {'date': date, 'sid': sid, 'dtype': 'S'+str(int((s-cs)/2))}
+                        key = {'date': date, 'sid': sid, 'dtype': 'S'+str((s-cs)/2)}
                         doc = {dname: df2[dname][s] for dname in dnames}
                         doc.update({'qtrno': df2.qtrno.iloc[-1]})
                         self.collection.update(key, {'$set': doc}, upsert=True)
                     else:
                         ps = s-2
                         if ps in df2.qtrno:
-                            key = {'date': date, 'sid': sid, 'dtype': 'S'+str(int((s-cs)/2))}
+                            key = {'date': date, 'sid': sid, 'dtype': 'S'+str((s-cs)/2)}
                             doc = {dname: df2[dname][s]-self.norm(df2[dname][ps]) for dname in dnames}
                             doc.update({'qtrno': df2.qtrno.iloc[-1]})
                             self.collection.update(key, {'$set': doc}, upsert=True)
@@ -140,14 +139,14 @@ class JYDataUpdater(UpdaterBase):
                     if q-cq <= -8:
                         continue
                     if q % 4 == 1:
-                        key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(int(q-cq))}
+                        key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(q-cq)}
                         doc = {dname: df3[dname][q] for dname in dnames}
                         doc.update({'qtrno': df3.qtrno.iloc[-1]})
                         self.collection.update(key, {'$set': doc}, upsert=True)
                     else:
                         pq = q-1
                         if pq in df3.qtrno:
-                            key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(int(q-cq))}
+                            key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(q-cq)}
                             doc = {dname: df3[dname][q]-self.norm(df3[dname][pq]) for dname in dnames}
                             doc.update({'qtrno': df3.qtrno.iloc[-1]})
                             self.collection.update(key, {'$set': doc}, upsert=True)
@@ -201,7 +200,7 @@ class JYDataUpdater(UpdaterBase):
                 for i, y in df1.year.iteritems():
                     if y <= -2:
                         continue
-                    key = {'date': date, 'sid': sid, 'dtype': 'Y'+str(int(y))}
+                    key = {'date': date, 'sid': sid, 'dtype': 'Y'+str(y)}
                     doc = {dname: df1[dname][i] for dname in dnames}
                     doc.update({'qtrno': df1.qtrno.iloc[-1]})
                     self.collection.update(key, {'$set': doc}, upsert=True)
@@ -214,14 +213,14 @@ class JYDataUpdater(UpdaterBase):
                     if (s-cs)/2 <= -4:
                         continue
                     if s % 4 == 2:
-                        key = {'date': date, 'sid': sid, 'dtype': 'S'+str(int((s-cs)/2))}
+                        key = {'date': date, 'sid': sid, 'dtype': 'S'+str((s-cs)/2)}
                         doc = {dname: df2[dname][s] for dname in dnames}
                         doc.update({'qtrno': df2.qtrno.iloc[-1]})
                         self.collection.update(key, {'$set': doc}, upsert=True)
                     else:
                         ps = s-1
                         if ps in df2.qtrno:
-                            key = {'date': date, 'sid': sid, 'dtype': 'S'+str(int((s-cs)/2))}
+                            key = {'date': date, 'sid': sid, 'dtype': 'S'+str((s-cs)/2)}
                             doc = {dname: df2[dname][s]-self.norm(df2[dname][ps]) for dname in dnames}
                             doc.update({'qtrno': df2.qtrno.iloc[-1]})
                             self.collection.update(key, {'$set': doc}, upsert=True)
@@ -234,14 +233,14 @@ class JYDataUpdater(UpdaterBase):
                     if q-cq <= -8:
                         continue
                     if q % 4 == 1:
-                        key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(int(q-cq))}
+                        key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(q-cq)}
                         doc = {dname: df3[dname][q] for dname in dnames}
                         doc.update({'qtrno': df3.qtrno.iloc[-1]})
                         self.collection.update(key, {'$set': doc}, upsert=True)
                     else:
                         pq = q-1
                         if pq in df3.qtrno:
-                            key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(int(q-cq))}
+                            key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(q-cq)}
                             doc = {dname: df3[dname][q]-self.norm(df3[dname][pq]) for dname in dnames}
                             doc.update({'qtrno': df3.qtrno.iloc[-1]})
                             self.collection.update(key, {'$set': doc}, upsert=True)
@@ -316,7 +315,7 @@ class JYDataUpdater(UpdaterBase):
                 for i, y in df1.year.iteritems():
                     if y <= -2:
                         continue
-                    key = {'date': date, 'sid': sid, 'dtype': 'Y'+str(int(y))}
+                    key = {'date': date, 'sid': sid, 'dtype': 'Y'+str(y)}
                     doc = {dname: df1[dname][i] for dname in dnames}
                     doc.update({'qtrno': df1.qtrno.iloc[-1]})
                     doc.update({'delta_'+dname: np.nan for dname in delta_dnames})
@@ -332,7 +331,7 @@ class JYDataUpdater(UpdaterBase):
                     s = df2.qtrno.iloc[i]
                     if (s-cs)/2 <= -4:
                         continue
-                    key = {'date': date, 'sid': sid, 'dtype': 'S'+str(int((s-cs)/2))}
+                    key = {'date': date, 'sid': sid, 'dtype': 'S'+str((s-cs)/2)}
                     doc = {dname: df2[dname][s] for dname in dnames}
                     doc.update({'qtrno': df2.qtrno.iloc[-1]})
                     doc.update({'delta_'+dname: np.nan for dname in delta_dnames})
@@ -348,7 +347,7 @@ class JYDataUpdater(UpdaterBase):
                     q = df3.qtrno.iloc[i]
                     if q-cq <= -8:
                         continue
-                    key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(int(q-cq))}
+                    key = {'date': date, 'sid': sid, 'dtype': 'Q'+str(q-cq)}
                     doc = {dname: df3[dname][q] for dname in dnames}
                     doc.update({'qtrno': df3.qtrno.iloc[-1]})
                     doc.update({'delta_'+dname: np.nan for dname in delta_dnames})
@@ -356,19 +355,6 @@ class JYDataUpdater(UpdaterBase):
                     if pq in df1.index:
                         doc.update({'delta_'+dname: doc[dname] - df1[dname][pq] for dname in delta_dnames})
                     self.collection.update(key, {'$set': doc}, upsert=True)
-            # dtype: 'TTM'
-            df4 = df.copy()
-            if len(df4):
-                cq = df4.qtrno.iloc[-1]
-                ttm = df4.ix[[cq-3, cq-2, cq-1, cq]].dropna(how='all', axis=0).mean()
-                key = {'date': date, 'sid': sid, 'dtype': 'TTM'}
-                doc = {dname: ttm[dname] for dname in dnames}
-                doc.update({'qtrno': df4.qtrno.iloc[-1]})
-                doc.update({'delta_'+dname: np.nan for dname in delta_dnames})
-                pq = cq - 4
-                if pq in df4.index:
-                    doc.update({'delta_'+dname: df4[dname][cq] - df4[dname][pq] for dname in delta_dnames})
-                self.collection.update(key, {'$set': doc}, upsert=True)
 
 
 if __name__ == '__main__':

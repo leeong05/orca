@@ -11,7 +11,22 @@ WHERE
   SUBSTR(SecuCode, 1, 2) IN ('60', '00', '30')
 """
 
-CMD = """
+CMD_h = """
+SELECT
+  *
+FROM
+  LC_CashflowStatementAll
+WHERE
+  IfAdjusted = 2
+  AND
+  IfMerged = 1
+  AND
+  AccountingStandards = 1
+  AND
+  InfoPublDate >= TO_DATE({prev_date}, 'yyyymmdd') AND InfoPublDate < TO_DATE({date}, 'yyyymmdd')
+"""
+
+CMD_u = """
 SELECT
   *
 FROM
