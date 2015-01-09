@@ -243,51 +243,52 @@ class IntradayFutAlpha(AlphaBase):
 
     def __init__(self, **kwargs):
         super(IntradayFutAlpha, self).__init__(**kwargs)
-        self.position = 0
         self.records = None
-        self.__record = None
         self.data = None
+        self.pnl = pd.Series()
+        self._price = 0
+        self._position = 0
+        self._pnl = 0
 
-    def enter_position(self, dt, price, position):
-        self.__record = {'date': dt.date(), 'enter_dt': dt, 'enter_price': price, 'position': position}
-        self.position = position
+    def clear(self, dt, price):
+        if self._position:
+            self.order(dt, price, -self._position)
+            self.pnl.ix[dt.date()] = self.records.iloc[-1]['pnl']
+        self._price = 0
+        self._position = 0
+        self._pnl = 0
 
-    def exit_position(self, dt, price):
-        self.__record.update({'exit_dt': dt, 'exit_price': price})
-        self.__record['duration'] = (self.__record['exit_dt'] - self.__record['enter_dt']).total_seconds()
-        self.__record['returns'] = (self.__record['exit_price'] / self.__record['enter_price'] - 1.) * self.position
+    def _order(self, dt, price, position):
+        if not position:
+            return
+        self._pnl += self._position * (price - self._price)
+        self._price = price
+        self._position += position
+        record = {
+                'order': position,
+                'price': price,
+                'position': self._position,
+                'pnl': self._pnl,
+                }
         if self.records is None:
-            self.records = pd.DataFrame(pd.Series(self.__record))
+            self.records = pd.DataFrame({dt: record}).T
         else:
-            self.records.ix[len(self.records)] = pd.Series(self.__record)
-        self.__record = None
-        self.position = 0
+            self.records.ix[dt] = pd.Series(record)
 
-    def enter_long(self, dt, price):
-        if self.position == 1:
-            return
-        elif self.position == -1:
-            self.exit_short(dt, price)
-            self.enter_position(dt, price, 1)
-        else:
-            self.enter_position(dt, price, 1)
+    def order(self, dt, price, position, exit=False):
+        if exit and self._position * position < 0:
+            self._order(dt, price, -self._position)
+        self._order(dt, price, position)
 
-    def exit_long(self, dt, price):
-        if self.position == 1:
-            self.exit_position(dt, price)
-
-    def enter_short(self, dt, price):
-        if self.position == -1:
-            return
-        elif self.position == 1:
-            self.exit_long(dt, price)
-            self.enter_position(dt, price, -1)
-        else:
-            self.enter_position(dt, price, -1)
-
-    def exit_short(self, dt, price):
-        if self.position == -1:
-            self.exit_position(dt, price)
+    def dump(self, fpath, ftype='csv'):
+        with open(fpath, 'w') as file:
+            if ftype == 'csv':
+                self.records.to_csv(file)
+            elif ftype == 'pickle':
+                self.records.to_pickle(file)
+            elif ftype == 'msgpack':
+                self.records.to_msgpack(file)
+        self.info('Saved in {}'.format(fpath))
 
     @abc.abstractmethod
     def associate(self, date):

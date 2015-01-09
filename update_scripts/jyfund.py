@@ -11,13 +11,9 @@ from base import UpdaterBase
 import jybs_mssql
 import jycs_mssql
 import jyis_mssql
-import jyindex_mssql
-import jydt_mssql
 import jybs_oracle
 import jycs_oracle
 import jyis_oracle
-import jyindex_oracle
-import jydt_oracle
 
 def quarter(dstr):
     md = dstr[4:8]
@@ -32,7 +28,7 @@ def quarter(dstr):
 
 
 class JYFundUpdater(UpdaterBase):
-    """The updater class for collections 'jybs', 'jycs', 'jyis', 'jyindex', 'jydt'."""
+    """The updater class for collections 'jybs', 'jycs', 'jyis'."""
 
     def __init__(self, timeout=30, table='balancesheet'):
         self.table = table
@@ -67,18 +63,6 @@ class JYFundUpdater(UpdaterBase):
                 self.sql = jyis_mssql
             elif self.source == 'oracle':
                 self.sql = jyis_oracle
-        elif self.table == 'index':
-            self.collection = self.db.jyindex
-            if self.source == 'mssql':
-                self.sql = jyindex_mssql
-            elif self.source == 'oracle':
-                self.sql = jyindex_oracle
-        else:
-            self.collection = self.db.jydt
-            if self.source == 'mssql':
-                self.sql = jydt_mssql
-            elif self.source == 'oracle':
-                self.sql = jydt_oracle
 
         self.cursor.execute(self.sql.CMD0)
         self.company_sid = {company: sid for company, sid in list(self.cursor)}
@@ -169,11 +153,7 @@ if __name__ == '__main__':
     jybs = JYBalancesheetUpdater()
     jycs = JYCashflowUpdater()
     jyis = JYIncomeUpdater()
-    #jyix = JYIndexUpdater()
-    #jydt = jydtUpdater()
 
     jybs.run()
     jycs.run()
     jyis.run()
-    #jyix.run()
-    #jydt.run()

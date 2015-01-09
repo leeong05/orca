@@ -48,9 +48,9 @@ class JYDataUpdater(UpdaterBase):
 
         if not sids:
             return
-        self.update_jybs(date, sids)
-        self.update_jycs(date, sids)
-        self.update_jyis(date, sids)
+        #self.update_jybs(date, sids)
+        #self.update_jycs(date, sids)
+        #self.update_jyis(date, sids)
         self.update_composite(date, sids)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', len(sids), self.collection.name, self.db.name, date)
 
@@ -65,6 +65,7 @@ class JYDataUpdater(UpdaterBase):
                 res.append(sdf.iloc[-1])
         df = pd.concat(res, axis=1).T
 
+        df['tax_rate'] = df['income_tax_expense'] / df['total_profit']
         df['ebitda'] = [i+self.norm(j) for i, j in zip(df['ebit'], df['da'])]
         df['capex'] = [self.norm(i+j) for i, j in zip(df['delta_fixed_assets'], df['fixed_assets_depreciation'])]
         df['efcf'] = [i1 + (self.norm(i2) if np.isnan(i3) else -1*i3)*(1- i4) - (i5 + self.norm(i6)) for i1, i2, i3, i4, i5, i6 in zip(df['ebitda'],df['financial_expense'], df['net_interest_income'], df['tax_rate'], df['capex'], df['delta_working_capital'])]
@@ -80,7 +81,7 @@ class JYDataUpdater(UpdaterBase):
 'total_operating_income', 'operating_income', 'net_interest_income', 'interest_income', 'interest_expense',
 'total_operating_expense', 'operating_payout', 'operating_expense', 'selling_expense', 'administration_expense', 'financial_expense',
 'nonrecurring_pnl', 'nonoperating_income', 'nonoperating_expense', 'noncurrent_assets_deal_loss',
-'operating_profit', 'total_profit', 'income_tax_expense', 'net_profit', 'np_shareholder', 'other_comprehensive_income', 'tci_shareholder', 'nps_cut', 'tax_rate', 'ebit', 'ebi', 'ebt',
+'operating_profit', 'total_profit', 'income_tax_expense', 'net_profit', 'np_shareholder', 'other_comprehensive_income', 'tci_shareholder', 'nps_cut', 'ebit', 'ebi', 'ebt',
 ]
         cursor = self.db.jyis.find({'date': {'$lte': date}, 'sid': {'$in': list(sids)}}, {'_id': 0})
         df = pd.DataFrame(list(cursor))

@@ -76,3 +76,4 @@ db.zyreport_adjust.ensureIndex({report_date: 1, org_id: 1}, {background: true})
 db.zyreport_adjust.ensureIndex({report_date: 1, report_type: 1}, {background: true})
 
 db.IF.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.lof.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
