@@ -68,6 +68,23 @@ class AlphaBase(object):
         """Logs a message with level CRITICAL on the alpha logger."""
         self.logger.critical(msg)
 
+    @staticmethod
+    def generate_dates(startdate, enddate, parts=None):
+        startdate, enddate = str(startdate), str(enddate)
+        if enddate[:5].lower() == 'today':
+            enddate = DATES[-1-int(enddate[6:])]
+
+        dates = dateutil.cut_window(
+                DATES,
+                dateutil.compliment_datestring(str(startdate), -1, True),
+                dateutil.compliment_datestring(str(enddate), 1, True))
+        if parts is None:
+            dates
+        chksize = len(dates)/parts
+        if len(dates) > chksize * parts:
+            chksize += 1
+        return [dates[i: i+chksize] for i in range(0, len(dates), chksize)]
+
 
 class IntervalAlphaBase(AlphaBase):
     """Base class for interval alphas.
@@ -150,14 +167,7 @@ class BacktestingAlpha(AlphaBase):
         :param dates list: One can supply this keyword argument with a list to omit ``startdate`` and ``enddate``
         """
         if dates is None:
-            startdate, enddate = str(startdate), str(enddate)
-            if enddate[:5].lower() == 'today':
-                enddate = DATES[-1-int(enddate[6:])]
-
-            dates = dateutil.cut_window(
-                        DATES,
-                        dateutil.compliment_datestring(str(startdate), -1, True),
-                        dateutil.compliment_datestring(str(enddate), 1, True))
+            dates = self.generate_dates(startdate, enddate)
 
         for date in dates:
             self.generate(date)
@@ -218,14 +228,7 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
         :param dates list: One can supply this keyword argument with a list to omit ``startdate`` and ``enddate``
         """
         if dates is None:
-            startdate, enddate = str(startdate), str(enddate)
-            if enddate[:5].lower() == 'today':
-                enddate = DATES[-1-int(enddate[6:])]
-
-            dates = dateutil.cut_window(
-                        DATES,
-                        dateutil.compliment_datestring(str(startdate), -1, True),
-                        dateutil.compliment_datestring(str(enddate), 1, True))
+            dates = self.generate_dates(startdate, enddate)
 
         for date in dates:
             for time in self.times:
@@ -305,14 +308,7 @@ class IntradayFutAlpha(AlphaBase):
         :param dates list: One can supply this keyword argument with a list to omit ``startdate`` and ``enddate``
         """
         if dates is None:
-            startdate, enddate = str(startdate), str(enddate)
-            if enddate[:5].lower() == 'today':
-                enddate = DATES[-1-int(enddate[6:])]
-
-            dates = dateutil.cut_window(
-                        DATES,
-                        dateutil.compliment_datestring(str(startdate), -1, True),
-                        dateutil.compliment_datestring(str(enddate), 1, True))
+            dates = self.generate_dates(startdate, enddate)
 
         for date in dates:
             self.associate(date)
