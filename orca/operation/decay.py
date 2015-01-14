@@ -19,9 +19,9 @@ class DecayOperation(OperationBase):
         self.days = days
         self.dense = dense
 
-    def operate(self, alpha):
-        current = (alpha.fillna(0) if self.dense else alpha) * self.days
+    def operate(self, alpha, exp=1):
+        current = (alpha.fillna(0) if self.dense else alpha) * self.days ** exp
         for i in range(1, self.days):
-            current += alpha.shift(i).fillna(0) * (self.days - i)
+            current += alpha.shift(i).fillna(0) * (self.days - i) ** exp
         current[alpha.fillna(method='ffill', limit=self.days-1).isnull()] = np.nan
         return current

@@ -97,9 +97,9 @@ from neutralize import (
         IndustryNeutOperation,
         )
 
-def decay(df, n, dense=False):
+def decay(df, n, dense=False, exp=1):
     """Wrapper for :py:class:`orca.operation.decay.DecayOperation`."""
-    return DecayOperation(n, dense=dense).operate(df)
+    return DecayOperation(n, dense=dense).operate(df, exp=exp)
 
 def barra_neut(df, model, factors):
     """Wrapper for :py:class:`orca.operation.barra.BarraFactorNeutOperation`."""

@@ -2,11 +2,16 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import os, sys
+from datetime import datetime
+from multiprocessing import Process
 import abc
+import argparse
 
 import pandas as pd
 import logbook
 logbook.set_datetime_format('local')
+from pymongo import MongoClient
 
 from orca import DATES
 from orca.utils import dateutil
@@ -325,4 +330,78 @@ class ProductionAlpha(AlphaBase):
     """
 
     def __init__(self, *args, **kwargs):
+        assert 'name' in kwargs
         super(ProductionAlpha, self).__init__(**kwargs)
+        self.timeout = kwargs.get('timeout', 60)
+
+    def run(self):
+        self.parse_args()
+        with self.setup:
+            self.connect_mongo()
+            self._dates = [date for date in self._dates if date in self.dates]
+            for date in self._dates:
+                try:
+                    p = Process(target=self.generate, args=(date,))
+                    p.start()
+                    p.join(self.timeout)
+                    if p.is_alive():
+                        self.warning('Timeout on date: {} for alpha: {}'.format(date, self.name))
+                        p.terminate()
+                except Exception, e:
+                    self.error('\n{}'.format(e))
+        self.client.close()
+
+
+    def connect_mongo(self, host='192.168.1.183', db='stocks_dev',
+            user='stocks_dev', password='stocks_dev'):
+        client = MongoClient(host)
+        db = client[db]
+        db.authenticate(user, password)
+        self.client, self.db = client, db
+        self.dates = sorted(db.dates.distinct('date'))
+
+    def parse_args(self):
+        """This method makes any alpha file can be turned into a script."""
+        today = datetime.now().strftime('%Y%m%d')
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-s', '--start', help='start date(included)', type=str)
+        parser.add_argument('-e', '--end', help='end date(included); default: today', default=today, nargs='?')
+        parser.add_argument('date', help='the date to be updated', default=today, nargs='?')
+        parser.add_argument('--source', choices=('mssql', 'oracle'), help='type of source database', default='oracle')
+        parser.add_argument('--debug_on', action='store_true')
+        parser.add_argument('-f', '--logfile', type=str)
+        parser.add_argument('-o', '--logoff', action='store_true')
+        args = parser.parse_args()
+
+        self.set_debug_mode(args.debug_on)
+
+        if args.start and args.end:
+            _dates = [dt.strftime('%Y%m%d') for dt in pd.date_range(args.start, args.end)]
+        else:
+            _dates = [args.date]
+        self._dates = _dates
+
+        if args.source:
+            self.source = args.source
+
+        if args.logfile:
+            args.logoff = False
+
+        if not args.logoff:
+            if not args.logfile:
+                self.logger.debug('@logfile not explicitly provided')
+                logdir = os.path.join('logs', today[:4], today[4:6])
+                if not os.path.exists(logdir):
+                    os.makedirs(logdir)
+                    self.logger.debug('Created directory {}', logdir)
+                args.logfile = os.path.join(logdir, 'log.'+today)
+                self.logger.debug('@logfile set to: {}', args.logfile)
+            self.setup = logbook.NestedSetup([
+                logbook.NullHandler(),
+                logbook.FileHandler(args.logfile, level='INFO'),
+                logbook.StreamHandler(sys.stdout, level=self.level, bubble=True)])
+        else:
+            self.setup = logbook.NestedSetup([
+                logbook.NullHandler(),
+                logbook.StreamHandler(sys.stdout, level=self.level, bubble=True)])

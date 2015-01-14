@@ -167,3 +167,19 @@ def run_interval(alpha, startdate, enddate, dates=None, threads=multiprocessing.
     for kvs in res:
         for k, v in kvs.iteritems():
             alpha[k] = v
+
+def worker_chunk(args):
+    alpha = args[0](*args[1])
+    alpha.run(dates=args[1][0])
+    return alpha.get_alphas()
+
+def run_chunk(alpha, startdate, enddate, chksize, args=(), threads=multiprocessing.cpu_count()):
+    pool = multiprocessing.Pool(threads)
+    res = pool.imap_unordered(worker_chunk, ((alpha, (dates,) + args) for dates in alpha.generate_dates(startdate, enddate, chksize)))
+    pool.close()
+    pool.join()
+    df = []
+    for chk in res:
+        df.append(chk)
+    df = pd.concat(df).sort_index()
+    return df
