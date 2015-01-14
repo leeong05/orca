@@ -93,3 +93,12 @@ class UnivFetcher(KDayFetcher):
         if as_list:
             return list(ser[ser].index)
 
+
+class AlphaFetcher(KDayFetcher):
+    """Class to fetch raw alpha data."""
+
+    dnames = DB.alpha.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.alpha
+        super(AlphaFetcher, self).__init__(**kwargs)

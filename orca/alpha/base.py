@@ -357,7 +357,7 @@ class ProductionAlpha(AlphaBase):
         client = MongoClient(host)
         db = client[db]
         db.authenticate(user, password)
-        self.client, self.db = client, db
+        self.client, self.db, self.collection = client, db, db.alpha
         self.dates = sorted(db.dates.distinct('date'))
 
     def parse_args(self):
@@ -373,8 +373,6 @@ class ProductionAlpha(AlphaBase):
         parser.add_argument('-f', '--logfile', type=str)
         parser.add_argument('-o', '--logoff', action='store_true')
         args = parser.parse_args()
-
-        self.set_debug_mode(args.debug_on)
 
         if args.start and args.end:
             _dates = [dt.strftime('%Y%m%d') for dt in pd.date_range(args.start, args.end)]
@@ -400,8 +398,8 @@ class ProductionAlpha(AlphaBase):
             self.setup = logbook.NestedSetup([
                 logbook.NullHandler(),
                 logbook.FileHandler(args.logfile, level='INFO'),
-                logbook.StreamHandler(sys.stdout, level=self.level, bubble=True)])
+                logbook.StreamHandler(sys.stdout, level='DEBUG', bubble=True)])
         else:
             self.setup = logbook.NestedSetup([
                 logbook.NullHandler(),
-                logbook.StreamHandler(sys.stdout, level=self.level, bubble=True)])
+                logbook.StreamHandler(sys.stdout, level='DEBUG', bubble=True)])
