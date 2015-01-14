@@ -31,7 +31,19 @@ class GroupNeutOperation(OperationBase):
         self.group = group
         self.threads = threads
 
-    def operate(self, alpha):
+    def operate(self, alpha, date=None):
+        if isinstance(alpha, pd.Series):
+            if self.group is None:
+                return alpha - alpha.mean()
+            if isinstance(self.group, pd.DataFrame):
+                group = self.group.ix[date]
+            else:
+                group = self.group
+            sids = group.dropna().index
+            nalpha = alpha.ix[sids]
+            nalpha = nalpha.groupby(group).transform(lambda x: x-x.mean())
+            return nalpha.reindex(index=alpha.index)
+
         if self.group is None:
             return alpha.subtract(alpha.mean(axis=1), axis=0)
         if isinstance(self.group, pd.Series):
@@ -42,7 +54,7 @@ class GroupNeutOperation(OperationBase):
 
         dates = dateutil.to_datestr(alpha.index)
         pool = multiprocessing.Pool(self.threads)
-        res = pool.imap_unordered(worker, [(dt, row, self.group.ix[date]) for (dt, row), date in zip(alpha.iterrows(), dates)])
+        res = pool.imap_unordered(worker, [(dt1, row, self.group.ix[dt2]) for (dt1, row), dt2 in zip(alpha.iterrows(), dates)])
         pool.close()
         pool.join()
 
@@ -64,7 +76,13 @@ class IndustryNeutOperation(GroupNeutOperation):
         self.industry = IndustryFetcher(datetime_index=True)
         self.group = None
 
-    def operate(self, alpha, group='sector', simple=False):
+    def operate(self, alpha, group='sector', simple=False, date=None):
+        if isinstance(alpha, pd.Series):
+            group = self.industry.fetch_daily(group, date).dropna()
+            nalpha = alpha.ix[group.index]
+            nalpha = nalpha.groupby(group).transform(lambda x: x-x.mean())
+            return nalpha.reindex(index=alpha.index)
+
         window = np.unique(dateutil.to_datestr(alpha.index))
         group = self.industry.fetch_window(group, window)
         self.group = group.iloc[-1] if simple else group
