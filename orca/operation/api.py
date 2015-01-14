@@ -109,26 +109,26 @@ def barra_corr_neut(df, model, factors):
     """Wrapper for :py:class:`orca.operation.barra.BarraFactorCorrNeutOperation`."""
     return BarraFactorCorrNeutOperation(model).operate(df, factors)
 
-def group_neut(df, group=None):
+def group_neut(df, group=None, date=None):
     """Wrapper for :py:class:`orca.operation.neutralize.GroupNeutOperation`."""
-    return GroupNeutOperation(group).operate(df)
+    return GroupNeutOperation(group).operate(df, date=date)
 
-def industry_neut(df, group, standard='SW2014', simple=False):
+def industry_neut(df, group, standard='SW2014', simple=False, date=None):
     """Wrapper for :py:class:`orca.operation.neutralize.IndustryNeutOperation`.
 
     :param str group: 'level1', 'level2', 'level3'
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX')
     """
-    return IndustryNeutOperation(standard).operate(df, group, simple=simple)
+    return IndustryNeutOperation(standard).operate(df, group, simple=simple, date=date)
 
-def level1_neut(df, standard='SW2014', simple=False):
+def level1_neut(df, standard='SW2014', simple=False, date=None):
     """Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group='level1'``."""
-    return industry_neut(df, 'level1', standard=standard, simple=simple)
+    return industry_neut(df, 'level1', standard=standard, simple=simple, date=date)
 
-def level2_neut(df, standard='SW2014', simple=False):
+def level2_neut(df, standard='SW2014', simple=False, date=None):
     """Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group='level2'``."""
-    return industry_neut(df, 'level2', standard=standard, simple=simple)
+    return industry_neut(df, 'level2', standard=standard, simple=simple, date=date)
 
-def level3_neut(df, standard='SW2014', simple=False):
+def level3_neut(df, standard='SW2014', simple=False, date=None):
     """Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group='level3'``."""
-    return industry_neut(df, 'level3', standard=standard, simple=simple)
+    return industry_neut(df, 'level3', standard=standard, simple=simple, date=date)

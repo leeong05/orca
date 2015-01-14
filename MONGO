@@ -79,3 +79,5 @@ db.IF.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, ba
 db.lof.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.alpha.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.performance.ensureIndex({alpha: 1, mode: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.performance.ensureIndex({mode: 1, alpha: 1, date: 1}, {unique: true, dropDups: true, background: true})

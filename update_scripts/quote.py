@@ -35,13 +35,13 @@ class QuoteUpdater(UpdaterBase):
                 unique=True, dropDups=True, background=True)
 
     def update(self, date):
-        """Update daily quote data for the **same** day after market open."""
+        """Update daily quote data for the **same** day after market close."""
         CMD = self.quote_sql.CMD.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            self.logger.error('No records found for {} on {}', self.db.sywgindex_quote.name, date)
+            self.logger.error('No records found for {} on {}', self.db.quote.name, date)
             return
 
         df.columns = ['sid'] + self.quote_sql.dnames
