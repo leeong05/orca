@@ -133,6 +133,30 @@ def run_msgpack(outdir, alpha, params, startdate, enddate, predicate=None, threa
 from orca import DATES
 from orca.utils import dateutil
 
+def worker_daily(args):
+    alpha, date = args
+    res = alpha.generate(date)
+    alpha.debug('Generated alpha for {}'.format(date))
+    return date, res
+
+def run_daily(alpha, startdate, enddate, dates=None, threads=multiprocessing.cpu_count()):
+    if dates is None:
+        startdate, enddate = str(startdate), str(enddate)
+        if enddate[:5].lower() == 'today':
+            enddate = DATES[-1-int(enddate[6:])]
+
+        dates = dateutil.cut_window(
+                    DATES,
+                    dateutil.compliment_datestring(str(startdate), -1, True),
+                    dateutil.compliment_datestring(str(enddate), 1, True))
+
+    pool = multiprocessing.Pool(threads)
+    res = pool.imap_unordered(worker_daily, ((alpha, date) for date in dates))
+    pool.close()
+    pool.join()
+    for k, v in res:
+        alpha[k] = v
+
 def worker_interval(args):
     alpha, date = args
     res = {}

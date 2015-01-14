@@ -113,22 +113,22 @@ def group_neut(df, group=None):
     """Wrapper for :py:class:`orca.operation.neutralize.GroupNeutOperation`."""
     return GroupNeutOperation(group).operate(df)
 
-def industry_neut(df, group, standard='SW2014'):
+def industry_neut(df, group, standard='SW2014', simple=False):
     """Wrapper for :py:class:`orca.operation.neutralize.IndustryNeutOperation`.
 
     :param str group: 'level1', 'level2', 'level3'
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX')
     """
-    return IndustryNeutOperation(standard).operate(df, group)
+    return IndustryNeutOperation(standard).operate(df, group, simple=simple)
 
-def level1_neut(df, standard='SW2014'):
+def level1_neut(df, standard='SW2014', simple=False):
     """Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group='level1'``."""
-    return industry_neut(df, 'level1', standard=standard)
+    return industry_neut(df, 'level1', standard=standard, simple=simple)
 
-def level2_neut(df, standard='SW2014'):
+def level2_neut(df, standard='SW2014', simple=False):
     """Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group='level2'``."""
-    return industry_neut(df, 'level2', standard=standard)
+    return industry_neut(df, 'level2', standard=standard, simple=simple)
 
-def level3_neut(df, standard='SW2014'):
+def level3_neut(df, standard='SW2014', simple=False):
     """Wrapper for :py:func:`orca.operation.api.industry_neut` with ``group='level3'``."""
-    return industry_neut(df, 'level3', standard=standard)
+    return industry_neut(df, 'level3', standard=standard, simple=simple)

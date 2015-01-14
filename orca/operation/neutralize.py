@@ -2,12 +2,10 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-from datetime import datetime
 import multiprocessing
 
 import numpy as np
 import pandas as pd
-from pandas.tseries.index import DatetimeIndex
 
 from orca.mongo.industry import IndustryFetcher
 from orca.utils import dateutil
@@ -17,16 +15,10 @@ from base import OperationBase
 
 def worker(args):
     dt, alpha, group = args
-    if isinstance(dt, datetime):
-        date = dt.strftime('%Y%m%d')
-    else:
-        date = dt
-    if not isinstance(group, pd.Series):
-        group = group.ix[date]
-    sids = group[group.notnull()].index.intersection(alpha[alpha.notnull()].index)
+    sids = group.dropna().index
     nalpha, group = alpha[sids], group[sids]
     nalpha = nalpha.groupby(group).transform(lambda x: x-x.mean())
-    return dt, nalpha.reindex(index=alpha.index)
+    return dt, nalpha
 
 class GroupNeutOperation(OperationBase):
     """Class to neutralize alpha within a group.
@@ -42,16 +34,22 @@ class GroupNeutOperation(OperationBase):
     def operate(self, alpha):
         if self.group is None:
             return alpha.subtract(alpha.mean(axis=1), axis=0)
+        if isinstance(self.group, pd.Series):
+            sids = self.group.dropna().index
+            nalpha = alpha.T.ix[sids]
+            nalpha = nalpha.groupby(self.group.dropna()).transform(lambda x: x-x.mean()).T
+            return nalpha.reindex(columns=alpha.columns)
 
+        dates = dateutil.to_datestr(alpha.index)
         pool = multiprocessing.Pool(self.threads)
-        res = pool.imap_unordered(worker, [(dt, row, self.group) for dt, row in alpha.iterrows()])
+        res = pool.imap_unordered(worker, [(dt, row, self.group.ix[date]) for (dt, row), date in zip(alpha.iterrows(), dates)])
         pool.close()
         pool.join()
 
         df = {}
         for dt, row in res:
             df[dt] = row
-        return pd.DataFrame(df).T
+        return pd.DataFrame(df).T.reindex(columns=alpha.columns)
 
 
 class IndustryNeutOperation(GroupNeutOperation):
@@ -66,11 +64,8 @@ class IndustryNeutOperation(GroupNeutOperation):
         self.industry = IndustryFetcher(datetime_index=True)
         self.group = None
 
-    def operate(self, alpha, group='sector'):
-        if isinstance(alpha.index, DatetimeIndex):
-            window = np.unique(dateutil.to_datestr(alpha.index))
-        else:
-            window = list(alpha.index)
+    def operate(self, alpha, group='sector', simple=False):
+        window = np.unique(dateutil.to_datestr(alpha.index))
         group = self.industry.fetch_window(group, window)
-        self.group = group
+        self.group = group.iloc[-1] if simple else group
         return super(IndustryNeutOperation, self).operate(alpha)
