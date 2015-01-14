@@ -48,9 +48,9 @@ class JYDataUpdater(UpdaterBase):
 
         if not sids:
             return
-        #self.update_jybs(date, sids)
-        #self.update_jycs(date, sids)
-        #self.update_jyis(date, sids)
+        self.update_jybs(date, sids)
+        self.update_jycs(date, sids)
+        self.update_jyis(date, sids)
         self.update_composite(date, sids)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', len(sids), self.collection.name, self.db.name, date)
 
@@ -70,6 +70,8 @@ class JYDataUpdater(UpdaterBase):
         df['capex'] = [self.norm(i+j) for i, j in zip(df['delta_fixed_assets'], df['fixed_assets_depreciation'])]
         df['efcf'] = [i1 + (self.norm(i2) if np.isnan(i3) else -1*i3)*(1- i4) - (i5 + self.norm(i6)) for i1, i2, i3, i4, i5, i6 in zip(df['ebitda'],df['financial_expense'], df['net_interest_income'], df['tax_rate'], df['capex'], df['delta_working_capital'])]
         df['efcf'] = [i1 + i2 - (i3+self.norm(i4)) + i5  for i1, i2, i3, i4, i5 in zip(df['np_shareholder'],df['da'], df['capex'], df['delta_working_capital'], df['delta_net_borrowing'])]
+        df['accruals_bs'] = df['delta_net_operating_assets']
+        df['accruals_cf'] = df['net_profit'] - (df['ocf']+df['icf'])
         for _, row in df.iterrows():
             key = {'date': row['date'], 'sid': row['sid'], 'dtype': row['dtype']}
             doc = row.to_dict()
@@ -275,9 +277,9 @@ class JYDataUpdater(UpdaterBase):
 'shortterm_loan', 'trading_liability', 'note_payable', 'account_payable', 'salary_payable', 'dividend_payable', 'tax_payable', 'interest_payable', 'accrued_expense', 'deferred_proceed', 'current_liability',
 'longterm_loan', 'bond_payable', 'longterm_account_payable', 'deferred_tax_liability', 'noncurrent_liability', 'liability',
 'paidin_capital', 'capital_reserve_fund', 'surplus_reserve_fund', 'retained_earnings', 'se_without_mi', 'shareholder_equity', 'liability_and_equity',
-'receivables', 'payables', 'invested_capital', 'noninterest_liability', 'interest_liability', 'tangible_equity', 'net_liability', 'working_capital', 'net_borrowing',
+'receivables', 'payables', 'invested_capital', 'noninterest_liability', 'interest_liability', 'tangible_equity', 'net_liability', 'working_capital', 'net_borrowing', 'net_operating_assets', 'net_operating_assets',
 ]
-        delta_dnames = ['working_capital', 'fixed_assets', 'net_borrowing']
+        delta_dnames = ['working_capital', 'fixed_assets', 'net_borrowing', 'net_operating_assets']
         cursor = self.db.jybs.find({'date': {'$lte': date}, 'sid': {'$in': list(sids)}}, {'_id': 0})
         df = pd.DataFrame(list(cursor))
         if len(df) == 0:
@@ -303,6 +305,7 @@ class JYDataUpdater(UpdaterBase):
         df['net_liability'] = df['interest_liability'] - df['cash_and_equivalent']
         df['working_capital'] = df['current_assets'] - df['current_liability']
         df['net_borrowing'] = [i1+self.norm(i2)+i3+self.norm(i4)+self.norm(i5) for i1, i2, i3, i4, i5 in zip(df['shortterm_loan'], df['note_payable'], df['longterm_loan'], df['bond_payable'], df['shortterm_bond_payable'])]
+        df['net_operating_assets'] = df['assets']-df['liability']+df['net_liability']
         dnames = [dname for dname in dnames if dname in df.columns]
         delta_dnames = [dname for dname in delta_dnames if dname in dnames]
         df['qtrno'] = 4*(df.year-2000) + df.quarter
@@ -356,7 +359,39 @@ class JYDataUpdater(UpdaterBase):
                     if pq in df1.index:
                         doc.update({'delta_'+dname: doc[dname] - df1[dname][pq] for dname in delta_dnames})
                     self.collection.update(key, {'$set': doc}, upsert=True)
-
+            # dtype: 'TTM'
+            df4 = df.copy()
+            if len(df4):
+                cq = df4.qtrno.iloc[-1]
+                if cq % 4 == 0:
+                    key = {'date': date, 'sid': sid, 'dtype': 'TTM'}
+                    doc = {dname: df4[dname][cq] for dname in dnames}
+                    doc.update({'qtrno': df4.qtrno.iloc[-1]})
+                    doc.update({'delta_'+dname: np.nan for dname in delta_dnames})
+                    pq = cq - 4
+                    if pq in df4.index:
+                        doc.update({'delta_'+dname: doc[dname]-df4[dname][pq] for dname in delta_dnames})
+                    self.collection.update(key, {'$set': doc}, upsert=True)
+                else:
+                    pyq, py = cq - 4, cq - cq % 4
+                    ppyq, ppy = pyq - 4, py - 4
+                    if py in df4.qtrno:
+                        if pyq not in df4.qtrno:
+                            key = {'date': date, 'sid': sid, 'dtype': 'TTM'}
+                            doc = {dname: df4[dname][py] for dname in dnames}
+                            doc.update({'qtrno': df4.qtrno.iloc[-1]})
+                            doc.update({'delta_'+dname: np.nan for dname in delta_dnames})
+                            if ppy in df4.index:
+                                doc.update({'delta_'+dname: doc[dname]-df4[dname][ppy]})
+                            self.collection.update(key, {'$set': doc}, upsert=True)
+                        else:
+                            key = {'date': date, 'sid': sid, 'dtype': 'TTM'}
+                            doc = {dname: self.norm(df4[dname][py])-self.norm(df4[dname][pyq])+df4[dname][cq] for dname in dnames}
+                            doc.update({'qtrno': df4.qtrno.iloc[-1]})
+                            doc.update({'delta_'+dname: np.nan for dname in delta_dnames})
+                            if ppy in df4.index and ppyq in df4.index:
+                                doc.update({'delta_'+dname: doc[dname]-(self.norm(df4[dname][ppy])-self.norm(df4[dname][ppyq])+df4[dname][pyq]) for dname in dnames})
+                            self.collection.update(key, {'$set': doc}, upsert=True)
 
 if __name__ == '__main__':
     jydata = JYDataUpdater()

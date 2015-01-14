@@ -13,12 +13,11 @@ from orca.utils import dateutil
 from base import KDayFetcher
 
 
-class JYDataFetcher(KDayFetcher):
+class JYFetcher(KDayFetcher):
     """Class to fetch derivative JYDB fundamental data."""
 
     def __init__(self, **kwargs):
-        super(JYDataFetcher, self).__init__(**kwargs)
-        self.collection = DB.jydata
+        super(JYFetcher, self).__init__(**kwargs)
 
     def fetch(self, dname, startdate, enddate=None, backdays=0, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
@@ -73,3 +72,19 @@ class JYDataFetcher(KDayFetcher):
     def fetch_daily(self, dname, date, offset=0, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
         return self.fetch_history(dname, date, 1, delay=offset, **kwargs).iloc[0]
+
+
+class JYDataFetcher(JYFetcher):
+    """Class to fetch collection 'jydata'."""
+
+    def __init__(self, **kwargs):
+        super(JYDataFetcher, self).__init__(**kwargs)
+        self.collection = DB.jydata
+
+
+class JYIndexFetcher(JYFetcher):
+    """Class to fetch collection 'jyindex'."""
+
+    def __init__(self, **kwargs):
+        super(JYIndexFetcher, self).__init__(**kwargs)
+        self.collection = DB.jyindex
