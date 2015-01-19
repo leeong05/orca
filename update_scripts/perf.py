@@ -56,7 +56,7 @@ class PerfUpdater(UpdaterBase):
             key = {'alpha': dname, 'mode': 'quantile30', 'date': date}
             metrics = self.get_metrics(analyser, date)
             self.collection.update(key, {'$set': metrics}, upsert=True)
-            # universe
+            # universe(s)
             analyser = perf.get_universe(BTOP70Q).get_longshort()
             key = {'alpha': dname, 'mode': 'BTOP70Q', 'date': date}
             metrics = self.get_metrics(analyser, date)

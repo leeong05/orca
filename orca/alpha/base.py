@@ -8,6 +8,7 @@ from multiprocessing import Process
 import abc
 import argparse
 
+import numpy as np
 import pandas as pd
 import logbook
 logbook.set_datetime_format('local')
@@ -176,7 +177,7 @@ class BacktestingAlpha(AlphaBase):
 
         for date in dates:
             self.generate(date)
-            self.debug('Generated alpha for {}'.format(date))
+            self.debug('Generated alpha for {} sids on {}'.format(self[date].count(), date))
 
 
 class BacktestingIntervalAlpha(IntervalAlphaBase):
@@ -209,7 +210,7 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
             key = self.make_datetime(*key)
         if key in self.alphas:
             self.warning('{0!r} already exists as a key'.format(key))
-        self.alphas[key] = value
+        self.alphas[key] = value[np.isfinite(value)]
 
     def push(self, key, value):
         if isinstance(key, tuple):
@@ -333,6 +334,14 @@ class ProductionAlpha(AlphaBase):
         assert 'name' in kwargs
         super(ProductionAlpha, self).__init__(**kwargs)
         self.timeout = kwargs.get('timeout', 60)
+
+    def push(self, alpha, date):
+        alpha = alpha[np.isfinite(alpha)]
+        self.collection.update(
+                {'dname': self.name, 'date': date},
+                {'$set': {'dvalue': alpha.to_dict()}},
+                upsert=True)
+        self.info('Updated positions on date: {} with {} sids for alpha: {}'.format(date, len(alpha), self.name))
 
     def run(self):
         self.parse_args()

@@ -2,7 +2,10 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-from orca import DB
+from orca import (
+        DB,
+        DATES,
+        )
 
 from base import KDayFetcher
 
@@ -102,3 +105,13 @@ class AlphaFetcher(KDayFetcher):
     def __init__(self, **kwargs):
         self.collection = DB.alpha
         super(AlphaFetcher, self).__init__(**kwargs)
+
+    def fetch(self, dname, startdate=None, enddate=None, **kwargs):
+        if startdate is None:
+            return self.fetch_window(dname, None, **kwargs)
+        return super(AlphaFetcher, self).fetch(dname, startdate, enddate, **kwargs)
+
+    def fetch_window(self, dname, window=None, **kwargs):
+        if window is None:
+            window = DATES
+        return super(AlphaFetcher, self).fetch_window(dname, window, **kwargs)

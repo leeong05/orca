@@ -23,6 +23,7 @@ class IndexQuoteFetcher(KDayFetcher):
             'HS300': 'SH000300',
             'CS500': 'SH000905',
             'CS800': 'SH000906',
+            'SH50': 'SH000016',
             }
     dnames = ['amount', 'close', 'high', 'low', 'open', 'prev_close', 'returns', 'volume', 'vwap']
 

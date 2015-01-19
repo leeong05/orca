@@ -42,16 +42,18 @@ class Analyser(object):
        A ``Series`` of daily returns without any cost considerations.
     """
 
-    def __init__(self, alpha, data, index_data=None):
-        self.alpha = api.scale(alpha)
-        self.intervals = self.alpha.index.date
+    def __init__(self, alpha=None, data=None, index_data=None):
+        if alpha is not None:
+            self.alpha = api.scale(alpha)
+            self.intervals = self.alpha.index.date
 
         self.IC, self.rIC = {}, {}
         self.AC, self.rAC = {}, {}
         self.turnover = None
         self.returns = None
 
-        self.data = data.ix[self.alpha.index]
+        if data is not None:
+            self.data = data.ix[self.alpha.index]
         if index_data is not None:
             self.index_data = index_data.ix[self.alpha.index]
 

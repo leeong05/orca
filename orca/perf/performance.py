@@ -90,6 +90,7 @@ class Performance(object):
             self.alpha = alpha.get_alphas()
         else:
             self.alpha = api.format(alpha)
+        self.alpha = self.alpha[np.isfinite(self.alpha)]
         self.startdate = self.alpha.index[0]
 
     def get_original(self):
