@@ -7,25 +7,44 @@ import os
 import pandas as pd
 pd.set_option('display.precision', 3)
 
+from orca.mongo.perf import PerfFetcher
+perf = PerfFetcher(datetime_index=True)
 from orca.constants import DAYS_IN_YEAR
 from orca.operation.api import format
 from orca.perf.performance import Performance
+from orca.mongo.kday import UnivFetcher
+univ_fetcher = UnivFetcher(datetime_index=True, reindex=True)
+from orca.utils.dateutil import to_datestr
 
-def corr(s1, s2, days):
-    index = s1.index.intersection(s2.index)
-    if len(index) > days:
-        index = index[-days:]
-    return s1.ix[index].corr(s2.ix[index])
+def _get_metric(analyser, metric):
+    if metric == 'returns':
+        return analyser.get_returns()
+    elif metric == 'rIC1':
+        return analyser.get_ic(1, rank=True)
+    elif metric == 'rIC5':
+        return analyser.get_ic(5, rank=True)
+    elif metric == 'rIC20':
+        return analyser.get_ic(20, rank=True)
+    elif metric == 'IC1':
+        return analyser.get_ic(1, rank=False)
+    elif metric == 'IC5':
+        return analyser.get_ic(5, rank=False)
+    elif metric == 'IC20':
+        return analyser.get_ic(20, rank=False)
 
-def get_pairwise_corr(name_series, days):
-    df = pd.DataFrame(name_series)
-    index = df.index
-    for name, series in df.iteritems():
-        index = index.intersection(series.index)
-    if len(index) > days:
-        index = index[-days:]
-    df = df.ix[index]
-    return df.corr()
+def _get_analyser(perf, mode):
+    if mode == 'longshort':
+        return perf.get_longshort()
+    elif mode == 'BTOP70Q':
+        univ = univ_fetcher.fetch_window('BTOP70Q', to_datestr(perf.alpha.index))
+        return perf.get_universe(univ).get_longshort()
+    elif mode == 'quantile30':
+        return perf.get_qtail(0.3)
+    elif mode == 'top30':
+        return perf.get_qtop(0.3)
+
+def get_metric(perf, mode, metric):
+    return _get_metric(_get_analyser(perf, mode), metric)
 
 def read_frame(fname, ftype='csv'):
     if ftype == 'csv':
@@ -37,82 +56,75 @@ def read_frame(fname, ftype='csv'):
 
 if __name__ == '__main__':
     import argparse
+    from glob import glob
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file', nargs='*')
     parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
-    parser.add_argument('-q', '--quantile', help='Sets threshold for tail quantiles to calculate returns', type=float)
-    parser.add_argument('--db', help='Check correlation with alphas in alphadb', action='store_true')
-    parser.add_argument('-m', '--method', choices=('ic', 'returns', 'both'), default='both', help='What type of correlations is of interest?')
     parser.add_argument('--dir', help='Input directory, each file contained is assumed to be an alpha file', type=str)
     parser.add_argument('--file', help='Input file, each row in the format: name path_to_a_csv_file', type=str)
     parser.add_argument('--days', type=int, default=2*DAYS_IN_YEAR, help='How many points to be included in correlation calculation')
+    parser.add_argument('--db', help='Check correlation with alphas in alphadb', action='store_true')
+    parser.add_argument('--mode', choices=('longshort', 'quantile30', 'BTOP70Q', 'top30'), default='BTOP70Q')
+    metrics = ('returns',) + tuple([('r' if rank else '') + 'IC' + str(n) for rank in [True, False] for n in (1, 5, 20)])
+    parser.add_argument('--metric', choices=metrics, default='rIC1', help='What type of correlations is of interest?')
+    parser.add_argument('--limit', type=int, default=10)
     args = parser.parse_args()
+
+    alpha_metric, dates = {}, None
+    if args.alpha:
+        for path in args.alpha:
+            for name in glob(path):
+                df = read_frame(name)
+                perf = Performance(df)
+                name = os.path.basename(name)
+                alpha_metric[name] = get_metric(perf, args.mode, args.metric)
+                if dates is None:
+                    dates = alpha_metric[name].index
+                else:
+                    dates = dates.union(alpha_metric[name].index)
 
     ext_alphas = {}
     if args.file:
         with open(args.file) as file:
             for line in file:
-                name, fpath = line.split('\s+')
+                name, fpath = line.strip().split()
                 ext_alphas[name] = read_frame(fpath)
     if args.dir:
         assert os.path.exists(args.dir)
         for name in os.listdir(args.dir):
             ext_alphas[name] = read_frame(os.path.join(args.dir, name), args.ftype)
-    for name, alpha in ext_alphas:
+
+    extalpha_metric = {}
+    if args.db:
+        assert args.alpha
+        db_metrics = perf.fetch_window(args.metric, to_datestr(dates), mode=args.mode)
+        for name, metric in db_metrics.iteritems():
+            extalpha_metric[name] = metric
+
+    for name, alpha in ext_alphas.iteritems():
         perf = Performance(alpha)
-        if args.quantile:
-            ext_alphas[name] = perf.get_qtail(args.quantile)
-        else:
-            ext_alphas[name] = perf.get_longshort()
+        extalpha_metric[name] = get_metric(perf, args.mode, args.metric)
 
-    if args.alpha is None:
-        if args.method == 'ic':
-            ics_dict = {name: analyser.get_ic(rank=True) for name, analyser in ext_alphas.iteritems()}
-            ics_corr = get_pairwise_corr(ics_dict, args.days)
-            print ics_corr
-        elif args.method == 'returns':
-            rets_dict = {name: analyser.get_returns() for name, analyser in ext_alphas.iteritems()}
-            rets_corr = get_pairwise_corr(rets_dict, args.days)
-            print rets_corr
-        else:
-            ics_dict = {name: analyser.get_ic(rank=True) for name, analyser in ext_alphas.iteritems()}
-            rets_dict = {name: analyser.get_returns() for name, analyser in ext_alphas.iteritems()}
-            ics_corr = get_pairwise_corr(ics_dict, args.days)
-            rets_corr = get_pairwise_corr(rets_dict, args.days)
-            print ics_corr
-            print ''
-            print rets_corr
+    extmetric_df = pd.DataFrame(extalpha_metric)
+    if not args.alpha:
+        if len(extmetric_df) > args.days:
+            extmetric_df = extmetric_df.iloc[-args.days:]
+        print extmetric_df.corr()
     else:
-        alpha_analyser = None
-        for i, name in enumerate(args.alpha):
-            df = read_frame(name)
-            perf = Performance(df)
-            if args.quantile:
-                analyser = perf.get_qtail(args.quantile)
-            else:
-                analyser = perf.get_longshort()
-            if i == 0:
-                alpha_analyser = analyser
-            else:
-                ext_alphas[name] = analyser
-
-        if args.method == 'ic':
-            ic = alpha_analyser.get_ic(rank=True)
-            ics_dict = {name: analyser.get_ic(rank=True) for name, analyser in ext_alphas.iteritems()}
-            ic_corr = pd.Series({name: corr(ic, ic_, args.days) for name, ic_ in ics_dict.iteritems()})
-            print ic_corr.sort(ascending=False)
-        elif args.method == 'ir':
-            ret = alpha_analyser.get_returns()
-            rets_dict = {name: analyser.get_returns() for name, analyser in ext_alphas.iteritems()}
-            ret_corr = pd.Series({name: corr(ret, ret_, args.days) for name, ret_ in rets_dict.iteritems()})
-            print ret_corr.sort(ascending=False)
+        if len(extmetric_df) > 0:
+            extmetric_df = extmetric_df.ix[dates]
+            if len(extmetric_df) > args.days:
+                extmetric_df = extmetric_df.iloc[-args.days:]
+            for name, metric in alpha_metric.iteritems():
+                corr = extmetric_df.corrwith(metric)
+                corr.sort(ascending=False)
+                if len(corr) > args.limit:
+                    corr = corr.ix[:args.limit]
+                print name
+                print corr
         else:
-            ic = alpha_analyser.get_ic(rank=True)
-            ics_dict = {name: analyser.get_ic(rank=True) for name, analyser in ext_alphas.iteritems()}
-            ic_corr = pd.Series({name: corr(ic, ic_, args.days) for name, ic_ in ics_dict.iteritems()})
-            ret = alpha_analyser.get_returns()
-            rets_dict = {name: analyser.get_returns() for name, analyser in ext_alphas.iteritems()}
-            ret_corr = pd.Series({name: corr(ret, ret_, args.days) for name, ret_ in rets_dict.iteritems()})
-            res = pd.concat([ic_corr, ret_corr], axis=1, keys=['ic', 'returns'])
-            print res.sort(['ic', 'returns'], ascending=False)
+            metric_df = pd.DataFrame(alpha_metric)
+            if len(metric_df) > args.days:
+                metric_df = metric_df.iloc[-args.days:]
+            print metric_df.corr()

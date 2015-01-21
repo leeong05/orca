@@ -221,9 +221,9 @@ class KMinFetcher(FetcherBase):
         if datetime_index:
             panel.major_axis = pd.to_datetime(panel.major_axis)
             if reindex:
-                panel = panel.reindex(major_axis=pd.to_datetime(window), minor_axis=SIDS, copy=False)
-        if reindex:
-            panel = panel.reindex(major_axis=window, minor_axis=SIDS)
+                panel = panel.reindex(minor_axis=SIDS, copy=False)
+        elif reindex:
+            panel = panel.reindex(minor_axis=SIDS)
 
         if isinstance(times, str):
             return panel[times]

@@ -14,7 +14,10 @@ import logbook
 logbook.set_datetime_format('local')
 from pymongo import MongoClient
 
-from orca import DATES
+from orca import (
+        DATES,
+        SIDS,
+        )
 from orca.utils import dateutil
 from orca.operation.api import format
 
@@ -334,6 +337,17 @@ class ProductionAlpha(AlphaBase):
         assert 'name' in kwargs
         super(ProductionAlpha, self).__init__(**kwargs)
         self.timeout = kwargs.get('timeout', 60)
+
+    def pull(self, dates):
+        cursor = self.collection.find(
+                {'dname': self.dname, 'date': {'$in': [dates] if isinstance(dates, str) else dates}},
+                {'_id': 0, 'date': 1, 'dvalue': 1}
+                )
+        df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
+        if isinstance(dates, str):
+            return df.ix[dates]
+        df.index = pd.to_datetime(df.index)
+        return df.reindex(columns=SIDS)
 
     def push(self, alpha, date):
         alpha = alpha[np.isfinite(alpha)]

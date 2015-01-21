@@ -26,7 +26,8 @@ class TSMinUpdater(UpdaterBase):
     def __init__(self, bar='1min', timeout=300, threads=cpu_count()):
         UpdaterBase.__init__(self, timeout)
         self.bar = bar
-        self.srcdir = os.path.join(tsmin_sql.srcdir, self.bar)
+        self.srcdir1 = os.path.join(tsmin_sql.srcdir1, self.bar)
+        self.srcdir2 = os.path.join(tsmin_sql.srcdir2, self.bar)
         self.threads = threads
 
     def pre_update(self):
@@ -46,9 +47,15 @@ class TSMinUpdater(UpdaterBase):
 
     def update(self, date):
         """Update TinySoft minute-bar data for the **same** day after market close."""
+        srcfile = None
         fname = '%s-%s-%s.csv' % (date[:4], date[4:6], date[6:8])
-        srcfile = os.path.join(self.srcdir, fname)
-        if not os.path.exists(srcfile):
+        srcfile1 = os.path.join(self.srcdir1, fname)
+        srcfile2 = os.path.join(self.srcdir2, fname)
+        if os.path.exists(srcfile1):
+            srcfile = srcfile1
+        if os.path.exists(srcfile2):
+            srcfile = srcfile2
+        if not srcfile:
             self.logger.error('No records found for {} on {}', self.collection.name, date)
             return
 
