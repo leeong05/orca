@@ -142,6 +142,9 @@ def gp_facret(date, model):
 def gp_faccov(date, model):
     return os.path.join(gp_dir(date, model), 'CNE5'+model[0].upper()+'_100_Covariance.%s' % date)
 
+def gp_precov(date, model):
+    return os.path.join(gp_dir(date, model), 'CNE5'+model[0].upper()+'_100_preVRACovariance.%s' % date)
+
 def gp_specret(date, model):
     return os.path.join(gp_dir(date, model), 'CNE5_100_Asset_DlySpecRet.%s' % date)
 

@@ -41,6 +41,12 @@ def scale(df):
     """Make DataFrame with absolute sum 1 for each row."""
     return df.div(np.abs(df).sum(axis=1), axis=0)
 
+def rank01(df, ascending=False):
+    """Transform each row to be distributed uniformly in [0, 1]."""
+    rdf = df.rank(ascending=ascending, axis=1)
+    rdf = rdf.sub(rdf.min(axis=1), axis=0)
+    return rdf.div(rdf.max(axis=1), axis=0)
+
 def top(df, n):
     """Return top n elements for each row in DataFrame.
 

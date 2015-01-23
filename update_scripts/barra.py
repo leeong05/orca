@@ -28,6 +28,7 @@ class BarraUpdater(UpdaterBase):
                     'exposure': self.db.barra_D_exposure,
                     'facret': self.db.barra_D_returns,
                     'faccov': self.db.barra_D_covariance,
+                    'precov': self.db.barra_D_precovariance,
                     'specifics': self.db.barra_D_specifics,
                     })
         else:
@@ -36,6 +37,7 @@ class BarraUpdater(UpdaterBase):
                     'exposure': self.db.barra_S_exposure,
                     'facret': self.db.barra_S_returns,
                     'faccov': self.db.barra_S_covariance,
+                    'precov': self.db.barra_D_precovariance,
                     'specifics': self.db.barra_S_specifics,
                     })
 
@@ -54,6 +56,9 @@ class BarraUpdater(UpdaterBase):
         self.logger.debug('Ensuring index date_1_factor_1 on collection {}', self.faccov.name)
         self.faccov.ensure_index([('date', 1), ('factor', 1)],
                 unique=True, dropDups=True, background=True)
+        self.logger.debug('Ensuring index date_1_factor_1 on collection {}', self.precov.name)
+        self.precov.ensure_index([('date', 1), ('factor', 1)],
+                unique=True, dropDups=True, background=True)
         self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.specifics.name)
         self.specifics.ensure_index([('dname', 1), ('date', 1)],
                 unique=True, dropDups=True, background=True)
@@ -70,6 +75,7 @@ class BarraUpdater(UpdaterBase):
         self.update_exposure(date)
         self.update_facret(date)
         self.update_faccov(date)
+        self.update_precov(date)
         self.update_specifics(date)
 
     def update_exposure(self, date):
@@ -125,6 +131,29 @@ class BarraUpdater(UpdaterBase):
             key = {'date': date, 'factor': factor}
             self.faccov.update(key, {'$set': {'covariance': cov}}, upsert=True)
         self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', len(res), self.faccov.name, self.db.name, date)
+
+    def update_precov(self, date):
+        precov = barra_sql.gp_precov(date, self.model)
+        if not os.path.exists(precov):
+            self.logger.error('No record found for {} on {}', self.precov.name, date)
+            return
+
+        from collections import defaultdict
+        res = defaultdict(dict)
+        with open(precov) as file:
+            for line in file:
+                try:
+                    factor1, factor2, cov, _ = [item.strip() for item in line.split('|')]
+                    cov = float(cov)
+                    res[factor1][factor2] = cov
+                    res[factor2][factor1] = cov
+                except:
+                    pass
+
+        for factor, cov in res.iteritems():
+            key = {'date': date, 'factor': factor}
+            self.precov.update(key, {'$set': {'covariance': cov}}, upsert=True)
+        self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', len(res), self.precov.name, self.db.name, date)
 
     def update_specifics(self, date):
         specret = barra_sql.gp_specret(date, self.model)

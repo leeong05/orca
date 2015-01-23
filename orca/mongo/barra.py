@@ -181,13 +181,13 @@ class BarraFactorFetcher(BarraFetcher):
     """Class to fetch factor returns/covariance data."""
 
     collections = {
-        'daily': (DB.barra_D_returns, DB.barra_D_covariance),
-        'short': (DB.barra_S_returns, DB.barra_S_covariance),
+        'daily': (DB.barra_D_returns, DB.barra_D_covariance, DB.barra_D_precovariance),
+        'short': (DB.barra_S_returns, DB.barra_S_covariance, DB.barra_S_precovariance),
         }
 
     def __init__(self, model, **kwargs):
         super(BarraFactorFetcher, self).__init__(model, **kwargs)
-        self.ret, self.cov = BarraFactorFetcher.collections[model]
+        self.ret, self.cov, self.precov = BarraFactorFetcher.collections[model]
 
     @property
     def factors(self):
@@ -231,11 +231,14 @@ class BarraFactorFetcher(BarraFetcher):
             df.index = pd.to_datetime(df.index)
         return df[factor] if isinstance(factor, str) else df
 
-    def fetch_covariance(self, date):
+    def fetch_covariance(self, date, prevra=False):
         """Fecth factor covariance matrix on a given date."""
         query = {'date': date}
         proj = {'_id': 0, 'factor': 1, 'covariance': 1}
-        cursor = self.cov.find(query, proj)
+        if self.prevra:
+            cursor = self.precov.find(query, proj)
+        else:
+            cursor = self.cov.find(query, proj)
         df = pd.DataFrame({row['factor']: row['covariance'] for row in cursor})
         return df
 
@@ -286,7 +289,7 @@ class BarraFactorFetcher(BarraFetcher):
 
 
 class BarraCovarianceFetcher(BarraFetcher):
-    """Class to fetch factor returns/covariance data."""
+    """Class to fetch covariance data."""
 
     def __init__(self, model, **kwargs):
         if kwargs.get('reindex', False):
