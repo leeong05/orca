@@ -54,12 +54,14 @@ db.tsindex_ret.ensureIndex({index: 1, dname: 1, date: 1}, {unique: true, dropDup
 db.barra_idmaps.ensureIndex({date: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_D_exposure.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.barra_D_exposure.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.barra_D_returns.ensureIndex({factor: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.barra_D_covariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})
 db.barra_D_precovariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})
 db.barra_D_specifics.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_S_exposure.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.barra_S_exposure.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.barra_S_returns.ensureIndex({factor: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.barra_S_covariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})
 db.barra_S_precovariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})

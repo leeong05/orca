@@ -231,16 +231,38 @@ class BarraFactorFetcher(BarraFetcher):
             df.index = pd.to_datetime(df.index)
         return df[factor] if isinstance(factor, str) else df
 
-    def fetch_covariance(self, date, prevra=False):
+    def fetch_daily_covariance(self, date, prevra=False):
         """Fecth factor covariance matrix on a given date."""
         query = {'date': date}
         proj = {'_id': 0, 'factor': 1, 'covariance': 1}
-        if self.prevra:
+        if prevra:
             cursor = self.precov.find(query, proj)
         else:
             cursor = self.cov.find(query, proj)
         df = pd.DataFrame({row['factor']: row['covariance'] for row in cursor})
         return df
+
+    def fetch_covariance(self, factor, startdate=None, enddate=None, **kwargs):
+        datetime_index = kwargs.get('datetime_index', self.datetime_index)
+        prevra = kwargs.get('prevra', False)
+        query = {'factor': factor,
+                'date': {
+                    '$lte': enddate if enddate else DATES[-1],
+                    '$gte': startdate if startdate else DATES[0],
+                    },
+                }
+        proj = {'_id': 0, 'date': 1, 'covariance': 1}
+        if prevra:
+            cursor = self.precov.find(query, proj)
+        else:
+            cursor = self.cov.find(query, proj)
+        df = pd.DataFrame({row['date']: row['covariance'] for row in cursor}).T
+        if datetime_index:
+            df.index = pd.to_datetime(df.index)
+        return df
+
+    def fetch_variance(self, factor, *args, **kwargs):
+        return self.fetch_covariance(factor)[factor]
 
     def fetch(self, *args, **kwargs):
         """Use this method **only** if one wants to fetch returns."""
