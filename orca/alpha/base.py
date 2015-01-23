@@ -88,7 +88,7 @@ class AlphaBase(object):
                 dateutil.compliment_datestring(str(startdate), -1, True),
                 dateutil.compliment_datestring(str(enddate), 1, True))
         if parts is None:
-            dates
+            return dates
         chksize = len(dates)/parts
         if len(dates) > chksize * parts:
             chksize += 1
