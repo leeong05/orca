@@ -50,10 +50,10 @@ def scale(df):
 def rank01(df):
     """Transform each row to be distributed uniformly in [0, 1]."""
     if isinstance(df, pd.DataFrame):
-        rdf = df.rank(ascending=False, axis=1)
+        rdf = df.rank(axis=1)
         rdf = rdf.sub(rdf.min(axis=1), axis=0)
         return rdf.div(rdf.max(axis=1), axis=0)
-    rdf = df.rank(ascending=False)
+    rdf = df.rank()
     return (rdf - rdf.min()) / (rdf.max() - rdf.min())
 
 def top(df, n):

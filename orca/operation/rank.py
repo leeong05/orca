@@ -15,10 +15,10 @@ from base import OperationBase
 
 def rank01(pdobj):
     if isinstance(pdobj, pd.DataFrame):
-        robj = pdobj.rank(ascending=False, axis=1)
+        robj = pdobj.rank(axis=1)
         robj = robj.sub(robj.min(axis=1), axis=0)
         return robj.div(robj.max(axis=1), axis=0)
-    robj = pdobj.rank(ascending=False)
+    robj = pdobj.rank()
     return (robj - robj.min()) / (robj.max() - robj.min())
 
 def worker(args):
