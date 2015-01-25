@@ -13,43 +13,51 @@ from orca.utils import dateutil
 from base import OperationBase
 
 
+def rank01(pdobj):
+    if isinstance(pdobj, pd.DataFrame):
+        robj = pdobj.rank(ascending=False, axis=1)
+        robj = robj.sub(robj.min(axis=1), axis=0)
+        return robj.div(robj.max(axis=1), axis=0)
+    robj = pdobj.rank(ascending=False)
+    return (robj - robj.min()) / (robj.max() - robj.min())
+
 def worker(args):
     dt, alpha, group = args
     sids = group.dropna().index
     nalpha, group = alpha[sids], group[sids]
-    nalpha = nalpha.groupby(group).transform(lambda x: x-x.mean())
+    nalpha = nalpha.groupby(group).transform(lambda x: rank01(x))
     return dt, nalpha
 
-class GroupNeutOperation(OperationBase):
-    """Class to neutralize alpha within a group.
+class GroupRankOperation(OperationBase):
+    """Class to rank alpha within a group.
 
     :param group: Groupings, either a Series(static grouping) or a DataFrame(dynamic grouping); in latter case, you are **advised** to make the index of type DatatimeIndex. Default: None
     """
 
     def __init__(self, group=None, threads=multiprocessing.cpu_count(), **kwargs):
-        super(GroupNeutOperation, self).__init__(**kwargs)
+        super(GroupRankOperation, self).__init__(**kwargs)
         self.group = group
         self.threads = threads
 
     def operate(self, alpha, date=None):
         if isinstance(alpha, pd.Series):
             if self.group is None:
-                return alpha - alpha.mean()
+                return rank01(alpha)
             if isinstance(self.group, pd.DataFrame):
                 group = self.group.ix[date]
             else:
                 group = self.group
             sids = group.dropna().index
             nalpha = alpha.ix[sids]
-            nalpha = nalpha.groupby(group).transform(lambda x: x-x.mean())
+            nalpha = nalpha.groupby(group).transform(lambda x: rank01(x))
             return nalpha.reindex(index=alpha.index)
 
         if self.group is None:
-            return alpha.subtract(alpha.mean(axis=1), axis=0)
+            return rank01(alpha)
         if isinstance(self.group, pd.Series):
             sids = self.group.dropna().index
             nalpha = alpha.T.ix[sids]
-            nalpha = nalpha.groupby(self.group.dropna()).transform(lambda x: x-x.mean()).T
+            nalpha = nalpha.groupby(self.group.dropna()).transform(lambda x: rank01(x)).T
             return nalpha.reindex(columns=alpha.columns)
 
         dates = dateutil.to_datestr(alpha.index)
@@ -64,14 +72,14 @@ class GroupNeutOperation(OperationBase):
         return pd.DataFrame(df).T.reindex(columns=alpha.columns)
 
 
-class IndustryNeutOperation(GroupNeutOperation):
+class IndustryRankOperation(GroupRankOperation):
     """Class to neutralize alpha by industry classifications.
 
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX'). Default: 'SW2014'
     """
 
     def __init__(self, standard='SW2014', **kwargs):
-        super(IndustryNeutOperation, self).__init__(**kwargs)
+        super(IndustryRankOperation, self).__init__(**kwargs)
         self.standard = standard
         self.industry = IndustryFetcher(datetime_index=True)
         self.group = None
@@ -80,19 +88,19 @@ class IndustryNeutOperation(GroupNeutOperation):
         if isinstance(alpha, pd.Series):
             group = self.industry.fetch_daily(group, date).dropna()
             nalpha = alpha.ix[group.index]
-            nalpha = nalpha.groupby(group).transform(lambda x: x-x.mean())
+            nalpha = nalpha.groupby(group).transform(lambda x: rank01(x))
             return nalpha.reindex(index=alpha.index)
 
         window = np.unique(dateutil.to_datestr(alpha.index))
         group = self.industry.fetch_window(group, window)
         self.group = group.iloc[-1] if simple else group
-        return super(IndustryNeutOperation, self).operate(alpha)
+        return super(IndustryRankOperation, self).operate(alpha)
 
 
-class BoardNeutOperation(GroupNeutOperation):
+class BoardRankOperation(GroupRankOperation):
 
     def __init__(self, **kwargs):
-        super(GroupNeutOperation, self).__init__(**kwargs)
+        super(GroupRankOperation, self).__init__(**kwargs)
 
     @staticmethod
     def get_board(sid):
@@ -107,7 +115,7 @@ class BoardNeutOperation(GroupNeutOperation):
     def operate(self, alpha):
         if isinstance(alpha, pd.Series):
             group = pd.Series({sid: self.get_board(sid) for sid in alpha.index})
-            return alpha.groupby(group).transform(lambda x: x-x.mean())
+            return alpha.groupby(group).transform(lambda x: rank01(x))
         else:
             group = pd.Series({sid: self.get_board(sid) for sid in alpha.columns})
-            return alpha.T.groupby(group).transform(lambda x: x.sub(x.mean(), axis=1)).T
+            return alpha.T.groupby(group).transform(lambda x: rank01(x)).T

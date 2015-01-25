@@ -30,11 +30,19 @@ class UpdaterBase(object):
         self.logger = logbook.Logger(UpdaterBase.LOGGER_NAME)
         self.set_debug_mode(debug_on)
         self.connected = False
+        self.options = {}
+        self.add_options()
 
     def set_debug_mode(self, debug_on):
         """Enable/Disable debug level message in data fetchers.
         This is enabled by default."""
         self.level = 'DEBUG' if debug_on else 'INFO'
+
+    def add_options(self):
+        pass
+
+    def parse_options(self):
+        pass
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the update logger."""
@@ -123,6 +131,7 @@ class UpdaterBase(object):
         * save logs if any
         """
         self.parse_args()
+        self.parse_options()
         with self.setup:
             if not self.connected:
                 self.connect_mongo()
@@ -162,7 +171,11 @@ class UpdaterBase(object):
         parser.add_argument('--debug_on', action='store_true')
         parser.add_argument('-f', '--logfile', type=str)
         parser.add_argument('-o', '--logoff', action='store_true')
+        for key in self.options:
+            parser.add_argument('--'+key, type=str)
         args = parser.parse_args()
+        for key in self.options:
+            self.options[key] = args.__dict__[key]
 
         self.set_debug_mode(args.debug_on)
 

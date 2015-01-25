@@ -8,7 +8,7 @@ import pandas as pd
 pd.set_option('display.precision', 3)
 
 from orca.mongo.perf import PerfFetcher
-perf = PerfFetcher(datetime_index=True)
+perf_fetcher = PerfFetcher(datetime_index=True)
 from orca.constants import DAYS_IN_YEAR
 from orca.operation.api import format
 from orca.perf.performance import Performance
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     extalpha_metric = {}
     if args.db:
         assert args.alpha
-        db_metrics = perf.fetch_window(args.metric, to_datestr(dates), mode=args.mode)
+        db_metrics = perf_fetcher.fetch_window(args.metric, to_datestr(dates), mode=args.mode)
         for name, metric in db_metrics.iteritems():
             extalpha_metric[name] = metric
 
