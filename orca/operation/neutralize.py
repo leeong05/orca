@@ -32,6 +32,7 @@ class GroupNeutOperation(OperationBase):
         self.threads = threads
 
     def operate(self, alpha, date=None):
+        alpha = alpha[np.isfinite(alpha)]
         if isinstance(alpha, pd.Series):
             if self.group is None:
                 return alpha - alpha.mean()
@@ -77,6 +78,7 @@ class IndustryNeutOperation(GroupNeutOperation):
         self.group = None
 
     def operate(self, alpha, group='sector', simple=False, date=None):
+        alpha = alpha[np.isfinite(alpha)]
         if isinstance(alpha, pd.Series):
             group = self.industry.fetch_daily(group, date).dropna()
             nalpha = alpha.ix[group.index]
@@ -105,6 +107,7 @@ class BoardNeutOperation(GroupNeutOperation):
         return 'SZ'
 
     def operate(self, alpha):
+        alpha = alpha[np.isfinite(alpha)]
         if isinstance(alpha, pd.Series):
             group = pd.Series({sid: self.get_board(sid) for sid in alpha.index})
             return alpha.groupby(group).transform(lambda x: x-x.mean())

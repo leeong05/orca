@@ -13,7 +13,7 @@ from orca.utils import dateutil
 from base import OperationBase
 
 
-def rank01(pdobj):
+def rank(pdobj):
     if isinstance(pdobj, pd.DataFrame):
         robj = pdobj.rank(axis=1)
         robj = robj.sub(robj.min(axis=1), axis=0)
@@ -25,7 +25,7 @@ def worker(args):
     dt, alpha, group = args
     sids = group.dropna().index
     nalpha, group = alpha[sids], group[sids]
-    nalpha = nalpha.groupby(group).transform(lambda x: rank01(x))
+    nalpha = nalpha.groupby(group).transform(lambda x: rank(x))
     return dt, nalpha
 
 class GroupRankOperation(OperationBase):
@@ -40,24 +40,25 @@ class GroupRankOperation(OperationBase):
         self.threads = threads
 
     def operate(self, alpha, date=None):
+        alpha = alpha[np.isfinite(alpha)]
         if isinstance(alpha, pd.Series):
             if self.group is None:
-                return rank01(alpha)
+                return rank(alpha)
             if isinstance(self.group, pd.DataFrame):
                 group = self.group.ix[date]
             else:
                 group = self.group
             sids = group.dropna().index
             nalpha = alpha.ix[sids]
-            nalpha = nalpha.groupby(group).transform(lambda x: rank01(x))
+            nalpha = nalpha.groupby(group).transform(lambda x: rank(x))
             return nalpha.reindex(index=alpha.index)
 
         if self.group is None:
-            return rank01(alpha)
+            return rank(alpha)
         if isinstance(self.group, pd.Series):
             sids = self.group.dropna().index
             nalpha = alpha.T.ix[sids]
-            nalpha = nalpha.groupby(self.group.dropna()).transform(lambda x: rank01(x)).T
+            nalpha = nalpha.groupby(self.group.dropna()).transform(lambda x: rank(x)).T
             return nalpha.reindex(columns=alpha.columns)
 
         dates = dateutil.to_datestr(alpha.index)
@@ -85,10 +86,11 @@ class IndustryRankOperation(GroupRankOperation):
         self.group = None
 
     def operate(self, alpha, group='sector', simple=False, date=None):
+        alpha = alpha[np.isfinite(alpha)]
         if isinstance(alpha, pd.Series):
             group = self.industry.fetch_daily(group, date).dropna()
             nalpha = alpha.ix[group.index]
-            nalpha = nalpha.groupby(group).transform(lambda x: rank01(x))
+            nalpha = nalpha.groupby(group).transform(lambda x: rank(x))
             return nalpha.reindex(index=alpha.index)
 
         window = np.unique(dateutil.to_datestr(alpha.index))
@@ -113,9 +115,10 @@ class BoardRankOperation(GroupRankOperation):
         return 'SZ'
 
     def operate(self, alpha):
+        alpha = alpha[np.isfinite(alpha)]
         if isinstance(alpha, pd.Series):
             group = pd.Series({sid: self.get_board(sid) for sid in alpha.index})
-            return alpha.groupby(group).transform(lambda x: rank01(x))
+            return alpha.groupby(group).transform(lambda x: rank(x))
         else:
             group = pd.Series({sid: self.get_board(sid) for sid in alpha.columns})
-            return alpha.T.groupby(group).transform(lambda x: rank01(x)).T
+            return alpha.T.groupby(group).transform(lambda x: rank(x)).T

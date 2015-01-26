@@ -158,7 +158,7 @@ class BacktestingAlpha(AlphaBase):
     def __setitem__(self, key, value):
         if key in self.alphas:
             self.warning('{0!r} already exists as a key'.format(key))
-        self.alphas[key] = value
+        self.alphas[key] = value[np.isfinite(value)]
 
     def dump(self, fpath, ftype='csv'):
         with open(fpath, 'w') as file:

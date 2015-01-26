@@ -47,7 +47,7 @@ def scale(df):
         return df.div(np.abs(df).sum(axis=1), axis=0)
     return df / np.abs(df).sum()
 
-def rank01(df):
+def rank(df):
     """Transform each row to be distributed uniformly in [0, 1]."""
     if isinstance(df, pd.DataFrame):
         rdf = df.rank(axis=1)
@@ -157,9 +157,11 @@ def board_neut(df):
 def industry_neut(df, group, standard='SW2014', simple=False, date=None):
     """Wrapper for :py:class:`orca.operation.neutralize.IndustryNeutOperation`.
 
-    :param str group: 'level1', 'level2', 'level3'
+    :param str group: 'level1', 'level2', 'level3', 'board'
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX')
     """
+    if group == 'board':
+        return board_neut(df)
     return IndustryNeutOperation(standard).operate(df, group, simple=simple, date=date)
 
 def level1_neut(df, standard='SW2014', simple=False, date=None):
@@ -185,9 +187,11 @@ def board_rank(df):
 def industry_rank(df, group, standard='SW2014', simple=False, date=None):
     """Wrapper for :py:class:`orca.operation.rank.IndustryRankOperation`.
 
-    :param str group: 'level1', 'level2', 'level3'
+    :param str group: 'level1', 'level2', 'level3', 'board'
     :param str standard: Industry classification standard, currently only supports: ('SW2014', 'ZX')
     """
+    if group == 'board':
+        return board_rank(df)
     return IndustryRankOperation(standard).operate(df, group, simple=simple, date=date)
 
 def level1_rank(df, standard='SW2014', simple=False, date=None):
