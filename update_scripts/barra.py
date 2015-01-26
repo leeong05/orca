@@ -37,7 +37,7 @@ class BarraUpdater(UpdaterBase):
                     'exposure': self.db.barra_S_exposure,
                     'facret': self.db.barra_S_returns,
                     'faccov': self.db.barra_S_covariance,
-                    'precov': self.db.barra_D_precovariance,
+                    'precov': self.db.barra_S_precovariance,
                     'specifics': self.db.barra_S_specifics,
                     })
 

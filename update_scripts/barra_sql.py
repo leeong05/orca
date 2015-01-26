@@ -80,7 +80,7 @@ def get_idmaps(date):
                 bid, marker, sid, start, end = [item.strip() for item in line.split('|')]
                 assert marker == 'LOCALID'
                 sid = sid[2:8]
-                if start <= date and date <= end:
+                if date <= end:
                     idmaps[bid] = sid
             except:
                 pass
@@ -108,17 +108,22 @@ def fetch_and_parse(date):
     unzip_files(date, zips)
     idmaps = get_idmaps(date)
     dstdir = os.path.join(dirdir, '%s', date[:4], date[4:6], date[6:8])
-    with open(os.path.join(dstdir % 'daily', 'idmaps.%s.json' % date), 'w') as dfile, \
-         open(os.path.join(dstdir % 'short', 'idmaps.%s.json' % date), 'w') as sfile:
-        logger.info('Dumping barra id to stock id maps')
-        json.dump(idmaps, dfile)
-        json.dump(idmaps, sfile)
-    expfile, expjson = get_exposure(date, 'daily', idmaps)
-    with open(expfile+'.json', 'w') as file:
-        json.dump(expjson, file)
-    expfile, expjson = get_exposure(date, 'short', idmaps)
-    with open(expfile+'.json', 'w') as file:
-        json.dump(expjson, file)
+    try:
+        with open(os.path.join(dstdir % 'daily', 'idmaps.%s.json' % date), 'w') as dfile:
+            json.dump(idmaps, dfile)
+        expfile, expjson = get_exposure(date, 'daily', idmaps)
+        with open(expfile+'.json', 'w') as file:
+            json.dump(expjson, file)
+    except:
+        pass
+    try:
+        with open(os.path.join(dstdir % 'short', 'idmaps.%s.json' % date), 'w') as sfile:
+            json.dump(idmaps, sfile)
+        expfile, expjson = get_exposure(date, 'short', idmaps)
+        with open(expfile+'.json', 'w') as file:
+            json.dump(expjson, file)
+    except:
+        pass
 
 """
 some file path utilities
