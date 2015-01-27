@@ -115,3 +115,13 @@ class AlphaFetcher(KDayFetcher):
         if window is None:
             window = DATES
         return super(AlphaFetcher, self).fetch_window(dname, window, **kwargs)
+
+
+class CalendarFetcher(KDayFetcher):
+    """Class to fetch financial calendar dates."""
+
+    dnames = DB.calendar.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.calendar
+        super(CalendarFetcher, self).__init__(**kwargs)

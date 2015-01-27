@@ -156,6 +156,7 @@ class KDayFetcher(FetcherBase):
         proj = {'_id': 0, 'dvalue': 1, 'date': 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
+        df = df.reindex(index=window)
         return self.format(df, datetime_index, reindex)
 
     def fetch_history(self, dname, date, backdays, **kwargs):
