@@ -55,11 +55,11 @@ def unzip_files(date, zips):
     _idfile = os.path.join(zipdir, idfile % date[2:8])
     if _idfile in zips:
         zips.discard(_idfile)
+        zipfile = ZipFile(_idfile)
+        zipfile.extract('CHN_X_Asset_ID.%s' % date, dirdir)
         for oldfile in glob.glob(os.path.join(dirdir, 'CHN_X_Asset_ID*')):
             os.remove(oldfile)
             logger.debug('Removed file {}', oldfile)
-        zipfile = ZipFile(_idfile)
-        zipfile.extract('CHN_X_Asset_ID.%s' % date, dirdir)
     while zips:
         zipf = zips.pop()
         model = 'daily' if zipf.find('CNE5D') != -1 else 'short'
@@ -89,9 +89,10 @@ def get_idmaps(date):
 def get_exposure(date, model, idmaps):
     dstdir = os.path.join(dirdir, model, date[:4], date[4:6], date[6:8])
     expfile = 'CNE5' + model[0].upper() + '_100_Asset_Exposure.%s' % date
+    expfile = os.path.join(dstdir, expfile)
 
     res = {}
-    with open(os.path.join(dstdir, expfile)) as file:
+    with open(expfile) as file:
         for line in file:
             try:
                 bid, fac, exp, _ = [item.strip() for item in line.split('|')]
@@ -101,7 +102,7 @@ def get_exposure(date, model, idmaps):
                 res[fac][idmaps[bid]] = exp
             except:
                 pass
-    return exp, res
+    return expfile, res
 
 def fetch_and_parse(date):
     zips = fetch_files(date)
@@ -111,6 +112,9 @@ def fetch_and_parse(date):
     try:
         with open(os.path.join(dstdir % 'daily', 'idmaps.%s.json' % date), 'w') as dfile:
             json.dump(idmaps, dfile)
+    except:
+        pass
+    try:
         expfile, expjson = get_exposure(date, 'daily', idmaps)
         with open(expfile+'.json', 'w') as file:
             json.dump(expjson, file)
@@ -119,11 +123,15 @@ def fetch_and_parse(date):
     try:
         with open(os.path.join(dstdir % 'short', 'idmaps.%s.json' % date), 'w') as sfile:
             json.dump(idmaps, sfile)
+    except:
+        pass
+    try:
         expfile, expjson = get_exposure(date, 'short', idmaps)
         with open(expfile+'.json', 'w') as file:
             json.dump(expjson, file)
     except:
         pass
+
 
 """
 some file path utilities

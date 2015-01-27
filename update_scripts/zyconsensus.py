@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from base import UpdaterBase
-import zyconsensus_sql as zysql
+import zyconsensus_oracle as zysql
 
 def worker(args):
     sid, df = args

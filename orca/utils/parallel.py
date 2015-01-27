@@ -174,12 +174,17 @@ def worker_chunk(args):
     return alpha.get_alphas()
 
 def run_chunk(alpha, startdate, enddate, chksize, args=(), threads=multiprocessing.cpu_count()):
-    pool = multiprocessing.Pool(threads)
-    res = pool.imap_unordered(worker_chunk, ((alpha, (dates,) + args) for dates in alpha.generate_dates(startdate, enddate, chksize)))
-    pool.close()
-    pool.join()
-    df = []
-    for chk in res:
-        df.append(chk)
-    df = pd.concat(df).sort_index()
-    return df
+    if chksize > 1:
+        pool = multiprocessing.Pool(threads)
+        res = pool.imap_unordered(worker_chunk, ((alpha, (dates,) + args) for dates in alpha.generate_dates(startdate, enddate, chksize)))
+        pool.close()
+        pool.join()
+        df = []
+        for chk in res:
+            df.append(chk)
+        df = pd.concat(df).sort_index()
+        return df
+    dates = alpha.generate_dates(startdate, enddate)
+    alpha = alpha(dates, *args)
+    alpha.run(dates=dates)
+    return alpha.get_alphas()

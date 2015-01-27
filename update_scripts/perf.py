@@ -38,7 +38,8 @@ class PerfUpdater(UpdaterBase):
 
     def parse_options(self):
         alphas = self.options['alphas']
-        self.options['alphas'] = alphas.split(',')
+        if alphas is not None:
+            self.options['alphas'] = alphas.split(',')
 
     def run(self):
         self.parse_args()
