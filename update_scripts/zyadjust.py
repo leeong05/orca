@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from base import UpdaterBase
-import zyadjust_sql as zysql
+import zyadjust_oracle as zysql
 
 
 class ZYAdjustUpdater(UpdaterBase):
