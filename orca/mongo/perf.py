@@ -32,6 +32,7 @@ class PerfFetcher(KDayFetcher):
         proj = {'_id': 0, 'alpha': 1, 'date': 1, metric: 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame([(row['date'], row['alpha'], row[metric]) for row in cursor])
+        del cursor
         df.columns = ['date', 'alpha', metric]
         df = df.pivot('date', 'alpha', metric)
         if datetime_index:

@@ -10,6 +10,7 @@ import argparse
 
 import numpy as np
 import pandas as pd
+from pandas.tseries.index import DatetimeIndex
 import logbook
 logbook.set_datetime_format('local')
 from pymongo import MongoClient
@@ -86,13 +87,74 @@ class AlphaBase(object):
         dates = dateutil.cut_window(
                 DATES,
                 dateutil.compliment_datestring(str(startdate), -1, True),
-                dateutil.compliment_datestring(str(enddate), 1, True))
+                dateutil.compliment_datestring(str(enddate), 1, True)
+                )
         if parts is None:
             return dates
         chksize = len(dates)/parts
         if len(dates) > chksize * parts:
             chksize += 1
         return [dates[i: i+chksize] for i in range(0, len(dates), chksize)]
+
+    @staticmethod
+    def fetch(df, startdate, enddate, backdays=0, date_check=False):
+        window = dateutil.cut_window(
+                DATES,
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check),
+                backdays
+                )
+        return AlphaBase.fetch_window(df, window)
+
+    @staticmethod
+    def fetch_window(df, window):
+        if isinstance(df.index, DatetimeIndex):
+            window = dateutil.to_pddatetime(window)
+        window = [date for date in window if date in df.index]
+        if not window:
+            return pd.DataFrame(columns=df.columns)
+        return df.ix[window]
+
+    @staticmethod
+    def fetch_history(df, date, backdays, delay=0, date_check=False):
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
+        di -= delay
+        window = DATES[di-backdays+1: di+1]
+        return AlphaBase.fetch_window(df, window)
+
+    @staticmethod
+    def fetch_daily(df, date, offset=0, date_check=False):
+        df = AlphaBase.fetch_history(df, date, 1, delay=offset, date_check=date_check)
+        if len(df) == 0:
+            return pd.Series(index=df.columns)
+        return df.iloc[0]
+
+    @staticmethod
+    def record_fetch(df, startdate, enddate, backdays, date_check=False):
+        window = dateutil.cut_window(
+                DATES,
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check),
+                backdays
+                )
+        return AlphaBase.record_fetch_window(df, window)
+
+    @staticmethod
+    def record_fetch_window(df, window):
+        return df.query('date >= {!r} & date <= {!r}'.format(window[0], window[-1]))
+
+    @staticmethod
+    def record_fetch_history(df, date, backdays, delay=0, date_check=False):
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
+        di -= delay
+        window = DATES[di-backdays+1: di+1]
+        return AlphaBase.record_fetch_window(df, window)
+
+    @staticmethod
+    def record_fetch_daily(df, date, offset=0, date_check=False):
+        return AlphaBase.record_fetch_history(df, date, 1, delay=offset, date_check=date_check)
 
 
 class IntervalAlphaBase(AlphaBase):

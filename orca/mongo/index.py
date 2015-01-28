@@ -54,6 +54,7 @@ class IndexQuoteFetcher(KDayFetcher):
             proj.update({d: 1})
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame(list(cursor))
+        del cursor
         df.index = df.date
         if datetime_index:
             df.index = pd.to_datetime(df.index)
@@ -125,6 +126,7 @@ class IndexIntervalFetcher(KMinFetcher):
             proj.update({d: 1})
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame(list(cursor))
+        del cursor
         df.index = pd.to_datetime(df.date + ' ' + df.time)
         df = df[_dname]
         return df[dname] if isinstance(dname, str) else df
@@ -207,6 +209,7 @@ class IndexIntervalReturnsFetcher(KDayFetcher):
         proj = {'_id': 0, 'date': 1, 'dvalue': 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor})
+        del cursor
         s = df.unstack()
         s.index = pd.to_datetime(pd.Series(s.index.get_level_values(0)) + ' ' + \
                                  pd.Series(s.index.get_level_values(1)))

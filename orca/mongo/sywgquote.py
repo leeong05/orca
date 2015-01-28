@@ -36,6 +36,7 @@ class SYWGQuoteFetcher(KDayFetcher):
         proj = {'_id': 0, 'dvalue': 1, 'date': 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
+        del cursor
         industry_index = self.fetcher.fetch_info('index', level, date=window[-1])
         index_industry = {v: k for k, v in industry_index.iteritems()}
 

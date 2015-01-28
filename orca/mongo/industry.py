@@ -42,6 +42,7 @@ class IndustryFetcher(KDayFetcher):
         proj = {'_id': 0, 'dvalue': 1, 'date': 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
+        del cursor
         return self.format(df, datetime_index, reindex)
 
     def fetch_info(self, dname='name', level=0, date=None, **kwargs):

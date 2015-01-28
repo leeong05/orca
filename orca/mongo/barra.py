@@ -166,6 +166,7 @@ class BarraExposureFetcher(BarraFetcher):
         proj = {'_id': 0, 'dname': 1, 'dvalue': 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['dname']: row['dvalue'] for row in cursor})
+        del cursor
 
         if reindex:
             df = df.reindex(index=SIDS)
@@ -227,6 +228,7 @@ class BarraFactorFetcher(BarraFetcher):
         proj = {'_id': 0, 'factor': 1, 'returns': 1, 'date': 1}
         cursor = self.ret.find(query, proj)
         df = pd.Series({(row['date'], row['factor']): row['returns'] for row in cursor}).unstack()
+        del cursor
         if datetime_index:
             df.index = pd.to_datetime(df.index)
         return df[factor] if isinstance(factor, str) else df
@@ -240,6 +242,7 @@ class BarraFactorFetcher(BarraFetcher):
         else:
             cursor = self.cov.find(query, proj)
         df = pd.DataFrame({row['factor']: row['covariance'] for row in cursor})
+        del cursor
         return df
 
     def fetch_covariance(self, factor, startdate=None, enddate=None, **kwargs):
@@ -257,6 +260,7 @@ class BarraFactorFetcher(BarraFetcher):
         else:
             cursor = self.cov.find(query, proj)
         df = pd.DataFrame({row['date']: row['covariance'] for row in cursor}).T
+        del cursor
         if datetime_index:
             df.index = pd.to_datetime(df.index)
         return df

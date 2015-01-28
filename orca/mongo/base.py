@@ -123,6 +123,53 @@ class FetcherBase(object):
         raise NotImplementedError
 
 
+class RecordFetcher(FetcherBase):
+    """Base class to fetch time-stamped records as DataFrame.
+
+    .. note::
+
+       This is a base class and should not be used directly.
+    """
+
+    def __init__(self, **kwargs):
+        super(RecordFetcher, self).__init__(**kwargs)
+
+    def fetch(self, startdate=None, enddate=None, backdays=0, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
+        date_check = kwargs.get('date_check', self.date_check)
+        if startdate is None:
+            startdate = DATES[0]
+        window = dateutil.cut_window(
+                DATES,
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None,
+                backdays=backdays)
+        return self.fetch_window(window, **kwargs)
+
+    def fetch_window(self, window=None, **kwargs):
+        query = {'date': {'$gte': window[0], '$lte': window[-1]}}
+        proj = {'_id': 0}
+        cursor = self.collection.find(query, proj)
+        df = pd.DataFrame(list(cursor))
+        del cursor
+        return df
+
+    def fetch_history(self, date, backdays, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
+        date_check = kwargs.get('date_check', self.date_check)
+        delay = kwargs.get('delay', self.delay)
+
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
+        di -= delay
+        window = DATES[di-backdays+1: di+1]
+        return self.fetch_window(window, **kwargs)
+
+    def fetch_daily(self, date, offset=0, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
+        return self.fetch_history(date, 1, delay=offset, **kwargs)
+
+
 class KDayFetcher(FetcherBase):
     """Base class to fetch daily data that can be formatted as DataFrame.
 
@@ -155,7 +202,8 @@ class KDayFetcher(FetcherBase):
         query = {'dname': dname, 'date': {'$gte': window[0], '$lte': window[-1]}}
         proj = {'_id': 0, 'dvalue': 1, 'date': 1}
         cursor = self.collection.find(query, proj)
-        df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
+        df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T.reindex(index=window)
+        del cursor
         return self.format(df, datetime_index, reindex)
 
     def fetch_history(self, dname, date, backdays, **kwargs):
@@ -216,6 +264,7 @@ class KMinFetcher(FetcherBase):
         proj = {'_id': 0, 'dvalue': 1, 'date': 1, 'time': 1}
         cursor = self.collection.find(query, proj)
         dfs = pd.DataFrame({(row['date'], row['time']): row['dvalue'] for row in cursor}).T
+        del cursor
         dfs.index.names = ['date', 'time']
         panel = dfs.to_panel().transpose(2, 1, 0)
         if datetime_index:
@@ -311,6 +360,7 @@ class KMinFetcher(FetcherBase):
         proj = {'_id': 0, 'dvalue': 1, 'date': 1, 'time': 1}
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['date']+' '+row['time']: row['dvalue'] for row in cursor}).T
+        del cursor
         df.index = pd.to_datetime(df.index)
         df = df.ix[dateindex]
         if reindex:
