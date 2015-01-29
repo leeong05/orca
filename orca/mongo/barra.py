@@ -182,13 +182,18 @@ class BarraFactorFetcher(BarraFetcher):
     """Class to fetch factor returns/covariance data."""
 
     collections = {
-        'daily': (DB.barra_D_returns, DB.barra_D_covariance, DB.barra_D_precovariance),
-        'short': (DB.barra_S_returns, DB.barra_S_covariance, DB.barra_S_precovariance),
+            'daily': (DB.barra_D_returns, DB.barra_D_covariance, DB.barra_D_precovariance),
+            'short': (DB.barra_S_returns, DB.barra_S_covariance, DB.barra_S_precovariance),
         }
+    prefixes = {
+            'daily': 'CNE5D',
+            'short': 'CNE5S',
+            }
 
     def __init__(self, model, **kwargs):
         super(BarraFactorFetcher, self).__init__(model, **kwargs)
         self.ret, self.cov, self.precov = BarraFactorFetcher.collections[model]
+        self.prefix = BarraFactorFetcher.prefixes[model]
 
     @property
     def factors(self):
@@ -222,6 +227,8 @@ class BarraFactorFetcher(BarraFetcher):
             factor = self.industry_factors[self.model]
         elif factor == 'style':
             factor = self.style_factors[self.model]
+        elif factor.find('_') == -1:
+            factor = self.prefix + '_' + factor
 
         query = {'factor': {'$in': [factor] if isinstance(factor, str) else factor},
                 'date': {'$gte': window[0], '$lte': window[-1]}}
@@ -233,8 +240,11 @@ class BarraFactorFetcher(BarraFetcher):
             df.index = pd.to_datetime(df.index)
         return df[factor] if isinstance(factor, str) else df
 
-    def fetch_daily_covariance(self, date, prevra=False):
+    def fetch_daily_covariance(self, date, prevra=False, **kwargs):
         """Fecth factor covariance matrix on a given date."""
+        date_check = kwargs.get('date_check', self.date_check)
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
+        date = dateutil.parse_date(DATES, date, -1)[1]
         query = {'date': date}
         proj = {'_id': 0, 'factor': 1, 'covariance': 1}
         if prevra:
@@ -246,14 +256,22 @@ class BarraFactorFetcher(BarraFetcher):
         return df
 
     def fetch_covariance(self, factor, startdate=None, enddate=None, **kwargs):
+        if factor.find('_') == -1:
+            factor = self.prefix + '_' + factor
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
         prevra = kwargs.get('prevra', False)
-        query = {'factor': factor,
-                'date': {
-                    '$lte': enddate if enddate else DATES[-1],
-                    '$gte': startdate if startdate else DATES[0],
-                    },
-                }
+        date_check = kwargs.get('date_check', self.date_check)
+        if enddate:
+            enddate = dateutil.compliment_datestring(str(enddate), 1, date_check)
+            enddate = dateutil.parse_date(DATES, enddate, -1)[1]
+        else:
+            enddate = DATES[-1]
+        if startdate:
+            startdate = dateutil.compliment_datestring(str(startdate), -1, date_check)
+            startdate = dateutil.parse_date(DATES, startdate, 1)[1]
+        else:
+            startdate = DATES[0]
+        query = {'factor': factor, 'date': {'$lte': enddate, '$gte': startdate}}
         proj = {'_id': 0, 'date': 1, 'covariance': 1}
         if prevra:
             cursor = self.precov.find(query, proj)
@@ -266,7 +284,7 @@ class BarraFactorFetcher(BarraFetcher):
         return df
 
     def fetch_variance(self, factor, *args, **kwargs):
-        return self.fetch_covariance(factor)[factor]
+        return self.fetch_covariance(factor, *args, **kwargs)[factor]
 
     def fetch(self, *args, **kwargs):
         """Use this method **only** if one wants to fetch returns."""
