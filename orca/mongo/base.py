@@ -134,7 +134,7 @@ class RecordFetcher(FetcherBase):
     def __init__(self, **kwargs):
         super(RecordFetcher, self).__init__(**kwargs)
 
-    def fetch(self, startdate=None, enddate=None, backdays=0, **kwargs):
+    def fetch(self, startdate=None, enddate=None, backdays=0, dnames=[], **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
         date_check = kwargs.get('date_check', self.date_check)
         if startdate is None:
@@ -144,11 +144,15 @@ class RecordFetcher(FetcherBase):
                 dateutil.compliment_datestring(str(startdate), -1, date_check),
                 dateutil.compliment_datestring(str(enddate), 1, date_check) if enddate is not None else None,
                 backdays=backdays)
-        return self.fetch_window(window, **kwargs)
+        return self.fetch_window(window, dnames=dnames, **kwargs)
 
-    def fetch_window(self, window=None, **kwargs):
+    def fetch_window(self, window=None, dnames=[], **kwargs):
         query = {'date': {'$gte': window[0], '$lte': window[-1]}}
         proj = {'_id': 0}
+        if dnames:
+            proj['date'], proj['sid'] = 1, 1
+            for dname in dnames:
+                proj[dname] = 1
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame(list(cursor))
         del cursor

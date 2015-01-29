@@ -128,17 +128,16 @@ def myfunc3(args):
 class JYFundFetcher(KDayFetcher):
     """Class to fetch JYDB fundamental data.
 
-    :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow', 'data')
+    :param str table: Table name, must be one of ('balancesheet', 'income', 'cashflow')
     :param startyear: Fetch data starting from this year in advance, must be in the format 'YYYY'. Default: 2007
     :type startyear: str, int
     """
 
-    tables = ('balancesheet', 'income', 'cashflow', 'data')
+    tables = ('balancesheet', 'income', 'cashflow')
     collections = {
             'balancesheet': DB.jybs,
             'income': DB.jyis,
             'cashflow': DB.jycs,
-            'data': DB.jydt,
             }
 
     datas, startyears = {}, {}
