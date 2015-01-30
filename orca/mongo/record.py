@@ -2,6 +2,8 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import pandas as pd
+
 from orca import DB
 
 from base import RecordFetcher
@@ -47,6 +49,19 @@ class JYDataRecordFetcher(RecordFetcher):
         super(JYDataRecordFetcher, self).__init__(**kwargs)
         self.collection = DB.jydata
 
+    def fetch_window(self, window, dnames=[], **kwargs):
+        dtype = kwargs.pop('dtype')
+        query = {'date': {'$gte': window[0], '$lte': window[-1]}, 'dtype': dtype}
+        proj = {'_id': 0}
+        if dnames:
+            proj['date'], proj['sid'] = 1, 1
+            for dname in dnames:
+                proj[dname] = 1
+        cursor = self.collection.find(query, proj)
+        df = pd.DataFrame(list(cursor))
+        del cursor
+        return df
+
 
 class JYIndexRecordFetcher(RecordFetcher):
     """Class to fetch collection 'jyindex'."""
@@ -54,3 +69,16 @@ class JYIndexRecordFetcher(RecordFetcher):
     def __init__(self, **kwargs):
         super(JYIndexRecordFetcher, self).__init__(**kwargs)
         self.collection = DB.jyindex
+
+    def fetch_window(self, window, dnames=[], **kwargs):
+        dtype = kwargs.pop('dtype')
+        query = {'date': {'$gte': window[0], '$lte': window[-1]}, 'dtype': dtype}
+        proj = {'_id': 0}
+        if dnames:
+            proj['date'], proj['sid'] = 1, 1
+            for dname in dnames:
+                proj[dname] = 1
+        cursor = self.collection.find(query, proj)
+        df = pd.DataFrame(list(cursor))
+        del cursor
+        return df

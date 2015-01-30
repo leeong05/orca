@@ -146,7 +146,7 @@ class RecordFetcher(FetcherBase):
                 backdays=backdays)
         return self.fetch_window(window, dnames=dnames, **kwargs)
 
-    def fetch_window(self, window=None, dnames=[], **kwargs):
+    def fetch_window(self, window, dnames=[], **kwargs):
         query = {'date': {'$gte': window[0], '$lte': window[-1]}}
         proj = {'_id': 0}
         if dnames:

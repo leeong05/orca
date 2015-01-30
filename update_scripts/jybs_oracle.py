@@ -49,7 +49,7 @@ dnames = [
 # financial assets
 'loan_and_account_receivable', 'settlement_provision', 'client_provision', 'deposit_in_interbank', 'precious_metal', 'lend_capital', 'derivative_assets', 'bought_sellback_assets', 'loan_and_advance', 'insurance_receivable', 'receivable_subrogate_fee', 'reinsurance_receivable', 'receivable_unearned_reserve', 'receivable_claims_reserve', 'receivable_life_insurance_reserve', 'receivable_longterm_health_insurance_reserve', 'insurer_impawn_loan', 'fixed_deposit', 'refundable_deposit', 'refundable_capital_deposit', 'independence_assets',
 # total assets
-'other_assets', 'assets_exceptional_items', 'assets_adjust_items', 'total_assets',
+'other_assets', 'assets_exceptional_items', 'assets_adjust_items', 'assets',
 # current liability
 'shortterm_loan', 'impawned_loan', 'trading_liability', 'note_payable', 'account_payable', 'shortterm_bond_payable', 'advance_receipt', 'salary_payable', 'dividend_payable', 'tax_payable', 'interest_payable', 'other_payable', 'accrued_expense', 'deferred_proceed', 'noncurrent_liability_in_1y', 'other_current_liability', 'cl_exceptional_items', 'cl_adjustment_items', 'current_liability',
 # non current liability

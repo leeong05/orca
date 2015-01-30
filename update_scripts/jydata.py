@@ -47,6 +47,7 @@ class JYDataUpdater(UpdaterBase):
             sids.add(row['sid'])
 
         if not sids:
+            self.logger.warning('No records found for {} on {}', self.collection.name, date)
             return
         self.update_jybs(date, sids)
         self.update_jycs(date, sids)
@@ -65,6 +66,22 @@ class JYDataUpdater(UpdaterBase):
                 res.append(sdf.iloc[-1])
         df = pd.concat(res, axis=1).T
 
+        self.add_col(df, 'income_tax_expense')
+        self.add_col(df, 'total_profit')
+        self.add_col(df, 'ebit')
+        self.add_col(df, 'da')
+        self.add_col(df, 'delta_fixed_assets')
+        self.add_col(df, 'fixed_assets_depreciation')
+        self.add_col(df, 'financial_expense')
+        self.add_col(df, 'net_interest_income')
+        self.add_col(df, 'delta_working_capital')
+        self.add_col(df, 'delta_net_borrowing')
+        self.add_col(df, 'delta_net_operating_assets')
+        self.add_col(df, 'net_profit')
+        self.add_col(df, 'np_shareholder')
+        self.add_col(df, 'net_ocf')
+        self.add_col(df, 'icf')
+        self.add_col(df, 'ocf')
         df['tax_rate'] = df['income_tax_expense'] / df['total_profit']
         df['ebitda'] = [i+self.norm(j) for i, j in zip(df['ebit'], df['da'])]
         df['capex'] = [self.norm(i+j) for i, j in zip(df['delta_fixed_assets'], df['fixed_assets_depreciation'])]
@@ -273,11 +290,11 @@ class JYDataUpdater(UpdaterBase):
     def update_jybs(self, date, sids):
         dnames = [
 'cash_and_equivalent', 'trading_assets', 'account_receivable', 'inventory', 'current_assets',
-'held_for_sale_assets', 'held_to_maturity_investment', 'longterm_account_receivable', 'fixed_assets', 'intangible_assets', 'research_and_development', 'goodwill', 'long_deferred_expense', 'deferred_tax_assets', 'noncurrent_assets', 'total_assets',
+'held_for_sale_assets', 'held_to_maturity_investment', 'longterm_account_receivable', 'fixed_assets', 'intangible_assets', 'research_and_development', 'goodwill', 'long_deferred_expense', 'deferred_tax_assets', 'noncurrent_assets', 'assets',
 'shortterm_loan', 'trading_liability', 'note_payable', 'account_payable', 'salary_payable', 'dividend_payable', 'tax_payable', 'interest_payable', 'accrued_expense', 'deferred_proceed', 'current_liability',
 'longterm_loan', 'bond_payable', 'longterm_account_payable', 'deferred_tax_liability', 'noncurrent_liability', 'liability',
 'paidin_capital', 'capital_reserve_fund', 'surplus_reserve_fund', 'retained_earnings', 'se_without_mi', 'shareholder_equity', 'liability_and_equity',
-'receivables', 'payables', 'invested_capital', 'noninterest_liability', 'interest_liability', 'tangible_equity', 'net_liability', 'working_capital', 'net_borrowing', 'net_operating_assets', 'net_operating_assets',
+'receivables', 'payables', 'invested_capital', 'noninterest_liability', 'interest_liability', 'tangible_equity', 'net_liability', 'working_capital', 'net_borrowing', 'net_operating_assets',
 ]
         delta_dnames = ['working_capital', 'fixed_assets', 'net_borrowing', 'net_operating_assets']
         cursor = self.db.jybs.find({'date': {'$lte': date}, 'sid': {'$in': list(sids)}}, {'_id': 0})
