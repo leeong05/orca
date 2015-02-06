@@ -53,6 +53,22 @@ def read_frame(fname, ftype='csv'):
         return pd.read_pickle(fname)
     elif ftype == 'msgpack':
         return pd.read_msgpack(fname)
+    else:
+        try:
+            return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
+        except:
+            pass
+
+        try:
+            return pd.read_msgpack(fname)
+        except:
+            pass
+
+        try:
+            return pd.read_pickle(fname)
+        except:
+            pass
+    raise Exception('File type not recognized for {}'.format(fname))
 
 if __name__ == '__main__':
     import argparse
@@ -75,7 +91,7 @@ if __name__ == '__main__':
     if args.alpha:
         for path in args.alpha:
             for name in glob(path):
-                df = read_frame(name)
+                df = read_frame(name, args.ftype)
                 perf = Performance(df)
                 name = os.path.basename(name)
                 alpha_metric[name] = get_metric(perf, args.mode, args.metric)
@@ -89,7 +105,7 @@ if __name__ == '__main__':
         with open(args.file) as file:
             for line in file:
                 name, fpath = line.strip().split()
-                ext_alphas[name] = read_frame(fpath)
+                ext_alphas[name] = read_frame(fpath, args.ftype)
     if args.dir:
         assert os.path.exists(args.dir)
         for name in os.listdir(args.dir):

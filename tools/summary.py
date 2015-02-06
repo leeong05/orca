@@ -15,22 +15,54 @@ from orca.perf.performance import (
         )
 from orca.operation.api import format
 
-def read_frame(fname, ftype='csv'):
+def read_frame(fname, ftype=None):
     if ftype == 'csv':
         return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
     elif ftype == 'pickle':
         return pd.read_pickle(fname)
     elif ftype == 'msgpack':
         return pd.read_msgpack(fname)
+    else:
+        try:
+            return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
+        except:
+            pass
+
+        try:
+            return pd.read_msgpack(fname)
+        except:
+            pass
+
+        try:
+            return pd.read_pickle(fname)
+        except:
+            pass
+    raise Exception('File type not recognized for {}'.format(fname))
+
+
+import multiprocessing
+
+def worker_i(args):
+    alpha, analyser, cost, by, group = args
+    summary = analyser.summary(cost=cost, by=by, group=group)
+    return alpha, summary
+
+def worker_d(args):
+    alpha, analyser, cost, by, group, freq = args
+    summary = analyser.summary(cost=cost, by=by, group=group, freq=freq)
+    return alpha, summary
+
 
 if __name__ == '__main__':
     import argparse
     import cPickle
 
     parser= argparse.ArgumentParser()
-    parser.add_argument('alpha', help='Alpha file')
-    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
+    parser.add_argument('alpha', help='Alpha file', nargs='?')
+    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'))
     parser.add_argument('--atype', help='Alpha type', choices=('daily', 'intraday', 'perf'))
+    parser.add_argument('--alphas', nargs='*')
+    parser.add_argument('-t', '--threads', type=int, default=8)
     parser.add_argument('--univ', help='Universe name', type=str)
     parser.add_argument('-i', '--index', default='HS300', type=str,
         help='Index name; se this only when option --longonly is turned on')
@@ -47,55 +79,76 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--cost', type=float, default=0.001, help='Linear trading cost')
     args = parser.parse_args()
 
-    if args.atype == 'perf':
-        with open(args.alpha) as file:
-            perf = cPickle.load(file)
-            if hasattr(perf, 'freq'):
-                args.atype = 'intraday'
-            else:
-                args.atype = 'daily'
-    else:
-        alpha = read_frame(args.alpha, args.ftype)
-        if args.atype is None:
-            if len(alpha.index) == len(np.unique(alpha.index.date)):
-                args.atype = 'daily'
-            else:
-                args.atype = 'intraday'
+    if args.alpha:
+        if not args.alphas:
+            args.alphas = []
+        if args.alpha not in args.alphas:
+            args.alphas.append(args.alpha)
+    assert args.alphas
 
-        if args.atype == 'intraday':
-            perf = IntPerformance(alpha)
-        else:
-            perf = Performance(alpha)
-        with open(args.alpha+'.pickle', 'w') as file:
-            cPickle.dump(perf, file)
+    alphas = {}
+    if args.atype == 'perf':
+        for alpha in args.alphas:
+            try:
+                with open(alpha) as file:
+                    perf = cPickle.load(file)
+                alphas[alpha] = perf
+                if hasattr(perf, 'freq'):
+                    args.atype = 'intraday'
+                else:
+                    args.atype = 'daily'
+            except:
+                print '[WARNING] Failed to parse file', alpha
+    else:
+        for alpha in args.alphas:
+            try:
+                alphadf = read_frame(alpha, args.ftype)
+                if args.atype is None:
+                    if len(alphadf.index) == len(np.unique(alphadf.index.date)):
+                        args.atype = 'daily'
+                    else:
+                        args.atype = 'intraday'
+
+                if args.atype == 'intraday':
+                    perf = IntPerformance(alphadf)
+                else:
+                    perf = Performance(alphadf)
+                alphas[alpha] = perf
+            except:
+                print '[WARNING] Failed to parse file', alpha
 
     if args.univ:
         assert args.univ in univ_fetcher.dnames
         dates = np.unique([dt.strftime('%Y%m%d') for dt in perf.alpha.index])
         univ = univ_fetcher.fetch_window(args.univ, dates)
-        perf = perf.get_universe(univ)
+        alphas = {alpha: perf.get_universe(univ) for alpha, perf in alphas.iteritems()}
 
     if args.longonly:
         if args.quantile:
             if args.quantile > 0:
-                analyser = perf.get_qtop(args.quantile, index=args.index)
+                alphas = {alpha: perf.get_qtop(args.quantile, index=args.index) for alpha, perf in alphas.iteritems()}
             else:
-                analyser = perf.get_qbottom(-args.quantile, index=args.index)
+                alphas = {alpha: perf.get_qbottom(-args.quantile, index=args.index) for alpha, perf in alphas.iteritems()}
         elif args.number:
             if args.number > 0:
-                analyser = perf.get_ntop(args.number, index=args.index)
+                alphas = {alpha: perf.get_ntop(args.number, index=args.index) for alpha, perf in alphas.iteritems()}
             else:
-                analyser = perf.get_nbottom(-args.number, index=args.index)
+                alphas = {alpha: perf.get_nbottom(-args.number, index=args.index) for alpha, perf in alphas.iteritems()}
     else:
         if args.quantile:
-            analyser = perf.get_qtail(args.quantile)
+            alphas = {alpha: perf.get_qtail(args.quantile) for alpha, perf in alphas.iteritems()}
         elif args.number:
-            analyser = perf.get_ntail(args.number)
+            alphas = {alpha: perf.get_ntail(args.number) for alpha, perf in alphas.iteritems()}
         else:
-            analyser = perf.get_longshort()
+            alphas = {alpha: perf.get_longshort() for alpha, perf in alphas.iteritems()}
 
+    pool = multiprocessing.Pool(args.threads)
     if args.atype == 'intraday':
-        summary = analyser.summary(cost=args.cost, by=args.by, group=args.group)
+        res = pool.imap_unordered(worker_i, ((alpha, analyser, args.cost, args.by, args.group) for alpha, analyser in alphas.iteritems()))
     else:
-        summary = analyser.summary(cost=args.cost, by=args.by, group=args.group, freq=args.freq)
-    print summary
+        res = pool.imap_unordered(worker_d, ((alpha, analyser, args.cost, args.by, args.group, args.freq) for alpha, analyser in alphas.iteritems()))
+    pool.close()
+    pool.join()
+    for alpha, summary in res:
+        print alpha
+        print summary

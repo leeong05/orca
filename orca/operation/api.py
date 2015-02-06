@@ -37,18 +37,21 @@ def intersect_interval(df, univ):
 
 def neutralize(df):
     """Make DataFrame with mean 0 for each row."""
+    df = df[df.notnull()]
     if isinstance(df, pd.DataFrame):
         return df.subtract(df.mean(axis=1), axis=0)
     return df - df.mean()
 
 def scale(df):
     """Make DataFrame with absolute sum 1 for each row."""
+    df = df[df.notnull()]
     if isinstance(df, pd.DataFrame):
         return df.div(np.abs(df).sum(axis=1), axis=0)
     return df / np.abs(df).sum()
 
 def rank(df):
     """Transform each row to be distributed uniformly in [0, 1]."""
+    df = df[df.notnull()]
     if isinstance(df, pd.DataFrame):
         rdf = df.rank(axis=1)
         rdf = rdf.sub(rdf.min(axis=1), axis=0)
@@ -61,6 +64,7 @@ def top(df, n):
 
     :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True
     """
+    df = df[df.notnull()]
     if isinstance(df, pd.DataFrame):
         return df.rank(ascending=False, axis=1) <= n
     return df.rank(ascending=False) <= n
@@ -70,6 +74,7 @@ def bottom(df, n):
 
     :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True
     """
+    df = df[df.notnull()]
     if isinstance(df, pd.DataFrame):
         return df.rank(ascending=True, axis=1) <= n
     return df.rank(ascending=False) <= n
@@ -79,6 +84,7 @@ def qtop(df, q):
 
     :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True
     """
+    df = df[df.notnull()]
     if isinstance(df, pd.DataFrame):
         return df.ge(df.quantile(1-q, axis=1), axis=0)
     return df >= df.quantile(1-q)
@@ -88,6 +94,7 @@ def qbottom(df, q):
 
     :returns: A boolean DataFrame with same shape as ``df`` with desired element position as True
     """
+    df = df[df.notnull()]
     if isinstance(df, pd.DataFrame):
         return df.le(df.quantile(q, axis=1), axis=0)
     return df <= df.quantile(q)
@@ -97,6 +104,7 @@ def quantiles(df, n):
 
     :returns: A list of ``n`` boolean DataFrames with same shape as ``df`` with desired element position as True, the first one being bottom quantile and last one being top quantile
     """
+    df = df[df.notnull()]
     if isinstance(df, pd.DataFrame):
         qtls = []
         qs = df.quantile(q=np.linspace(1./n, 1, n), axis=1)
@@ -113,6 +121,60 @@ def quantiles(df, n):
     for i in range(2, n+1):
         qtls.append((df <= qs.ix[i]) & (df > qs.ix[i-1]))
     return qtls
+
+def sigma_cut(df, sigma=3, method='cut'):
+    df = df[df.notnull()]
+    if isinstance(df, pd.DataFrame):
+        m, s = df.mean(axis=1), df.std(axis=1)
+        m, s = pd.DataFrame({c: m for c in df.columns}), pd.DataFrame({c: s for c in df.columns})
+        l, u = (df <= (m-sigma*s)), (df >= (m+sigma*s))
+    else:
+        m, s = df.mean(), df.std()
+        l, u = (df <= (m-sigma*s)), (df >= (m+sigma*s))
+    if method == 'drop':
+        df[l], df[u] = np.nan, np.nan
+    elif method == 'drop_lower':
+        df[l], df[u] = np.nan, m+sigma*s
+    elif method == 'drop_upper':
+        df[l], df[u] = m-sigma*s, np.nan
+    else:
+        df[l], df[u] = m-sigma*s, m+sigma*s
+    return df
+
+def quartile_cut(df, multiplier=1.5, method='cut'):
+    df = df[df.notnull()]
+    if isinstance(df, pd.DataFrame):
+        lq, uq = df.quantile(0.25, axis=1), df.quantile(0.75, axis=1)
+        lq, uq = pd.DataFrame({c: lq for c in df.columns}), pd.DataFrame({c: uq for c in df.columns})
+        iqr = uq -lq
+        l, u = (df <= (lq-multiplier*iqr)), (df >= (uq+multiplier*iqr))
+    else:
+        lq, uq = df.quantile(0.25), df.quantile(0.75)
+        iqr = uq -lq
+        l, u = (df <= (lq-multiplier*iqr)), (df >= (uq+multiplier*iqr))
+    if method == 'drop':
+        df[l], df[u] = np.nan, np.nan
+    elif method == 'drop_lower':
+        df[l], df[u] = np.nan, uq+multiplier*iqr
+    elif method == 'drop_upper':
+        df[l], df[u] = lq-multiplier*iqr, np.nan
+    else:
+        df[l], df[u] = lq-multiplier*iqr, uq+multiplier*iqr
+    return df
+
+def quantile_cut(df, lower=0, upper=1, reverse=False):
+    df = df[df.notnull()]
+    if isinstance(df, pd.DataFrame):
+        lq, uq = df.quantile(lower, axis=1), df.quantile(upper, axis=1)
+        lq, uq = pd.DataFrame({c: lq for c in df.columns}), pd.DataFrame({c: uq for c in df.columns})
+    else:
+        lq, uq = df.quantile(lower), df.quantile(upper)
+    l, u = (df < lq), (df > uq)
+    if not reverse:
+        df[l], df[u] = np.nan, np.nan
+    else:
+        df[~(l|u)] = np.nan
+    return df
 
 """
 Helper APIs from operation classes

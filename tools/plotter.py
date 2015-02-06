@@ -26,6 +26,22 @@ def read_frame(fname, ftype='csv'):
         return pd.read_pickle(fname)
     elif ftype == 'msgpack':
         return pd.read_msgpack(fname)
+    else:
+        try:
+            return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
+        except:
+            pass
+
+        try:
+            return pd.read_msgpack(fname)
+        except:
+            pass
+
+        try:
+            return pd.read_pickle(fname)
+        except:
+            pass
+    raise Exception('File type not recognized for {}'.format(fname))
 
 if __name__ == '__main__':
     import argparse

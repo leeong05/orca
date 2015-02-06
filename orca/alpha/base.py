@@ -145,11 +145,14 @@ class AlphaBase(object):
         return df.query('date >= {!r} & date <= {!r}'.format(window[0], window[-1]))
 
     @staticmethod
-    def record_fetch_history(df, date, backdays, delay=0, date_check=False):
+    def record_fetch_history(df, date, backdays=None, delay=0, date_check=False):
         date = dateutil.compliment_datestring(str(date), -1, date_check)
         di, date = dateutil.parse_date(DATES, date, -1)
         di -= delay
-        window = DATES[di-backdays+1: di+1]
+        if backdays is None:
+            window = DATES[:di+1]
+        else:
+            window = DATES[di-backdays+1: di+1]
         return AlphaBase.record_fetch_window(df, window)
 
     @staticmethod
