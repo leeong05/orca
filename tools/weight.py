@@ -93,17 +93,17 @@ if __name__ == '__main__':
     parser.add_argument('--name', help='Name of the summed up industries', type=str)
     parser.add_argument('--sum', help='Whether to sum up these industries weight', action='store_true')
     parser.add_argument('-s', '--start', help='IS startdate', nargs='*')
-    parser.add_argument('e-', '--end', help='IS enddate', nargs='*')
+    parser.add_argument('-e', '--end', help='IS enddate', nargs='*')
     parser.add_argument('--delay', help='Delay of index data w.r.t. weight', default=1, type=int)
     parser.add_argument('--pdf', action='store_true', help='Whether to save plots in a PDF file')
     args = parser.parse_args()
 
-    if args.starts:
-        if len(args.starts) == 1:
-            args.ends = [None]
-        assert args.ends and len(args.starts) == len(args.ends)
+    if args.start:
+        if len(args.start) == 1:
+            args.end = [None]
+        assert args.end and len(args.start) == len(args.end)
     else:
-        args.starts, args.ends = [None], [None]
+        args.start, args.end = [None], [None]
 
     alpha = read_frame(args.alpha, args.ftype)
     weight = Weight(alpha, args.ntop)
@@ -144,7 +144,7 @@ if __name__ == '__main__':
             exit(0)
 
     figs = []
-    for start, end in zip(args.starts, args.ends):
+    for start, end in zip(args.start, args.end):
         fig = weight.plot(
                 industry=args.industry,
                 name=args.name,
