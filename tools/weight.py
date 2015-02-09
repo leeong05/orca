@@ -10,23 +10,16 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from orca.mongo.industry import IndustryFetcher
 from orca.mongo.index import IndexQuoteFetcher
-from orca.operation import api
 from orca.utils import dateutil
-
-def read_frame(fname, ftype='csv'):
-    if ftype == 'csv':
-        return pd.read_csv(fname, header=0, parse_dates=[0], index_col=0)
-    elif ftype == 'pickle':
-        return pd.read_pickle(fname)
-    elif ftype == 'msgpack':
-        return pd.read_msgpack(fname)
+from orca.utils.io import read_frame
+from orca.operation import api
 
 
 class Weight(object):
     """Class to analyse portfolio weight decomposition through time."""
 
     def __init__(self, alpha, n):
-        self.alpha = api.format(read_frame(alpha))
+        self.alpha = api.format(alpha)
         self.alpha = self.alpha.rank(axis=1, ascending=False)
         self.rank_alpha = self.alpha[self.alpha <= n]
         self.alpha = n+1 - self.rank_alpha
@@ -92,15 +85,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
-    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
+    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'))
     parser.add_argument('--ntop', type=int, required=True)
     parser.add_argument('-i', '--index', type=str, help='Name of the index')
     parser.add_argument('--dname', type=str, help='Name of the index data', default='close')
     parser.add_argument('--industry', help='List of industries', nargs='+')
     parser.add_argument('--name', help='Name of the summed up industries', type=str)
     parser.add_argument('--sum', help='Whether to sum up these industries weight', action='store_true')
-    parser.add_argument('--starts', help='IS startdate', nargs='*')
-    parser.add_argument('--ends', help='IS enddate', nargs='*')
+    parser.add_argument('-s', '--start', help='IS startdate', nargs='*')
+    parser.add_argument('e-', '--end', help='IS enddate', nargs='*')
     parser.add_argument('--delay', help='Delay of index data w.r.t. weight', default=1, type=int)
     parser.add_argument('--pdf', action='store_true', help='Whether to save plots in a PDF file')
     args = parser.parse_args()
@@ -112,7 +105,8 @@ if __name__ == '__main__':
     else:
         args.starts, args.ends = [None], [None]
 
-    weight = Weight(args.alpha, args.ntop)
+    alpha = read_frame(args.alpha, args.ftype)
+    weight = Weight(alpha, args.ntop)
     if args.index:
         weight.overlap(index=args.index, dname=args.dname)
 

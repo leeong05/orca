@@ -4,21 +4,13 @@
 
 import os
 
-import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from orca.perf.performance import Performance
 from orca.perf.plotter import QuantilesPlotter
-from orca.operation.api import format
+from orca.utils.io import read_frame
 
-def read_frame(fname, ftype='csv'):
-    if ftype == 'csv':
-        return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
-    elif ftype == 'pickle':
-        return pd.read_pickle(fname)
-    elif ftype == 'msgpack':
-        return pd.read_msgpack(fname)
 
 if __name__ == '__main__':
     import argparse

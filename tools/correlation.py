@@ -10,11 +10,11 @@ pd.set_option('display.precision', 3)
 from orca.mongo.perf import PerfFetcher
 perf_fetcher = PerfFetcher(datetime_index=True)
 from orca.constants import DAYS_IN_YEAR
-from orca.operation.api import format
 from orca.perf.performance import Performance
 from orca.mongo.kday import UnivFetcher
 univ_fetcher = UnivFetcher(datetime_index=True, reindex=True)
 from orca.utils.dateutil import to_datestr
+from orca.utils.io import read_frame
 
 def _get_metric(analyser, metric):
     if metric == 'returns':
@@ -46,29 +46,6 @@ def _get_analyser(perf, mode):
 def get_metric(perf, mode, metric):
     return _get_metric(_get_analyser(perf, mode), metric)
 
-def read_frame(fname, ftype='csv'):
-    if ftype == 'csv':
-        return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
-    elif ftype == 'pickle':
-        return pd.read_pickle(fname)
-    elif ftype == 'msgpack':
-        return pd.read_msgpack(fname)
-    else:
-        try:
-            return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
-        except:
-            pass
-
-        try:
-            return pd.read_msgpack(fname)
-        except:
-            pass
-
-        try:
-            return pd.read_pickle(fname)
-        except:
-            pass
-    raise Exception('File type not recognized for {}'.format(fname))
 
 if __name__ == '__main__':
     import argparse

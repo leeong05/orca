@@ -5,7 +5,6 @@
 import os
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -17,31 +16,8 @@ from orca.perf.performance import (
         IntPerformance,
         )
 from orca.perf.plotter import Plotter
-from orca.operation.api import format
+from orca.utils.io import read_frame
 
-def read_frame(fname, ftype='csv'):
-    if ftype == 'csv':
-        return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
-    elif ftype == 'pickle':
-        return pd.read_pickle(fname)
-    elif ftype == 'msgpack':
-        return pd.read_msgpack(fname)
-    else:
-        try:
-            return format(pd.read_csv(fname, header=0, parse_dates=[0], index_col=0))
-        except:
-            pass
-
-        try:
-            return pd.read_msgpack(fname)
-        except:
-            pass
-
-        try:
-            return pd.read_pickle(fname)
-        except:
-            pass
-    raise Exception('File type not recognized for {}'.format(fname))
 
 if __name__ == '__main__':
     import argparse

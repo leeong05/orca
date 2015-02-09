@@ -17,15 +17,8 @@ from orca import logger
 from orca import DATES
 from orca.mongo.quote import QuoteFetcher
 from orca.mongo.industry import IndustryFetcher
+from orca.utils.io import read_frame
 from orca.operation import api
-
-def read_frame(fname, ftype='csv'):
-    if ftype == 'csv':
-        return pd.read_csv(fname, header=0, parse_dates=[0], index_col=0)
-    elif ftype == 'pickle':
-        return pd.read_pickle(fname)
-    elif ftype == 'msgpack':
-        return pd.read_msgpack(fname)
 
 
 class AlphaCombiner(object):
