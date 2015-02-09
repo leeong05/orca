@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file', nargs='*')
-    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
+    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'))
     parser.add_argument('--dir', help='Input directory, each file contained is assumed to be an alpha file', type=str)
     parser.add_argument('--file', help='Input file, each row in the format: name path_to_a_csv_file', type=str)
     parser.add_argument('--days', type=int, default=2*DAYS_IN_YEAR, help='How many points to be included in correlation calculation')

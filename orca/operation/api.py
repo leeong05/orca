@@ -20,9 +20,9 @@ def format(df, value=np.nan):
 
 def intersect(df, univ):
     """Intersect DataFrame with a universe."""
-    df = df.copy()
-    df[~(univ.ix[df.index].fillna(False))] = np.nan
-    return df
+    univ = univ.ix[df.index].fillna(method='bfill').fillna(method='ffill')
+    df = df.reindex(columns=univ.columns)
+    return df[univ]
 
 def intersect_interval(df, univ):
     """Intersect an interval DataFrame with a daily universe."""

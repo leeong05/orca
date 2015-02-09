@@ -95,6 +95,7 @@ class UnivFetcher(KDayFetcher):
         ser = super(UnivFetcher, self).fetch_daily(*args, **kwargs)
         if as_list:
             return list(ser[ser].index)
+        return ser
 
 
 class AlphaFetcher(KDayFetcher):

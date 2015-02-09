@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
-    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'), default='csv')
+    parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'))
     parser.add_argument('--atype', help='Alpha type', choices=('daily', 'intraday', 'perf'))
     parser.add_argument('--univ', help='Universe name', type=str)
     parser.add_argument('--which', help='Only used for intraday alpha', choices=('daily', 'trading', 'holding'), default='trading')
