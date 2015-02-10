@@ -5,6 +5,8 @@
 import os
 
 import pandas as pd
+import warnings
+warnings.simplefilter(action='ignore', category=pd.core.common.SettingWithCopyWarning)
 
 from base import UpdaterBase
 
@@ -15,7 +17,7 @@ dnames = ['price', 'volume', 'open_interest', 'bid1', 'bds1', 'ask1', 'aks1']
 class IFUpdater(UpdaterBase):
     """The updater class for collection 'IF'."""
 
-    def __init__(self, timeout=240):
+    def __init__(self, timeout=1200):
         super(IFUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
@@ -56,6 +58,7 @@ class IFUpdater(UpdaterBase):
 
             res = []
             for ms, sdf in df.groupby('ms'):
+                sdf = sdf.copy()
                 sdf['ms'] += [int(1000/len(sdf)) * i for i in range(0, len(sdf))]
                 res.append(sdf)
 

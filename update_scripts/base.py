@@ -147,7 +147,7 @@ class UpdaterBase(object):
                         p.start()
                         p.join(self.timeout)
                         if p.is_alive():
-                            self.logger.warning('Timeout on date: {}', date)
+                            self.logger.warning('Timeout on date: {} for updater class {}', date, self.__class__)
                             p.terminate()
                             iterates -= 1
                         else:

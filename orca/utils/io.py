@@ -5,7 +5,7 @@
 import pandas as pd
 import magic
 
-def read_frame(fname, ftype=None):
+def read_frame(fname, ftype=None, return_ftype=False):
     if ftype is None:
         with magic.Magic() as m:
             ftype = m.id_filename(fname)
@@ -18,9 +18,20 @@ def read_frame(fname, ftype=None):
             else:
                 ftype = None
     if ftype == 'msgpack':
-        return pd.read_msgpack(fname)
+        df = pd.read_msgpack(fname)
     elif ftype == 'csv':
-        return pd.read_csv(fname, header=0, parse_dates=[0], index_col=0)
+        df = pd.read_csv(fname, header=0, parse_dates=[0], index_col=0)
     elif ftype == 'pickle':
-        return pd.read_pickle(fname)
+        df = pd.read_pickle(fname)
+    if ftype is not None:
+        return (df, ftype) if return_ftype else df
     raise Exception('File type not recognized for {}'.format(fname))
+
+def dump_frame(df, fname, ftype='csv'):
+    with open(fname, 'w') as file:
+        if ftype == 'csv':
+            df.to_csv(file)
+        elif ftype == 'pickle':
+            df.to_pickle(file)
+        elif ftype == 'msgpack':
+            df.to_msgpack(file)

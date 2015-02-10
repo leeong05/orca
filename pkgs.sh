@@ -1,6 +1,7 @@
 #!/usr/bin/sh
 
 pip install -U setuptools
+pip install -U pip
 pip install -U requests
 pip install -U nose
 
@@ -9,6 +10,7 @@ pip install -U numpy
 pip install -U scipy
 pip install -U scikit-learn
 
+pip install -U msgpack-python
 pip install -U matplotlib
 pip install -U pytz
 pip install -U python-dateutil
@@ -25,8 +27,11 @@ pip install -U Sphinx
 pip install -U sphinxcontrib-blockdiag
 pip install -U logbook
 
+pip install -U pymongo
 pip install -U pymssql
 easy_install -U mysql-connector-python
 
 easy_install -U TA-Lib
 pip install -U tables
+
+pip install filemagic
