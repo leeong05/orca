@@ -35,8 +35,9 @@ class AlphaBase(object):
 
     LOGGER_NAME = 'alpha'
 
-    def __init__(self, **kwargs):
+    def __init__(self, debug_on=True, **kwargs):
         self.logger = logbook.Logger(AlphaBase.LOGGER_NAME)
+        self.debug_on = debug_on
         self.__dict__.update(kwargs)
 
     @abc.abstractmethod
@@ -60,7 +61,8 @@ class AlphaBase(object):
 
     def debug(self, msg):
         """Logs a message with level DEBUG on the alpha logger."""
-        self.logger.debug(msg)
+        if self.debug_on:
+            self.logger.debug(msg)
 
     def info(self, msg):
         """Logs a message with level INFO on the alpha logger."""

@@ -2,14 +2,25 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
 datefmt = DateFormatter('%Y%m%d')
 from matplotlib.backends.backend_pdf import PdfPages
 
+import magic
+
 from orca.mongo.industry import IndustryFetcher
 from orca.mongo.index import IndexQuoteFetcher
+from orca.mongo.components import ComponentsFetcher
+from orca.mongo.sywgquote import SYWGQuoteFetcher
+
+industry_fetcher = IndustryFetcher(datetime_index=True, reindex=True)
+indexquote_fetcher = IndexQuoteFetcher(datetime_index=True)
+components_fetcher = ComponentsFetcher(datetime_index=True)
+sywgquote_fetcher = SYWGQuoteFetcher(datetime_index=True, use_industry=True)
+
 from orca.utils import dateutil
 from orca.utils.io import read_frame
 from orca.operation import api
@@ -18,62 +29,66 @@ from orca.operation import api
 class Weight(object):
     """Class to analyse portfolio weight decomposition through time."""
 
-    def __init__(self, alpha, n):
+    def __init__(self, alpha, n, rank=None):
         self.alpha = api.format(alpha)
         self.alpha = self.alpha.rank(axis=1, ascending=False)
         self.rank_alpha = self.alpha[self.alpha <= n]
-        self.alpha = n+1 - self.rank_alpha
+        if rank is not None:
+            self.alpha = rank - np.floor(self.rank_alpha/(n+1)*rank)
         self.alpha = api.scale(self.alpha)
         self.dates = dateutil.to_datestr(self.alpha.index)
-        self.index_fetcher = IndexQuoteFetcher(datetime_index=True)
-        industry_fetcher = IndustryFetcher(datetime_index=True, reindex=True)
-        self.industry = industry_fetcher.fetch_window('level1', self.dates).fillna('')
-        self.industry_weight = {}
-        for ind in industry_fetcher.fetch_info('name', level=1).keys():
-            indweight = self.alpha[self.industry == ind].sum(axis=1)
-            self.industry_weight[ind] = indweight
-        self.industry_weight = pd.DataFrame(self.industry_weight)
-        self.index_data = {}
 
-    def overlap(self, index='HS300', dname='close'):
-        data = self.index_fetcher.fetch_window(dname, self.dates, index=index)
-        data.name = index+'_'+dname
-        self.index_data[index+'_'+dname] = data
+    def get_industry_weight(self, industry=[]):
+        sid_ind = industry_fetcher.fetch_window('level1', self.dates).fillna('')
+        ind_wgt = {}
+        for ind in industry:
+            ind_alpha = self.alpha[sid_ind == ind]
+            wgt = ind_alpha.sum(axis=1)
+            ind_wgt[ind] = wgt
+        return pd.DataFrame(ind_wgt)
 
-    def plot(self, industry=[], name='', index_data='', startdate=None, enddate=None, delay=1, sumweight=True):
-        dates = self.dates[:]
-        if startdate:
-            dates = [date for date in dates if date >= startdate]
-        if enddate:
-            dates = [date for date in dates if date <= enddate]
-        dates = pd.to_datetime(dates)
-        indweight = self.industry_weight[industry].shift(delay).ix[dates]
-        if sumweight:
-            indweight = indweight.sum(axis=1)
-            if name:
-                indweight.name = name
-            indweight = pd.DataFrame({indweight.name: indweight})
-        x, y1 = dates[delay:], indweight.iloc[delay:]
+    def get_component_weight(self, component=[]):
+        comp_wgt = {}
+        for comp in component:
+            if comp == 'CYB':
+                cyb = [sid.startswith('30') for sid in self.alpha.columns]
+                cyb_alpha = self.alpha.ix[:, cyb]
+                wgt = cyb_alpha.sum(axis=1)
+                comp_wgt[comp] = wgt
+            elif comp == 'ZXB':
+                zxb = [sid.startswith('002') for sid in self.alpha.columns]
+                zxb_alpha = self.alpha.ix[:, zxb]
+                wgt = zxb_alpha.sum(axis=1)
+                comp_wgt[comp] = wgt
+            else:
+                try:
+                    c = components_fetcher.fetch_window(comp, self.dates, as_bool=True).astype(float)
+                    comp_alpha = self.alpha.ix[:, c.columns] * c
+                    wgt = comp_alpha.sum(axis=1)
+                    comp_wgt[comp] = wgt
+                except:
+                    pass
+        return pd.DataFrame(comp_wgt)
 
+    def get_index_quote(self, index='HS300', shift=0):
+        ser = indexquote_fetcher.fetch_window('close', self.dates, index=index).shift(shift)
+        ser.name = index
+        return ser
+
+    def plot(self, df, index_quote=None):
         fig, ax1 = plt.subplots()
-        for name, y in y1.iteritems():
-            ax1.plot(x, y, label=name)
+        for label, y in df.iteritems():
+            ax1.plot(self.alpha.index, y, label=label)
         ax1.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05), ncol=3, fancybox=True, shadow=True)
         ax1.format_xdata = datefmt
         ax1.xaxis.set_major_formatter(datefmt)
 
-        if index_data:
-            if len(self.index_data) == 1:
-                index = self.index_data[self.index_data.keys()[0]]
-            else:
-                index = self.index_data[index_data]
-            index = index.ix[dates]
-            y2 = index.iloc[delay:]
+        if index_quote:
             ax2 = ax1.twinx()
-            ax2.plot(x, y2, 'r')
+            ax2.plot(self.alpha.index, index_quote, 'r')
             ax2.format_xdata = datefmt
             ax2.xaxis.set_major_formatter(datefmt)
-            ax2.set_ylabel(y2.name)
+            ax2.set_ylabel(index_quote.name)
 
         fig.autofmt_xdate()
         return fig
@@ -86,90 +101,73 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
     parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'))
-    parser.add_argument('--ntop', type=int, required=True)
-    parser.add_argument('-i', '--index', type=str, help='Name of the index')
-    parser.add_argument('--dname', type=str, help='Name of the index data', default='close')
-    parser.add_argument('--industry', help='List of industries', nargs='+')
-    parser.add_argument('--name', help='Name of the summed up industries', type=str)
-    parser.add_argument('--sum', help='Whether to sum up these industries weight', action='store_true')
-    parser.add_argument('-s', '--start', help='IS startdate', nargs='*')
-    parser.add_argument('-e', '--end', help='IS enddate', nargs='*')
-    parser.add_argument('--delay', help='Delay of index data w.r.t. weight', default=1, type=int)
-    parser.add_argument('--pdf', action='store_true', help='Whether to save plots in a PDF file')
+    parser.add_argument('-n', '--ntop', help='Number of stocks used in analysis', type=int, required=True)
+    parser.add_argument('-r', '--rank', help='Weight these stocks by ranks', type=int)
+    parser.add_argument('--index', help='Name of the index', type=str)
+    parser.add_argument('-i', '--industry', help='List of SYWG Level1 industries', nargs='*')
+    parser.add_argument('-c', '--component', nargs='*', help='List of groupings to analyse its components; for example: HS300, CS500, ZXB, CYB etc')
+    parser.add_argument('--sum_i', help='Whether to sum up these industries weight', action='store_true')
+    parser.add_argument('--sum_c', help='Whether to sum up these components weight', action='store_true')
+    parser.add_argument('-s', '--start', help='Startdate', type=str)
+    parser.add_argument('-e', '--end', help='Enddate', type=str)
+    parser.add_argument('--shift', help='Shift of index data w.r.t. weight', default=0, type=int)
+    parser.add_argument('--pdf', type=str, help='PDF file to save the plot')
     args = parser.parse_args()
 
-    if args.start:
-        if len(args.start) == 1:
-            args.end = [None]
-        assert args.end and len(args.start) == len(args.end)
-    else:
-        args.start, args.end = [None], [None]
-
     alpha = read_frame(args.alpha, args.ftype)
-    weight = Weight(alpha, args.ntop)
+
+    if args.pdf and os.path.exists(args.pdf):
+        with magic.Magic() as m:
+            ftype = m.id_filename(args.pdf)
+            if ftype[:3] != 'PDF':
+                print 'The argument --pdf if exists must be a PDF file'
+                exit(0)
+    if args.start:
+        alpha = alpha.ix[args.start:]
+    if args.end:
+        alpha = alpha.ix[:args.end]
+    weight = Weight(alpha, args.ntop, args.rank)
+
+    if args.industry:
+        ind_wgt = weight.get_industry_weight(args.industry)
+        if args.sum_i and len(args.industry) > 1:
+            colname = 'Sum of ' + ', '.join(list(ind_wgt.columns))
+            ind_wgt = pd.DataFrame({colname: ind_wgt.sum(axis=1)})
+    else:
+        ind_wgt = None
+
+    if args.component:
+        comp_wgt = weight.get_component_weight(args.component)
+        if args.sum_c and len(args.component) > 1:
+            colname = 'Sum of ' + ', '.join(list(comp_wgt.columns))
+            comp_wgt = pd.DataFrame({colname: comp_wgt.sum(axis=1)})
+    else:
+        comp_wgt = None
+
+    if ind_wgt is None and comp_wgt is None:
+        print 'Either --industry or --component(-c) must not be empty'
+        parser.print_help()
+        exit(0)
+    else:
+        if ind_wgt is None:
+            df = comp_wgt
+        else:
+            if comp_wgt is None:
+                df = ind_wgt
+            else:
+                df = pd.concat([ind_wgt, comp_wgt], axis=1)
+
     if args.index:
-        weight.overlap(index=args.index, dname=args.dname)
+        index_quote = weight.get_index_quote(args.index, args.shift)
+    else:
+        index_quote = None
 
-    _industry = args.industry[:]
-    args.industry = []
-    args.industries = {}
-    for industry in _industry:
-        if not os.path.isfile(industry):
-            args.industry.append(industry)
-            last = weight.industry.iloc[-1]
-            args.industries[industry] = list(last[last == industry].index)
-            continue
-        industries = {}
-        with open(industry) as file:
-            for line in file:
-                try:
-                    sid, ind = line.strip().split()
-                    assert len(sid) == 6 and sid[:2] in ('00', '30', '60')
-                    if ind not in industries:
-                        industries[ind] = set()
-                    industries[ind].add(sid)
-                except:
-                    pass
-        args.industry = []
-        for ind, sids in industries.iteritems():
-            weight.industry_weight[ind] = weight.alpha.ix[:, list(sids)].sum(axis=1)
-            args.industry.append(ind)
-            args.industries[ind] = list(sids)
-
-    if not args.name:
-        if len(args.industry) == 1:
-            args.name = args.industry[0]
-        elif args.sum:
-            parser.print_help()
-            exit(0)
-
-    figs = []
-    for start, end in zip(args.start, args.end):
-        fig = weight.plot(
-                industry=args.industry,
-                name=args.name,
-                index_data=args.index+'_'+args.dname if args.index else None,
-                startdate=start,
-                enddate=end,
-                delay=args.delay,
-                sumweight=args.sum)
-        figs.append(fig)
+    fig = weight.plot(df, index_quote)
 
     if args.pdf:
-        pdf = os.path.basename(args.alpha)+'.pdf'
-        if os.path.exists(pdf):
-            os.remove(pdf)
-        pp = PdfPages(pdf)
-        for fig in figs:
-            pp.savefig(fig)
+        pp = PdfPages(args.pdf)
+        pp.savefig(fig)
         pp.close()
+        print 'Saved figure in', args.pdf
     else:
         plt.show()
-
-    last_alpha = weight.rank_alpha.iloc[-1]
-    for industry, sids in args.industries.iteritems():
-        print industry
-        alpha = last_alpha.ix[sids].dropna()
-        alpha.sort()
-        print alpha
-
