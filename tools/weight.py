@@ -15,11 +15,13 @@ from orca.mongo.industry import IndustryFetcher
 from orca.mongo.index import IndexQuoteFetcher
 from orca.mongo.components import ComponentsFetcher
 from orca.mongo.sywgquote import SYWGQuoteFetcher
+from orca.mongo.kday import UnivFetcher
 
 industry_fetcher = IndustryFetcher(datetime_index=True, reindex=True)
 indexquote_fetcher = IndexQuoteFetcher(datetime_index=True)
 components_fetcher = ComponentsFetcher(datetime_index=True)
 sywgquote_fetcher = SYWGQuoteFetcher(datetime_index=True, use_industry=True)
+univ_fetcher = UnivFetcher(datetime_index=True, reindex=True)
 
 from orca.utils import dateutil
 from orca.utils.io import read_frame
@@ -31,10 +33,15 @@ class Weight(object):
 
     def __init__(self, alpha, n, rank=None):
         self.alpha = api.format(alpha)
-        self.alpha = self.alpha.rank(axis=1, ascending=False)
-        self.rank_alpha = self.alpha[self.alpha <= n]
-        if rank is not None:
-            self.alpha = rank - np.floor(self.rank_alpha/(n+1)*rank)
+        self.rank_alpha = self.alpha.rank(axis=1, ascending=False)
+        self.rank_alpha = self.rank_alpha[self.rank_alpha <= n]
+        if rank is None:
+            self.alpha = (self.rank_alpha <= n).astype(float)
+        else:
+            if rank < 0:
+                self.alpha = self.alpha[self.rank_alpha <= n]
+            else:
+                self.alpha = rank - np.floor(self.rank_alpha/(n+1)*rank)
         self.alpha = api.scale(self.alpha)
         self.dates = dateutil.to_datestr(self.alpha.index)
 
@@ -46,6 +53,15 @@ class Weight(object):
             wgt = ind_alpha.sum(axis=1)
             ind_wgt[ind] = wgt
         return pd.DataFrame(ind_wgt)
+
+    def get_universe_weight(self, universe=[]):
+        univ_wgt = {}
+        for univ in universe:
+            u = univ_fetcher.fetch_window(univ, self.dates)
+            univ_alpha = self.alpha * u.astype(float)
+            wgt = univ_alpha.sum(axis=1)
+            univ_wgt[univ] = wgt
+        return pd.DataFrame(univ_wgt)
 
     def get_component_weight(self, component=[]):
         comp_wgt = {}
@@ -75,16 +91,19 @@ class Weight(object):
         ser.name = index
         return ser
 
-    def plot(self, df, index_quote=None):
+    def plot(self, df, index_quote=None, ylim=None):
         fig, ax1 = plt.subplots()
         for label, y in df.iteritems():
             ax1.plot(self.alpha.index, y, label=label)
+        if ylim is not None:
+            ax1.set_ylim(ylim)
         ax1.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05), ncol=3, fancybox=True, shadow=True)
         ax1.format_xdata = datefmt
         ax1.xaxis.set_major_formatter(datefmt)
 
         if index_quote is not None:
             ax2 = ax1.twinx()
+            index_quote = index_quote.reindex(index=self.alpha.index)
             ax2.plot(self.alpha.index, index_quote, 'r')
             ax2.format_xdata = datefmt
             ax2.xaxis.set_major_formatter(datefmt)
@@ -106,12 +125,16 @@ if __name__ == '__main__':
     parser.add_argument('--index', help='Name of the index', type=str)
     parser.add_argument('-i', '--industry', help='List of SYWG Level1 industries', nargs='*')
     parser.add_argument('-c', '--component', nargs='*', help='List of groupings to analyse its components; for example: HS300, CS500, ZXB, CYB etc')
+    parser.add_argument('-u', '--univ', nargs='*', help='List of universes to analyse its components; for example:TotalCap70Q  etc')
     parser.add_argument('--sum_i', help='Whether to sum up these industries weight', action='store_true')
     parser.add_argument('--sum_c', help='Whether to sum up these components weight', action='store_true')
+    parser.add_argument('--sum_u', help='Whether to sum up these universes weight', action='store_true')
     parser.add_argument('-s', '--start', help='Startdate', type=str)
     parser.add_argument('-e', '--end', help='Enddate', type=str)
     parser.add_argument('--shift', help='Shift of index data w.r.t. weight', default=0, type=int)
     parser.add_argument('--pdf', type=str, help='PDF file to save the plot')
+    parser.add_argument('--png', type=str, help='PNG file to save the plot')
+    parser.add_argument('--ylim', nargs=2, help='Y-axis limit')
     args = parser.parse_args()
 
     alpha = read_frame(args.alpha, args.ftype)
@@ -121,6 +144,12 @@ if __name__ == '__main__':
             ftype = m.id_filename(args.pdf)
             if ftype[:3] != 'PDF':
                 print 'The argument --pdf if exists must be a PDF file'
+                exit(0)
+    if args.png and os.path.exists(args.png):
+        with magic.Magic() as m:
+            ftype = m.id_filename(args.png)
+            if ftype[:3] != 'PNG':
+                print 'The argument --png if exists must be a PNG file'
                 exit(0)
     if args.start:
         alpha = alpha.ix[args.start:]
@@ -144,30 +173,43 @@ if __name__ == '__main__':
     else:
         comp_wgt = None
 
-    if ind_wgt is None and comp_wgt is None:
-        print 'Either --industry or --component(-c) must not be empty'
+    if args.univ:
+        univ_wgt = weight.get_universe_weight(args.univ)
+        if args.sum_u and len(args.univ) > 1:
+            colname = 'Sum of ' + ', '.join(list(univ_wgt.columns))
+            univ_wgt = pd.DataFrame({colname: univ_wgt.sum(axis=1)})
+    else:
+        univ_wgt = None
+
+    dfs = []
+    if ind_wgt is not None:
+        dfs.append(ind_wgt)
+    if comp_wgt is not None:
+        dfs.append(comp_wgt)
+    if univ_wgt is not None:
+        dfs.append(univ_wgt)
+    if len(dfs) == 0:
+        print 'At least one of --industry(-i), --component(-c), --univ(-u) must not be empty'
         parser.print_help()
         exit(0)
-    else:
-        if ind_wgt is None:
-            df = comp_wgt
-        else:
-            if comp_wgt is None:
-                df = ind_wgt
-            else:
-                df = pd.concat([ind_wgt, comp_wgt], axis=1)
+    df = pd.concat(dfs, axis=1)
 
     if args.index:
         index_quote = weight.get_index_quote(args.index, args.shift)
     else:
         index_quote = None
 
-    fig = weight.plot(df, index_quote)
+    if args.ylim:
+        args.ylim = [float(y) for y in args.ylim]
+    fig = weight.plot(df, index_quote, args.ylim)
 
     if args.pdf:
         pp = PdfPages(args.pdf)
         pp.savefig(fig)
         pp.close()
         print 'Saved figure in', args.pdf
+    elif args.png:
+        fig.savefig(args.png)
+        print 'Saved figure in', args.png
     else:
         plt.show()

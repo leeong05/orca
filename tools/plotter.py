@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
+import magic
+
 from orca.mongo.kday import UnivFetcher
 univ_fetcher = UnivFetcher(datetime_index=True, reindex=True)
 
@@ -22,7 +24,6 @@ from orca.utils.io import read_frame
 if __name__ == '__main__':
     import argparse
     import cPickle
-    import logging
 
     parser = argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file')
@@ -47,9 +48,23 @@ if __name__ == '__main__':
         help='For "ic"/"ac"/"turnover" plot, use simple moving average to smooth')
     parser.add_argument('--periods', help='Periods used in calculation of IC and AC', type=int, default=1)
     parser.add_argument('--pdf', help='Save plots in a PDF file', type=str)
+    parser.add_argument('--png', type=str, help='PNG file to save the plot')
     parser.add_argument('-s', '--start', type=str, help='Starting date')
     parser.add_argument('-e', '--end', type=str, help='Ending date')
     args = parser.parse_args()
+
+    if args.pdf and os.path.exists(args.pdf):
+        with magic.Magic() as m:
+            ftype = m.id_filename(args.pdf)
+            if ftype[:3] != 'PDF':
+                print 'The argument --pdf if exists must be a PDF file'
+                exit(0)
+    if args.png and os.path.exists(args.png):
+        with magic.Magic() as m:
+            ftype = m.id_filename(args.png)
+            if ftype[:3] != 'PNG':
+                print 'The argument --png if exists must be a PNG file'
+                exit(0)
 
     if args.atype == 'perf':
         with open(args.alpha) as file:
@@ -115,14 +130,15 @@ if __name__ == '__main__':
         fig = plotter.plot_turnover(ma=args.ma, startdate=args.start, enddate=args.end, which=args.which)
         figs.append(fig)
 
-    if args.pdf is not None:
-        pdf = args.pdf
-        if os.path.exists(pdf):
-            os.remove(pdf)
-        pp = PdfPages(pdf)
+    if args.pdf:
+        pp = PdfPages(args.pdf)
         for fig in figs:
             pp.savefig(fig)
         pp.close()
-        logging.info('Saved plots in {}'.format(pdf))
+        print 'Saved plots in {}'.format(args.pdf)
+    elif args.png:
+        for i, fig in enumerate(figs):
+            fig.savefig(str(i)+'_'+args.png)
+        print 'Saved plots in 0-{}_{}'.format(len(figs), args.pdf)
     else:
         plt.show()
