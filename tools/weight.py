@@ -83,7 +83,7 @@ class Weight(object):
         ax1.format_xdata = datefmt
         ax1.xaxis.set_major_formatter(datefmt)
 
-        if index_quote:
+        if index_quote is not None:
             ax2 = ax1.twinx()
             ax2.plot(self.alpha.index, index_quote, 'r')
             ax2.format_xdata = datefmt
