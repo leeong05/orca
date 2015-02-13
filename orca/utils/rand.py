@@ -11,12 +11,13 @@ from orca import (
         )
 from orca.utils import dateutil
 
-def random_alpha(startdate='20140103', n=None):
+def random_alpha(startdate='20140103', n=None, datetime_index=True):
     """Generate a random alpha(i.e. a DataFrame of random floats with DatetimeINdex and full sids columns).
 
     :param startdate: Starting point. Default: '20140103'
     :type startdate: int, str
     :param int n: Length of the returned DataFrame; when None, it will be a random number between 50 and 100. Default: None
+    :param boolean datetime_index: Whether to format the DataFrame with DatetimeIndex. Default: True
     """
     if not n >= 0:
         n = np.random.randint(50, 100)
@@ -24,9 +25,11 @@ def random_alpha(startdate='20140103', n=None):
                                    dateutil.compliment_datestring(str(startdate), -1, True),
                                    n)
     df = pd.DataFrame(np.random.randn(n, len(SIDS)), index=dates, columns=SIDS)
+    if datetime_index:
+        df.index = pd.to_datetime(df.index)
     return df
 
-def rand_intalpha(startdate='20140103', freq='30min', n=None):
+def random_intalpha(startdate='20140103', freq='30min', n=None):
     if not n >= 0:
         n = np.random.randint(10, 20)
     dates = dateutil.get_startfrom(DATES,
