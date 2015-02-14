@@ -2,10 +2,10 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-import re
 from collections import OrderedDict
 import abc
 import argparse
+import imp
 
 import numpy as np
 import pandas as pd
@@ -80,64 +80,65 @@ class AlphaCombinerBase(object):
 
 class CombinerWrapper(object):
 
-    def __init__(self, combiner, gcombiner=None, options={}):
-        self.combiner = combiner
-        self.gcombiner = combiner if gcombiner is None else gcombiner
-        self.options = options
-
     def run(self):
         self.parse_args(self)
-        self.parse_options(self)
-        self.parse_file(self)
-        X = self.group_fit(self)
-        dump_frame(X, self.args.output, self.args.type)
+        self.fit_by_group(self)
+        X = self.combine_groups(self)
+        dump_frame(X, self.output, self.filetype)
 
     def parse_args(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('file', help='Each line in the input file should have three columns: name, groupid, file_path; separated by space or comma. Line starting with # is ommitted')
-        parser.add_argument('-p', '--periods', help='Returns period', type=int, default=10)
+        parser.add_argument('file', help='A Python configuration script file')
         parser.add_argument('-s', '--start', help='IS startdate', type=str)
         parser.add_argument('-e', '--end', help='IS enddate', type=str)
         parser.add_argument('-o', '--output', help='Output file name; overwritten if exists', type=str, required=True)
         parser.add_argument('-t', '--type', choices=('csv', 'msgpack', 'pickle'), help='Output file type', default='msgpack', type=str)
-        for opt in self.options:
-            parser.add_argument('--'+opt, type=str)
-
         args = parser.parse_args()
-        self.args = args
 
-    def parse_options(self):
-        for opt in self.options:
-            self.options[opt] = self.args.__dict__[opt]
+        self.start, self.end = args.start, args.end
 
-    def parse_file(self):
+        mod = imp.load_source(args.file)
         self.groups = {}
-        pattern = re.compile(r'[#\s]')
-        with open(self.args.file) as file:
-            for line in file:
-                if line.startswith('#'):
-                    continue
-                cont = re.split(pattern, line.strip())
-                if len(cont) != 3:
-                    continue
-                name, group, fpath = cont
-                if group not in self.groups:
-                    self.groups[group] = self.combiner(self.args.periods, self.options)
-                self.groups[group].add_alpha(name, fpath)
+        for group, config in mod.groups.iteritems():
+            combiner = config['combiner']
+            for name, alpha_config in config['alphas'].iteritems():
+                alpha = read_frame(alpha_config['path'], alpha_config.get('filetype', None))
+                combiner.add_alpha(name, alpha)
+            self.groups[group] = combiner
 
-    def group_fit(self):
-        self.fitted = {}
+        if 'group_combiner' not in mod.__dict__:
+            try:
+                assert len(self.groups) == 1
+            except:
+                print 'For multiple groups, you should specify "group_combiner" in', args.file
+                raise
+            self.group_combiner = None
+        else:
+            if len(self.groups) == 1:
+                print 'With only one group specified, the "group_combiner" is not used'
+                self.group_combiner = None
+            else:
+                self.group_combiner = mod.group_combiner['combiner']
+                groups = mod.group_combiner['groups']
+                if not groups:
+                    self.groups_to_combine = self.groups.keys()
+                else:
+                    self.groups_to_combine = [group for group in groups if group in self.groups.keys()]
+                self.output = mod.group_combiner['output']
+                self.filetype = mod.group_combiner.get('filetype', 'msgpack')
+
+    def fit_by_group(self):
         for group, combiner in self.groups.iteritems():
             combiner.prepare_data()
-            X, Y = combiner.get_XY(self.args.start, self.args.end)
-            self.fitted[group] = combiner.fit(X, Y)
+            X, Y = combiner.get_XY(self.start, self.end)
+            self.groups[group] = combiner.fit(X, Y)
 
-        if len(self.fitted) == 1:
-            return self.fitted.values()[0]
+    def combine_groups(self):
+        if self.group_combiner is None:
+            return self.groups.values()[0]
 
-        gcombiner = self.gcombiner(self.args.periods, self.options)
-        for group, X in self.fitted.iteritems():
-            gcombiner.add_alpha(group, X)
-        gcombiner.prepare_data()
-        X, Y = gcombiner.get_XY(self.args.start, self.args.end)
-        return gcombiner.fit(X, Y)
+        for group, X in self.groups.iteritems():
+            self.group_combiner.add_alpha(group, X)
+        self.group_combiner.prepare_data()
+        X, Y = self.group_combiner.get_XY(self.start, self.end)
+        return self.group_combiner.fit(X, Y)
