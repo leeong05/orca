@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import pandas as pd
 
 from orca.combiner.regression import (
@@ -31,7 +33,7 @@ class MyOLSCombiner(OLSCombiner):
         return pd.Series(results.predict(X), index=X.index).unstack()
 
 
-groups = {
+groups = OrderedDict({
         'wdfund': {
             'combiner': OLSCombiner(20),
             'alphas': {
@@ -46,11 +48,11 @@ groups = {
                 'jyfund5': {'path': 'jyfund5.msgpack'},
                 },
             },
-        }
+        })
 
-group_combiner = {
+group_combiner = OrderedDict({
         'combiner': OLSCombiner(20),
         'groups': None,
         'output': 'wdfund.msgpack',
         'filetype': 'msgpack',
-        }
+        })
