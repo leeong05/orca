@@ -83,7 +83,6 @@ class AlphaCombinerBase(object):
         Y = Y.stack().ix[X.index]
         self.data['returns'] = Y
 
-        self.data = self.data.ix[Y.notnull()]
         self.info('Data prepared')
 
     def get_XY(self, start=None, end=None):
