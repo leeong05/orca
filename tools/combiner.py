@@ -13,6 +13,7 @@ def fit_by_group(groups, start, end):
         combiner.normalize()
         X, Y = combiner.get_XY(start, end)
         groups[group] = combiner.fit(X, Y)
+    return groups
 
 def combine_groups(group_combiner, groups, start, end):
     if group_combiner is None:
@@ -21,6 +22,7 @@ def combine_groups(group_combiner, groups, start, end):
     for group, X in groups.iteritems():
         group_combiner.add_alpha(group, X)
     group_combiner.prepare_data()
+    group_combiner.normalize()
     X, Y = group_combiner.get_XY(start, end)
     return group_combiner.fit(X, Y)
 
@@ -68,7 +70,7 @@ if __name__ == '__main__':
         output = mod.group_combiner.get('output', args.output)
         filetype = mod.group_combiner.get('filetype', args.filetype)
 
-    fit_by_group(groups, args.start, args.end)
+    groups = fit_by_group(groups, args.start, args.end)
     X = combine_groups(group_combiner, groups, args.start, args.end)
     dump_frame(X, output, filetype)
     print 'Saved in file', output
