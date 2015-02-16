@@ -132,6 +132,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--start', help='Startdate', type=str)
     parser.add_argument('-e', '--end', help='Enddate', type=str)
     parser.add_argument('--shift', help='Shift of index data w.r.t. weight', default=0, type=int)
+    parser.add_argument('--dump', type=str, help='File to dump weights')
     parser.add_argument('--pdf', type=str, help='PDF file to save the plot')
     parser.add_argument('--png', type=str, help='PNG file to save the plot')
     parser.add_argument('--ylim', nargs=2, help='Y-axis limit')
@@ -202,6 +203,8 @@ if __name__ == '__main__':
     if args.ylim:
         args.ylim = [float(y) for y in args.ylim]
     fig = weight.plot(df, index_quote, args.ylim)
+    if args.dump:
+        df.to_csv(args.dump)
 
     if args.pdf:
         pp = PdfPages(args.pdf)
