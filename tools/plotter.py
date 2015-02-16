@@ -85,8 +85,6 @@ if __name__ == '__main__':
             perf = IntPerformance(alpha)
         else:
             perf = Performance(alpha)
-        with open(args.alpha+'.pickle', 'w') as file:
-            cPickle.dump(perf, file)
 
     if args.univ:
         dates = np.unique([dt.strftime('%Y%m%d') for dt in perf.alpha.index])
