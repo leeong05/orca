@@ -23,7 +23,8 @@ class OLSCombiner(AlphaCombinerBase):
         return pd.Series(results.predict(X), index=X.index).unstack()
 
     def normalize(self):
-        self.data[:, 2:-1] = self.data[:, 2:-1].fillna(0)
+        for i in range(2, self.data.shape[1]-1):
+            self.data.iloc[:, i] = self.data.iloc[:, i].fillna(0)
 
 
 class QuantRegCombiner(AlphaCombinerBase):
@@ -40,7 +41,8 @@ class QuantRegCombiner(AlphaCombinerBase):
         return pd.Series(results.predict(X), index=X.index).unstack()
 
     def normalize(self):
-        self.data[:, 2:-1] = self.data[:, 2:-1].fillna(0)
+        for i in range(2, self.data.shape[1]-1):
+            self.data.iloc[:, i] = self.data.iloc[:, i].fillna(0)
 
 
 class RidgeCombiner(AlphaCombinerBase):
@@ -58,7 +60,8 @@ class RidgeCombiner(AlphaCombinerBase):
         return pd.Series(ridge.predict(X), index=X.index).unstack()
 
     def normalize(self):
-        self.data[:, 2:-1] = self.data[:, 2:-1].fillna(0)
+        for i in range(2, self.data.shape[1]-1):
+            self.data.iloc[:, i] = self.data.iloc[:, i].fillna(0)
 
 
 class LassoCombiner(AlphaCombinerBase):
@@ -76,7 +79,8 @@ class LassoCombiner(AlphaCombinerBase):
         return pd.Series(ridge.predict(X), index=X.index).unstack()
 
     def normalize(self):
-        self.data[:, 2:-1] = self.data[:, 2:-1].fillna(0)
+        for i in range(2, self.data.shape[1]-1):
+            self.data.iloc[:, i] = self.data.iloc[:, i].fillna(0)
 
 
 class ElasticNetCombiner(AlphaCombinerBase):
@@ -95,4 +99,5 @@ class ElasticNetCombiner(AlphaCombinerBase):
         return pd.Series(elastic.predict(X), index=X.index).unstack()
 
     def normalize(self):
-        self.data[:, 2:-1] = self.data[:, 2:-1].fillna(0)
+        for i in range(2, self.data.shape[1]-1):
+            self.data.iloc[:, i] = self.data.iloc[:, i].fillna(0)
