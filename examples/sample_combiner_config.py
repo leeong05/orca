@@ -1,18 +1,30 @@
+from orca.combiner.regression import (
+        OLSCombiner,
+        QuantRegCombiner,
+        RidgeCombiner,
+        LassoCombiner,
+        )
+
 groups = {
-        'g1': {
-            'combiner': 'Combiner(5)',
+        'wdfund': {
+            'combiner': OLSCombiner(20),
             'alphas': {
-                'alpha1': {
-                    'path': 'file_path_to_alpha1',
-                    'filetype': 'msgpack',
-                    },
+                'wdfund1': {'path': 'wdfund1.msgpack'},
+                'wdfund2': {'path': 'wdfund2.msgpack'},
+                'wdfund3': {'path': 'wdfund3.msgpack'},
+                'wdfund4': {'path': 'wdfund4.msgpack'},
+                'jyfund1': {'path': 'jyfund1.msgpack'},
+                'jyfund2': {'path': 'jyfund2.msgpack'},
+                'jyfund3': {'path': 'jyfund3.msgpack'},
+                'jyfund4': {'path': 'jyfund4.msgpack'},
+                'jyfund5': {'path': 'jyfund5.msgpack'},
                 },
             },
         }
 
 group_combiner = {
-        'combiner': 'Combiner(10)',
+        'combiner': OLSCombiner(20),
         'groups': None,
-        'output': 'output',
+        'output': 'wdfund.msgpack',
         'filetype': 'msgpack',
         }

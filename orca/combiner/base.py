@@ -5,7 +5,6 @@
 from collections import OrderedDict
 import abc
 
-import numpy as np
 import pandas as pd
 import logbook
 logbook.set_datetime_format('local')
@@ -61,37 +60,44 @@ class AlphaCombinerBase(object):
         """
         :param DataFrame alpha: Alpha to be added
         """
-        self.name_alpha[name] = alpha.stack()
+        alpha.index = pd.to_datetime(alpha.index)
+        self.name_alpha[name] = alpha
+        self.info('Added alpha {}'.format(name))
 
     def __setitem__(self, name, alpha):
         """Convenient method wrapper of :py:meth:`add_alpha`."""
         self.add_alpha(name, alpha)
+        self.info('Added alpha {}'.format(name))
 
     def prepare_data(self):
         """Prepare inputs for regression."""
-        X = pd.DataFrame(self.name_alpha)
+        X = pd.Panel.from_dict(self.name_alpha, intersect=False)
+        X = X.to_frame(filter_observations=False).dropna(how='all')
         X.index.names = ['date', 'sid']
-        X = X.dropna(axis=0, how='all')
         self.data = X.reset_index()
         self.data.index = X.index
 
         startdate, enddate = self.data['date'].min().strftime('%Y%m%d'), self.data['date'].max().strftime('%Y%m%d')
-        Y = self.quote.fetch('returnsN', self.periods, startdate, enddate, self.periods)[np.unique(self.data['sid'])]
-        Y = Y.shift(-self.periods).iloc[self.periods:].stack()
-        Y = Y.ix[X.index]
+        Y = self.quote.fetch('returnsN', self.periods, startdate, enddate, self.periods)
+        Y = Y.shift(-self.periods).iloc[self.periods:]
+        Y = Y.stack().ix[X.index]
         self.data['returns'] = Y
 
         self.data = self.data.ix[Y.notnull()]
+        self.info('Data prepared')
 
     def get_XY(self, start=None, end=None):
+        data = self.data
         if start is not None:
-            data = self.data.query('date >= {!r}'.format(str(start)))
+            data = data.query('date >= {!r}'.format(str(start)))
         if end is not None:
-            data = data.query('data <= {!r}'.format(str(end)))
-        return data.iloc[:, 2:-1], data.iloc[:, -1]
+            data = data.query('date <= {!r}'.format(str(end)))
+        X, Y = data.iloc[:, 2:-1], data.iloc[:, -1]
+        return X, Y
 
-    def normalize(self, X):
-        return X.fillna(0)
+    @abc.abstractmethod
+    def normalize(self):
+        raise NotImplementedError
 
     @abc.abstractmethod
     def fit(self, X, Y):

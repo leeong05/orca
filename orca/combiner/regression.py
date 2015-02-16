@@ -2,7 +2,6 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-import numpy as np
 import pandas as pd
 
 import statsmodels.api as sm
@@ -17,12 +16,13 @@ class OLSCombiner(AlphaCombinerBase):
         super(OLSCombiner, self).__init__(periods, **kwargs)
 
     def fit(self, X, Y):
-        X = self.normalize(X)
         results = sm.OLS(Y, X).fit()
         self.info('Regression summary:\n{}'.format(results.summary()))
         X = self.data.iloc[:, 2:-1]
-        X = self.normalize(X)
-        return results.predict(X).unstack()
+        return pd.Series(results.predict(X), index=X.index).unstack()
+
+    def normalize(self):
+        self.data = self.data.fillna(0)
 
 
 class QuantRegCombiner(AlphaCombinerBase):
@@ -32,12 +32,13 @@ class QuantRegCombiner(AlphaCombinerBase):
         self.q = q
 
     def fit(self, X, Y):
-        X = self.normalize(X)
         results = sm.QuantReg(Y, X).fit(self.q)
         self.info('Regression summary:\n{}'.format(results.summary()))
         X = self.data.iloc[:, 2:-1]
-        X = self.normalize(X)
-        return results.predict(X).unstack()
+        return pd.Series(results.predict(X), index=X.index).unstack()
+
+    def normalize(self):
+        self.data = self.data.fillna(0)
 
 
 class RidgeCombiner(AlphaCombinerBase):
@@ -48,12 +49,13 @@ class RidgeCombiner(AlphaCombinerBase):
         self.fit_intercept = fit_intercept
 
     def fit(self, X, Y):
-        X = self.normalize(X)
         ridge = skl.Ridge(alpha=self.alpha, fit_intercept=self.fit_intercept)
         ridge.fit(X, Y)
         X = self.data.iloc[:, 2:-1]
-        X = self.normalize(X)
         return pd.Series(ridge.predict(X), index=X.index).unstack()
+
+    def normalize(self):
+        self.data = self.data.fillna(0)
 
 
 class LassoCombiner(AlphaCombinerBase):
@@ -64,12 +66,13 @@ class LassoCombiner(AlphaCombinerBase):
         self.fit_intercept = fit_intercept
 
     def fit(self, X, Y):
-        X = self.normalize(X)
         ridge = skl.Lasso(alpha=self.alpha, fit_intercept=self.fit_intercept)
         ridge.fit(X, Y)
         X = self.data.iloc[:, 2:-1]
-        X = self.normalize(X)
         return pd.Series(ridge.predict(X), index=X.index).unstack()
+
+    def normalize(self):
+        self.data = self.data.fillna(0)
 
 
 class ElasticNetCombiner(AlphaCombinerBase):
@@ -81,9 +84,10 @@ class ElasticNetCombiner(AlphaCombinerBase):
         self.fit_intercept = fit_intercept
 
     def fit(self, X, Y):
-        X = self.normalize(X)
         ridge = skl.ElasticNet(alpha=self.alpha, l1_ratio=self.rho, fit_intercept=self.fit_intercept)
         ridge.fit(X, Y)
         X = self.data.iloc[:, 2:-1]
-        X = self.normalize(X)
         return pd.Series(ridge.predict(X), index=X.index).unstack()
+
+    def normalize(self):
+        self.data = self.data.fillna(0)

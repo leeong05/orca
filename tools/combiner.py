@@ -10,10 +10,11 @@ from orca.utils.io import (
 def fit_by_group(groups, start, end):
     for group, combiner in groups.iteritems():
         combiner.prepare_data()
+        combiner.normalize()
         X, Y = combiner.get_XY(start, end)
         groups[group] = combiner.fit(X, Y)
 
-def combine_groups(groups, group_combiner, start, end):
+def combine_groups(group_combiner, groups, start, end):
     if group_combiner is None:
         return groups.values()[0]
 
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    mod = imp.load_source(args.file)
+    mod = imp.load_source('config',  args.file)
     groups = {}
     for group, config in mod.groups.iteritems():
         combiner = config['combiner']
@@ -70,3 +71,4 @@ if __name__ == '__main__':
     fit_by_group(groups, args.start, args.end)
     X = combine_groups(group_combiner, groups, args.start, args.end)
     dump_frame(X, output, filetype)
+    print 'Saved in file', output
