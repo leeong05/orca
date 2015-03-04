@@ -2,65 +2,67 @@ db.dates.ensureIndex({date: 1, unique: true, dropDups: true})
 db.sids.ensureIndex({sid: 1, unique: true, dropDups: true})
 
 db.misc.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.misc.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.calendar.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.calendar.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.universe.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.universe.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.cax.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.cax.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.shares.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.shares.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.industry.ensureIndex({standard: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.industry.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.industry_info.ensureIndex({standard: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.industry_info.ensureIndex({standard: 1, date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.index_components.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
-
-#db.jybs.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
-#db.jybs.ensureIndex({sid: 1, date: 1}, {background: true})
-#
-#db.jycs.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
-#db.jycs.ensureIndex({sid: 1, date: 1}, {background: true})
-#
-#db.jyis.ensureIndex({date: 1, year: 1, quarter: 1}, {background: true})
-#db.jyis.ensureIndex({sid: 1, date: 1}, {background: true})
-#
-#db.jydata.ensureIndex({dtype: 1, date: 1}, {background: true})
-#db.jydata.ensureIndex({sid: 1, dtype: 1, date: 1}, {background: true})
-#db.jydata.ensureIndex({date: 1, dtype: 1, qtrno: 1}, {background: true})
-#
-#db.jyindex.ensureIndex({dtype: 1, date: 1}, {background: true})
-#db.jyindex.ensureIndex({sid: 1, dtype: 1, date: 1}, {background: true})
-#db.jyindex.ensureIndex({date: 1, dtype: 1, qtrno: 1}, {background: true})
+db.index_components.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.quote.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.eod_value.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.eod_value.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.index_quote.ensureIndex({index: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.index_quote.ensureIndex({date: 1, index: 1}, {unique: true, dropDups: true, background: true})
 
 db.sywgindex_quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.sywgindex_quote.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
-db.ts_1min.ensureIndex({dname: 1, date: 1}, {background: true})
-db.tsindex_1min.ensureIndex({dname: 1, date: 1}, {background: true})
+db.ts_1min.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: true, background: true})
+db.ts_1min.ensureIndex({dname: 1, time: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.ts_1min.ensureIndex({date: 1, time: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_1min.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_1min.ensureIndex({dname: 1, time: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_1min.ensureIndex({date: 1, time: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
-db.ts_5min.ensureIndex({dname: 1, date: 1}, {background: true})
-db.tsindex_5min.ensureIndex({dname: 1, date: 1}, {background: true})
+db.ts_5min.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: true, background: true})
+db.ts_5min.ensureIndex({dname: 1, time: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.ts_5min.ensureIndex({date: 1, time: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_5min.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_5min.ensureIndex({dname: 1, time: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_5min.ensureIndex({date: 1, time: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
-db.ts_30min.ensureIndex({dname: 1, date: 1}, {background: true})
-db.tsindex_30min.ensureIndex({dname: 1, date: 1}, {background: true})
+db.ts_30min.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: true, background: true})
+db.ts_30min.ensureIndex({dname: 1, time: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.ts_30min.ensureIndex({date: 1, time: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_30min.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_30min.ensureIndex({dname: 1, time: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_30min.ensureIndex({date: 1, time: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
-db.ts_ret.ensureIndex({dname: 1, date: 1}, {background: true})
+db.ts_ret.ensureIndex({dname: 1, date: 1, time: 1}, {unique: true, dropDups: true, background: true})
+db.ts_ret.ensureIndex({date: 1, time: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.tsindex_ret.ensureIndex({index: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.tsindex_ret.ensureIndex({index: 1, date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_idmaps.ensureIndex({date: 1}, {unique: true, dropDups: true, background: true})
-
-db.barra_D_exposure.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
-db.barra_D_exposure.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
-db.barra_D_returns.ensureIndex({factor: 1, date: 1}, {unique: true, dropDups: true, background: true})
-db.barra_D_covariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})
-db.barra_D_precovariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDups: true, background: true})
-db.barra_D_specifics.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_S_exposure.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.barra_S_exposure.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
@@ -70,6 +72,7 @@ db.barra_S_precovariance.ensureIndex({date: 1, factor: 1}, {unique: true, dropDu
 db.barra_S_specifics.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.zyconsensus.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.zyconsensus.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.zyscore_adjust.ensureIndex({date: 1, org_id: 1}, {background: true})
 db.zyscore_adjust.ensureIndex({date: 1, report_type: 1}, {background: true})
@@ -82,8 +85,11 @@ db.zyreport_adjust.ensureIndex({report_date: 1, org_id: 1}, {background: true})
 db.zyreport_adjust.ensureIndex({report_date: 1, report_type: 1}, {background: true})
 
 db.IF.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.IF.ensureIndex({sid: 1, date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.lof.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.lof.ensureIndex({sid: 1, date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.alpha.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.alpha.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.performance.ensureIndex({alpha: 1, mode: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.performance.ensureIndex({mode: 1, alpha: 1, date: 1}, {unique: true, dropDups: true, background: true})
