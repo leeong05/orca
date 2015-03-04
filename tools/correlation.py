@@ -62,6 +62,7 @@ if __name__ == '__main__':
     metrics = ('returns',) + tuple([('r' if rank else '') + 'IC' + str(n) for rank in [True, False] for n in (1, 5, 20)])
     parser.add_argument('--metric', choices=metrics, default='rIC1', help='What type of correlations is of interest?')
     parser.add_argument('--limit', type=int, default=10)
+    parser.add_argument('-n', '--negate', action='store_true')
     args = parser.parse_args()
 
     alpha_metric, dates = {}, None
@@ -111,7 +112,7 @@ if __name__ == '__main__':
                 extmetric_df = extmetric_df.iloc[-args.days:]
             for name, metric in alpha_metric.iteritems():
                 corr = extmetric_df.corrwith(metric)
-                corr.sort(ascending=False)
+                corr.sort(ascending=bool(args.negate))
                 if len(corr) > args.limit:
                     corr = corr.ix[:args.limit]
                 print name

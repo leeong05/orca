@@ -206,7 +206,7 @@ class KDayFetcher(FetcherBase):
         query = {'dname': dname, 'date': {'$gte': window[0], '$lte': window[-1]}}
         proj = {'_id': 0, 'dvalue': 1, 'date': 1}
         cursor = self.collection.find(query, proj)
-        df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T.reindex(index=window)
+        df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
         del cursor
         return self.format(df, datetime_index, reindex)
 

@@ -43,10 +43,6 @@ class MsgPackSaver(SaverBase):
     """Class for saving data in msgpack files."""
 
     def save(self, name, data):
-        """Use ``kwargs`` to pass additional file writing parameters or override the default setting.
-
-        .. seealso:: :py:meth:`orca.data.base.SaverBase.configure`
-        """
         fname = os.path.join(self.cachedir, name)
         if os.path.exists(fname):
             self.warning('Existing file will be overwritten: {0!r}'.format(fname))

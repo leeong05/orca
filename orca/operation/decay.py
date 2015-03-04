@@ -19,11 +19,11 @@ class DecayOperation(OperationBase):
         self.days = days
         self.dense = dense
 
-    def operate(self, alpha, exp=1):
+    def operate(self, alpha, exp=1, minimum=0):
         div = self.days ** exp
         current = (alpha.fillna(0) if self.dense else alpha) * self.days ** exp
         for i in range(1, self.days):
-            current += alpha.shift(i).fillna(0) * (self.days - i) ** exp
-            div += (self.days - i) ** exp
+            current += alpha.shift(i).fillna(0) * (self.days-i*(1-minimum)) ** exp
+            div += (self.days-i*(1-minimum)) ** exp
         current[alpha.fillna(method='ffill', limit=self.days-1).isnull()] = np.nan
         return current / div

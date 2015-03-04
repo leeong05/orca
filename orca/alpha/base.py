@@ -10,7 +10,6 @@ import argparse
 
 import numpy as np
 import pandas as pd
-from pandas.tseries.index import DatetimeIndex
 import logbook
 logbook.set_datetime_format('local')
 from pymongo import MongoClient
@@ -110,12 +109,8 @@ class AlphaBase(object):
 
     @staticmethod
     def fetch_window(df, window):
-        if isinstance(df.index, DatetimeIndex):
-            window = dateutil.to_pddatetime(window)
-        window = [date for date in window if date in df.index]
-        if not window:
-            return pd.DataFrame(columns=df.columns)
-        return df.ix[window]
+        start, end = map(df.index.get_loc, [window[0], window[-1]])
+        return df.ix[start: end+1]
 
     @staticmethod
     def fetch_history(df, date, backdays, delay=0, date_check=False):
@@ -160,6 +155,36 @@ class AlphaBase(object):
     @staticmethod
     def record_fetch_daily(df, date, offset=0, date_check=False):
         return AlphaBase.record_fetch_history(df, date, 1, delay=offset, date_check=date_check)
+
+    @staticmethod
+    def interval_fetch(pl, times, startdate, enddate, backdays=0, date_check=False):
+        window = dateutil.cut_window(
+                DATES,
+                dateutil.compliment_datestring(str(startdate), -1, date_check),
+                dateutil.compliment_datestring(str(enddate), 1, date_check),
+                backdays
+                )
+        return AlphaBase.interval_fetch_window(pl, times, window)
+
+    @staticmethod
+    def interval_fetch_window(pl, times, window):
+        start, end = map(pl.major_axis.get_loc, [window[0], window[-1]])
+        return pl[times, start: end+1, :]
+
+    @staticmethod
+    def interval_fetch_history(pl, times, date, backdays, delay=0, date_check=False):
+        date = dateutil.compliment_datestring(str(date), -1, date_check)
+        di, date = dateutil.parse_date(DATES, date, -1)
+        di -= delay
+        window = DATES[di-backdays+1: di+1]
+        return AlphaBase.interval_fetch_window(pl, times, window)
+
+    @staticmethod
+    def interval_fetch_daily(pl, times, date, offset=0, date_check=False):
+        res = AlphaBase.interval_fetch_history(pl, times, date, 1, delay=offset, date_check=date_check)
+        if isinstance(times, str):
+            return res.iloc[0]
+        return res.iloc[:, 0, :]
 
 
 class IntervalAlphaBase(AlphaBase):
@@ -225,6 +250,10 @@ class BacktestingAlpha(AlphaBase):
     def __setitem__(self, key, value):
         if key in self.alphas:
             self.warning('{0!r} already exists as a key'.format(key))
+        if isinstance(value, dict):
+            value = pd.Series(value)
+        if not isinstance(value, pd.Series):
+            raise Exception('Alpha type not expected')
         self.alphas[key] = value[np.isfinite(value)]
 
     def dump(self, fpath, ftype='csv'):
@@ -280,6 +309,10 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
             key = self.make_datetime(*key)
         if key in self.alphas:
             self.warning('{0!r} already exists as a key'.format(key))
+        if isinstance(value, dict):
+            value = pd.Series(value)
+        if not isinstance(value, pd.Series):
+            raise Exception('Alpha type not expected')
         self.alphas[key] = value[np.isfinite(value)]
 
     def push(self, key, value):
@@ -417,6 +450,10 @@ class ProductionAlpha(AlphaBase):
         return df.reindex(columns=SIDS)
 
     def push(self, alpha, date):
+        if isinstance(alpha, dict):
+            alpha = pd.Series(alpha)
+        if not isinstance(alpha, pd.Series):
+            raise Exception('Alpha type not expected')
         alpha = alpha[np.isfinite(alpha)]
         self.collection.update(
                 {'dname': self.name, 'date': date},
