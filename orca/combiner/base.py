@@ -2,6 +2,7 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+from threading import Lock
 from collections import OrderedDict
 import abc
 
@@ -26,11 +27,22 @@ class AlphaCombinerBase(object):
 
     LOGGER_NAME = 'combiner'
 
+    mongo_lock = Lock()
+    quote = QuoteFetcher(datetime_index=True, reindex=True)
+    returns = None
+
+    @classmethod
+    def get_returns(cls, n, startdate):
+        if cls.returns is None or n not in cls.returns or\
+                cls.returns[n].index[0].strftime('%Y%m%d'):
+            with cls.mongo_lock:
+                cls.returns[n] = cls.quote.fetch('returnsN', n, startdate, None, n)
+        return cls.returns[n]
+
     def __init__(self, periods, debug_on=True, **kwargs):
         self.periods = periods
         self.logger = logbook.Logger(AlphaCombinerBase.LOGGER_NAME)
         self.debug_on = debug_on
-        self.quote = QuoteFetcher(datetime_index=True, reindex=True)
         self.name_alpha = OrderedDict()
         self.data = None
         self.__dict__.update(kwargs)
@@ -56,11 +68,13 @@ class AlphaCombinerBase(object):
         """Logs a message with level CRITICAL on the alpha logger."""
         self.logger.critical(msg)
 
-    def add_alpha(self, name, alpha, ftype=None):
+    def add_alpha(self, name, alpha, ftype=None, preprocess=False):
         """
         :param DataFrame alpha: Alpha to be added
         """
         alpha.index = pd.to_datetime(alpha.index)
+        if preprocess:
+            alpha = self.preprocess(alpha)
         self.name_alpha[name] = alpha
         self.info('Added alpha {}'.format(name))
 
@@ -78,7 +92,7 @@ class AlphaCombinerBase(object):
         self.data.index = X.index
 
         startdate, enddate = self.data['date'].min().strftime('%Y%m%d'), self.data['date'].max().strftime('%Y%m%d')
-        Y = self.quote.fetch('returnsN', self.periods, startdate, enddate, self.periods)
+        Y = self.get_returns(self.periods, startdate)[:enddate]
         Y = Y.shift(-self.periods).iloc[self.periods:]
         Y = Y.stack().ix[X.index]
         self.data['returns'] = Y
@@ -100,4 +114,8 @@ class AlphaCombinerBase(object):
 
     @abc.abstractmethod
     def fit(self, X, Y):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def preprocess(self, alpha):
         raise NotImplementedError

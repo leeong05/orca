@@ -46,7 +46,7 @@ if __name__ == '__main__':
         combiner = config['combiner']
         for name, alpha_config in config['alphas'].iteritems():
             alpha = read_frame(alpha_config['path'], alpha_config.get('filetype', None))
-            combiner.add_alpha(name, alpha)
+            combiner.add_alpha(name, alpha, preprocess=alpha_config.get('preprocess', False))
         groups[group] = combiner
 
     if 'group_combiner' not in mod.__dict__:
