@@ -240,23 +240,12 @@ class BarraFactorFetcher(BarraFetcher):
             df.index = pd.to_datetime(df.index)
         return df[factor] if isinstance(factor, str) else df
 
-    def fetch_daily_covariance(self, date, prevra=False, **kwargs):
+    def fetch_daily_covariance(self, date, **kwargs):
         """Fecth factor covariance matrix on a given date."""
-        date_check = kwargs.get('date_check', self.date_check)
-        date = dateutil.compliment_datestring(str(date), -1, date_check)
-        date = dateutil.parse_date(DATES, date, -1)[1]
-        query = {'date': date}
-        proj = {'_id': 0, 'factor': 1, 'covariance': 1}
-        if prevra:
-            cursor = self.precov.find(query, proj)
-        else:
-            cursor = self.cov.find(query, proj)
-        df = pd.DataFrame({row['factor']: row['covariance'] for row in cursor})
-        del cursor
-        return df
+        return self.fetch_covariance(startdate=date, enddate=date, **kwargs)[date]
 
-    def fetch_covariance(self, factor, startdate=None, enddate=None, **kwargs):
-        if factor.find('_') == -1:
+    def fetch_covariance(self, factor=None, startdate=None, enddate=None, **kwargs):
+        if isinstance(factor, str) and factor.find('_') == -1:
             factor = self.prefix + '_' + factor
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
         prevra = kwargs.get('prevra', False)
@@ -271,17 +260,25 @@ class BarraFactorFetcher(BarraFetcher):
             startdate = dateutil.parse_date(DATES, startdate, 1)[1]
         else:
             startdate = DATES[0]
-        query = {'factor': factor, 'date': {'$lte': enddate, '$gte': startdate}}
-        proj = {'_id': 0, 'date': 1, 'covariance': 1}
+        query = {'date': {'$lte': enddate, '$gte': startdate}}
+        if isinstance(factor, str):
+            query['factor'] = factor
+        proj = {'_id': 0, 'date': 1, 'covariance': 1, 'factor': 1}
         if prevra:
             cursor = self.precov.find(query, proj)
         else:
             cursor = self.cov.find(query, proj)
-        df = pd.DataFrame({row['date']: row['covariance'] for row in cursor}).T
+        if factor:
+            res = pd.DataFrame({row['date']: row['covariance'] for row in cursor}).T
+            if datetime_index:
+                res.index = pd.to_datetime(res.index)
+        else:
+            res = pd.DataFrame({(row['date'], row['factor']): row['covariance'] for row in cursor}).T
+            res = pd.Panel({date: res.ix[date] for date in res.unstack().index})
+            if datetime_index:
+                res.items = pd.to_datetime(res.items)
         del cursor
-        if datetime_index:
-            df.index = pd.to_datetime(df.index)
-        return df
+        return res
 
     def fetch_variance(self, factor, *args, **kwargs):
         return self.fetch_covariance(factor, *args, **kwargs)[factor]
@@ -326,7 +323,7 @@ class BarraFactorFetcher(BarraFetcher):
         date = DATES[di-offset]
 
         if dname == 'covariance':
-            return self.fetch_covariance(date)
+            return self.fetch_daily_covariance(date)
 
         factor = kwargs.get('factor', None)
         return self.fetch_returns(factor, [date], **kwargs).iloc[0]
@@ -384,8 +381,7 @@ class BarraCovarianceFetcher(BarraFetcher):
         """
         suppress_warning = kwargs.get('suppress_warning', self.suppress_warning)
 
-        if sids is None or len(sids) == 0:
-            sids = SIDS
+        sids = sids and SIDS
 
         exposure = self.fexp.fetch_daily(date, offset=offset).ix[sids]
         exposure = exposure.dropna(axis=0, how='all').fillna(0)
