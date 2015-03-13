@@ -45,6 +45,11 @@ class IndustryFetcher(KDayFetcher):
         del cursor
         return self.format(df, datetime_index, reindex)
 
+    def fetch_daily(self, dname, date=None, **kwargs):
+        if date is None:
+            date = DATES[-1]
+        return super(IndustryFetcher, self).fetch_daily(dname, date, **kwargs)
+
     def fetch_info(self, dname='name', level=0, date=None, **kwargs):
         """Fetch industry-name/industry-index correspondance.
 

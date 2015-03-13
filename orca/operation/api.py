@@ -195,10 +195,19 @@ from rank import (
         IndustryRankOperation,
         BoardRankOperation,
         )
+from group import (
+        group_by_board,
+        group_by_industry,
+        )
 
-def decay(df, n, dense=False, exp=1):
+def group_by(df, group, standard='SW2014', date=None):
+    if group == 'board':
+        return group_by_board(df)
+    return group_by_industry(df, group, standard=standard, date=date)
+
+def decay(df, n, dense=False, exp=1, minimum=0):
     """Wrapper for :py:class:`orca.operation.decay.DecayOperation`."""
-    return DecayOperation(n, dense=dense).operate(df, exp=exp)
+    return DecayOperation(n, dense=dense).operate(df, exp=exp, minimum=minimum)
 
 def barra_neut(df, model, factors):
     """Wrapper for :py:class:`orca.operation.barra.BarraFactorNeutOperation`."""

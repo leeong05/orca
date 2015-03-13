@@ -89,6 +89,22 @@ class BarraOperation(OperationBase):
         self.exposure = BarraExposureFetcher(model, **self.kwargs)
         self.factor = BarraFactorFetcher(model, **self.kwargs)
 
+    def parse_factors(self, factors):
+        if isinstance(factors, str):
+            factors = [factors]
+        elif not factors:
+            factors = self.all_factors
+        assert isinstance(factors, list)
+        _factors = set()
+        for factor in factors:
+            if factor == 'industry':
+                _factors = _factors | set(self.industry_factors)
+            elif factors == 'style':
+                _factors = _factors | set(self.style_factors)
+            if factor in self.all_factors:
+                _factors = set(self.all_factors)
+        return list(_factors)
+
 
 def worker1(args):
     date, alpha, exposure = args
@@ -119,14 +135,7 @@ class BarraFactorNeutOperation(BarraOperation):
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str, list
         """
-        if factors == 'industry':
-            factors = self.industry_factors
-        elif factors == 'style':
-            factors = self.style_factors
-        elif not factors:
-            factors = self.all_factors
-        assert isinstance(factors,  list)
-        factors = [f for f in factors if f in self.all_factors]
+        factors = self.parse_factors(factors)
 
         if isinstance(alpha.index, pd.tseries.index.DatetimeIndex):
             datetime_index = True
@@ -198,14 +207,7 @@ class BarraFactorCorrNeutOperation(BarraOperation):
         :param factors: Factors to be neutralized. When it is a string, it must take value in ('industry', 'style', 'all')
         :type factors: str, list
         """
-        if factors == 'industry':
-            factors = self.industry_factors
-        elif factors == 'style':
-            factors = self.style_factors
-        elif not factors:
-            factors = self.all_factors
-        assert isinstance(factors,  list)
-        factors = [f for f in factors if f in self.all_factors]
+        factors = self.parse_factors(factors)
 
         if isinstance(alpha.index, pd.tseries.index.DatetimeIndex):
             datetime_index = True

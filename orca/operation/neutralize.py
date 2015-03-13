@@ -47,6 +47,7 @@ class GroupNeutOperation(OperationBase):
 
         if self.group is None:
             return alpha.subtract(alpha.mean(axis=1), axis=0)
+
         if isinstance(self.group, pd.Series):
             sids = self.group.dropna().index
             nalpha = alpha.T.ix[sids]
@@ -86,8 +87,7 @@ class IndustryNeutOperation(GroupNeutOperation):
             return nalpha.reindex(index=alpha.index)
 
         window = np.unique(dateutil.to_datestr(alpha.index))
-        group = self.industry.fetch_window(group, window)
-        self.group = group.iloc[-1] if simple else group
+        self.group = simple and self.industry.fetch_daily(group, window[-1]) or self.industry.fetch_window(group, window)
         return super(IndustryNeutOperation, self).operate(alpha)
 
 
