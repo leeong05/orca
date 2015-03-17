@@ -87,7 +87,10 @@ class IndustryNeutOperation(GroupNeutOperation):
             return nalpha.reindex(index=alpha.index)
 
         window = np.unique(dateutil.to_datestr(alpha.index))
-        self.group = simple and self.industry.fetch_daily(group, window[-1]) or self.industry.fetch_window(group, window)
+        if simple:
+            self.group = self.industry.fetch_daily(group, window[-1])
+        else:
+            self.group = self.industry.fetch_window(group, window)
         return super(IndustryNeutOperation, self).operate(alpha)
 
 
