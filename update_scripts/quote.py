@@ -17,22 +17,19 @@ class QuoteUpdater(UpdaterBase):
         super(QuoteUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
-        self.connect_jydb()
         self.dates = self.db.dates.distinct('date')
-        if self.source == 'mssql':
-            self.quote_sql = quote_mssql
-        elif self.source == 'oracle':
-            self.quote_sql = quote_oracle
+        self.collection = self.db.quote
+        if not self.skip_update:
+            self.connect_jydb()
+            if self.source == 'mssql':
+                self.quote_sql = quote_mssql
+            elif self.source == 'oracle':
+                self.quote_sql = quote_oracle
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index sid_1 on collection sids')
-        self.db.sids.ensure_index([('sid', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1 on collection quote')
-        self.db.quote.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
+        pass
 
     def update(self, date):
         """Update daily quote data for the **same** day after market close."""
@@ -41,7 +38,7 @@ class QuoteUpdater(UpdaterBase):
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
         if len(df) == 0:
-            self.logger.error('No records found for {} on {}', self.db.quote.name, date)
+            self.logger.error('No records found for {} on {}', self.collection.name, date)
             return
 
         df.columns = ['sid'] + self.quote_sql.dnames
@@ -56,7 +53,7 @@ class QuoteUpdater(UpdaterBase):
         di = self.dates.index(date)
         if di >= 1:
             prev_date = self.dates[di-1]
-            prev_fclose = self.db.quote.find_one({'dname': 'fclose', 'date': prev_date}, {'_id': 0, 'dvalue': 1})['dvalue']
+            prev_fclose = self.collection.find_one({'dname': 'fclose', 'date': prev_date}, {'_id': 0, 'dvalue': 1})['dvalue']
             nsids = set(prev_fclose.keys()) - set(df.index)
         else:
             prev_date = None
@@ -68,10 +65,29 @@ class QuoteUpdater(UpdaterBase):
 
         for dname in self.quote_sql.dnames:
             key = {'dname': dname, 'date': date}
-            self.db.quote.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
-        self.db.quote.update({'dname': 'fclose', 'date': date}, {'$set': {'dvalue': fclose}}, upsert=True)
+            self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
+        self.collection.update({'dname': 'fclose', 'date': date}, {'$set': {'dvalue': fclose}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}',
-                len(df), self.db.quote.name, self.db.name, date)
+                len(df), self.collection.name, self.db.name, date)
+
+    def monitor(self, date):
+        statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
+        SQL1 = "SELECT * FROM mongo_quote WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_quote SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_quote (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+
+        cursor = self.monitor_connection.cursor()
+        for dname in self.collection.distinct('dname'):
+            ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue'])
+            for statistic in statistics:
+                cursor.execute(SQL1, (date, dname, statistic))
+                if list(cursor):
+                    cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, dname, statistic))
+                else:
+                    cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
+            self.logger.info('MONITOR for {} on {}', dname, date)
+        self.monitor_connection.commit()
+
 
 if __name__ == '__main__':
     quote = QuoteUpdater()

@@ -29,6 +29,10 @@ db.quote.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, backgro
 db.quote.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.eod_value.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.eod_value.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.moneyflow.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.moneyflow.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.l2indicator.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.l2indicator.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.index_quote.ensureIndex({index: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.index_quote.ensureIndex({date: 1, index: 1}, {unique: true, dropDups: true, background: true})

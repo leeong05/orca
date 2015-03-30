@@ -37,7 +37,10 @@ class SYWGQuoteFetcher(KDayFetcher):
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
         del cursor
-        industry_index = self.fetcher.fetch_info('index', level, date=window[-1])
+        try:
+            industry_index = self.fetcher.fetch_info('index', level, date=window[-1])
+        except:
+            industry_index = self.fetcher.fetch_info('index', level)
         index_industry = {v: k for k, v in industry_index.iteritems()}
 
         res = {}

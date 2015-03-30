@@ -200,10 +200,10 @@ from group import (
         group_by_industry,
         )
 
-def group_by(df, group, standard='SW2014', date=None):
+def group_by(df, group, standard='SW2014', date=None, use_name=False):
     if group == 'board':
         return group_by_board(df)
-    return group_by_industry(df, group, standard=standard, date=date)
+    return group_by_industry(df, group, standard=standard, date=date, use_name=use_name)
 
 def decay(df, n, dense=False, exp=1, minimum=0):
     """Wrapper for :py:class:`orca.operation.decay.DecayOperation`."""

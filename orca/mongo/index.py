@@ -26,6 +26,7 @@ class IndexQuoteFetcher(KDayFetcher):
             'SH50': 'SH000016',
             'CYB': 'SZ399006',
             'ZXB': 'SZ399005',
+            'JCA': 'SZ399317',
             }
     dnames = ['amount', 'close', 'high', 'low', 'open', 'prev_close', 'returns', 'volume', 'vwap']
 
@@ -56,6 +57,7 @@ class IndexQuoteFetcher(KDayFetcher):
             proj.update({d: 1})
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame(list(cursor))
+        print df
         del cursor
         df.index = df.date
         if datetime_index:

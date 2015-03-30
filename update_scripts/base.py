@@ -24,45 +24,19 @@ class UpdaterBase(object):
 
     LOGGER_NAME = 'update'
 
-    def __init__(self, timeout=600, iterates=1, debug_on=True):
+    def __init__(self, timeout=600, iterates=1):
         self.timeout = timeout
         self.iterates = iterates
         self.logger = logbook.Logger(UpdaterBase.LOGGER_NAME)
-        self.set_debug_mode(debug_on)
         self.connected = False
         self.options = {}
         self.add_options()
-
-    def set_debug_mode(self, debug_on):
-        """Enable/Disable debug level message in data fetchers.
-        This is enabled by default."""
-        self.level = 'DEBUG' if debug_on else 'INFO'
 
     def add_options(self):
         pass
 
     def parse_options(self):
         pass
-
-    def debug(self, msg):
-        """Logs a message with level DEBUG on the update logger."""
-        self.logger.debug(msg)
-
-    def info(self, msg):
-        """Logs a message with level INFO on the update logger."""
-        self.logger.info(msg)
-
-    def warning(self, msg):
-        """Logs a message with level WARNING on the update logger."""
-        self.logger.warning(msg)
-
-    def error(self, msg):
-        """Logs a message with level ERROR on the update logger."""
-        self.logger.error(msg)
-
-    def critical(self, msg):
-        """Logs a message with level CRITICAL on the update logger."""
-        self.logger.critical(msg)
 
     def connect_mongo(self, host='192.168.1.183', db='stocks_dev',
             user='stocks_dev', password='stocks_dev'):
@@ -84,6 +58,32 @@ class UpdaterBase(object):
         :raises: NotImplementedError
         """
         raise NotImplementedError
+
+    def monitor(self, date):
+        pass
+
+    @staticmethod
+    def compute_statistic(ser, statistic):
+        if statistic == 'mean':
+            return float(ser.mean())
+        elif statistic == 'min':
+            return float(ser.min())
+        elif statistic == 'max':
+            return float(ser.max())
+        elif statistic == 'median':
+            return float(ser.median())
+        elif statistic == 'std':
+            return float(ser.std())
+        elif statistic == 'quartile1':
+            return float(ser.quantile(0.25))
+        elif statistic == 'quartile3':
+            return float(ser.quantile(0.75))
+        elif statistic == 'skew':
+            return float(ser.skew())
+        elif statistic == 'kurt':
+            return float(ser.kurt())
+        else:
+            return int(ser.count())
 
     def pre_update(self):
         """Things to be done before calling :py:meth:`update`. For example, to check if the data file exists or connect to data vendor's database."""
@@ -120,6 +120,17 @@ class UpdaterBase(object):
         self.logger.debug('Connected to Oracle Database zyyx/zyyx@zyyx')
         self.__dict__.update({'connection': connection, 'cursor': cursor})
 
+    def connect_monitor(self):
+        import mysql.connector
+        connection = mysql.connector.connect(
+                host='192.168.1.183',
+                user='kbars',
+                password='123456',
+                database='monitor',
+                )
+        self.logger.debug('Connected to Monitor Database monitor@anjuta')
+        self.__dict__.update({'monitor_connection': connection})
+
     def run(self):
         """Main interface. Workflow is:
         * connect to mongodb
@@ -139,23 +150,28 @@ class UpdaterBase(object):
             for date in self._dates:
                 if hasattr(self, 'dates') and date not in self.dates:
                     continue
-                self.logger.info('START')
-                iterates = self.iterates
-                while iterates:
-                    try:
-                        p = Process(target=self.update, args=(date,))
-                        p.start()
-                        p.join(self.timeout)
-                        if p.is_alive():
-                            self.logger.warning('Timeout on date: {} for updater class {}', date, self.__class__)
-                            p.terminate()
-                            iterates -= 1
-                        else:
-                            iterates = 0
-                    except Exception, e:
-                        self.logger.error('\n{}', e)
-                        break
-                self.logger.info('END\n')
+                if not self.skip_update:
+                    self.logger.info('START updating')
+                    iterates = self.iterates
+                    while iterates:
+                        try:
+                            p = Process(target=self.update, args=(date,))
+                            p.start()
+                            p.join(self.timeout)
+                            if p.is_alive():
+                                self.logger.warning('Timeout on date: {} for updater class {}', date, self.__class__)
+                                p.terminate()
+                                iterates -= 1
+                            else:
+                                iterates = 0
+                        except Exception, e:
+                            self.logger.error('\n{}', e)
+                            break
+                    self.logger.info('END updating')
+                if not self.skip_monitor:
+                    self.logger.info('START monitoring')
+                    self.monitor(date)
+                    self.logger.info('END monitoring')
             self.pro_update()
             self.disconnect_mongo()
 
@@ -168,7 +184,8 @@ class UpdaterBase(object):
         parser.add_argument('-e', '--end', help='end date(included); default: today', default=today, nargs='?')
         parser.add_argument('date', help='the date to be updated', default=today, nargs='?')
         parser.add_argument('--source', choices=('mssql', 'oracle'), help='type of source database', default='oracle')
-        parser.add_argument('--debug_on', action='store_true')
+        parser.add_argument('--skip_update', action='store_true')
+        parser.add_argument('--skip_monitor', action='store_true')
         parser.add_argument('-f', '--logfile', type=str)
         parser.add_argument('-o', '--logoff', action='store_true')
         for key in self.options:
@@ -177,7 +194,8 @@ class UpdaterBase(object):
         for key in self.options:
             self.options[key] = args.__dict__[key]
 
-        self.set_debug_mode(args.debug_on)
+        self.skip_update = args.skip_update
+        self.skip_monitor = args.skip_monitor
 
         if args.start and args.end:
             _dates = [dt.strftime('%Y%m%d') for dt in pd.date_range(args.start, args.end)]
@@ -202,9 +220,9 @@ class UpdaterBase(object):
                 self.logger.debug('@logfile set to: {}', args.logfile)
             self.setup = logbook.NestedSetup([
                 logbook.NullHandler(),
-                logbook.FileHandler(args.logfile, level='INFO'),
-                logbook.StreamHandler(sys.stdout, level=self.level, bubble=True)])
+                logbook.FileHandler(args.logfile),
+                logbook.StreamHandler(sys.stdout, bubble=True)])
         else:
             self.setup = logbook.NestedSetup([
                 logbook.NullHandler(),
-                logbook.StreamHandler(sys.stdout, level=self.level, bubble=True)])
+                logbook.StreamHandler(sys.stdout, bubble=True)])

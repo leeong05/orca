@@ -5,22 +5,22 @@
 import pandas as pd
 
 from base import UpdaterBase
-import eodvalue_mssql
+import l2indicator_mssql
 
 
-class EODValueUpdater(UpdaterBase):
-    """The updater class for collection 'eod_value'."""
+class L2IndicatorUpdater(UpdaterBase):
+    """The updater class for collection 'l2indicator'."""
 
     def __init__(self, source=None, timeout=60):
         self.source = source
-        super(EODValueUpdater, self).__init__(timeout=timeout)
+        super(L2IndicatorUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
-        self.collection = self.db.eod_value
+        self.collection = self.db.l2indicator
         if not self.skip_update:
             self.connect_wind()
-            self.sql = eodvalue_mssql
+            self.sql = l2indicator_mssql
         if not self.skip_monitor:
             self.connect_monitor()
 
@@ -28,7 +28,7 @@ class EODValueUpdater(UpdaterBase):
         pass
 
     def update(self, date):
-        """Update daily valuation data for the **same** day after market open."""
+        """Update daily l2indicator data for the **same** day after market open."""
         CMD = self.sql.CMD.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
@@ -37,8 +37,8 @@ class EODValueUpdater(UpdaterBase):
             self.logger.error('No records found for {} on {}', self.collection.name, date)
             return
 
-        df = df.ix[:, [1]+self.sql.cols+[27]]
-        df.columns = ['sid'] + self.sql.dnames + ['adj_factor']
+        df.columns = ['sid'] + self.sql.dnames
+        df = df.ix[[sid[-2:] in ('SH', 'SZ') and len(sid) == 9 and sid[:2] in ('00', '60', '30') for sid in df.sid]]
         df.index = [sid[:6] for sid in df.sid]
 
         for dname in self.sql.dnames:
@@ -49,9 +49,9 @@ class EODValueUpdater(UpdaterBase):
 
     def monitor(self, date):
         statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
-        SQL1 = "SELECT * FROM mongo_eod_value WHERE trading_day=%s AND data=%s AND statistic=%s"
-        SQL2 = "UPDATE mongo_eod_value SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
-        SQL3 = "INSERT INTO mongo_eod_value (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+        SQL1 = "SELECT * FROM mongo_l2indicator WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_l2indicator SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_l2indicator (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
 
         cursor = self.monitor_connection.cursor()
         for dname in self.collection.distinct('dname'):
@@ -66,5 +66,5 @@ class EODValueUpdater(UpdaterBase):
         self.monitor_connection.commit()
 
 if __name__ == '__main__':
-    value = EODValueUpdater()
+    value = L2IndicatorUpdater()
     value.run()

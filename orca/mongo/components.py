@@ -16,7 +16,10 @@ class ComponentsFetcher(KDayFetcher):
             'HS300': 'SH000300',
             'CS500': 'SH000905',
             'CS800': 'SH000906',
-            'SH50':  'SH000016',
+            'SH50': 'SH000016',
+            'CYB': 'SZ399006',
+            'ZXB': 'SZ399005',
+            'JCA': 'SZ399317',
             }
 
     dnames = DB.index_components.distinct('dname')

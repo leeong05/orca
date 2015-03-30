@@ -4,7 +4,7 @@
 
 from collections import OrderedDict
 
-#import pandas as pd
+import pandas as pd
 
 from orca.universe import common
 from orca.universe import rules
@@ -24,11 +24,7 @@ class UnivUpdater(UpdaterBase):
         self.collection = self.db.universe
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index dname_1_date_1 on collection quote')
-        self.db.quote.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
+        pass
 
     def update_universe(self, date, univ_name, univ_filter):
         univ = univ_filter.filter_daily(date)
@@ -88,6 +84,24 @@ class UnivUpdater(UpdaterBase):
 
         self.logger.info('UPSERT {} universes into (c: [{}]) of (d: [{}]) on {}', len(self.univs), self.collection.name, self.db.name, date)
         self.logger.info('Detailed information:\n{}', self.univs)
+
+    def monitor(self, date):
+        statistics = ('count',)
+        SQL1 = "SELECT * FROM mongo_universe WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_universe SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_universe (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+
+        cursor = self.monitor_connection.cursor()
+        for dname in self.collection.distinct('dname'):
+            ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue'])
+            for statistic in statistics:
+                cursor.execute(SQL1, (date, dname, statistic))
+                if list(cursor):
+                    cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, dname, statistic))
+                else:
+                    cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
+            self.logger.info('MONITOR for {} on {}', dname, date)
+        self.monitor_connection.commit()
 
 if __name__ == '__main__':
     univ = UnivUpdater()

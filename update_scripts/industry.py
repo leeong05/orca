@@ -20,22 +20,18 @@ class IndustryUpdater(UpdaterBase):
         UpdaterBase.__init__(self, timeout)
 
     def pre_update(self):
-        self.connect_jydb()
         self.dates = self.db.dates.distinct('date')
-        if self.source == 'mssql':
-            self.industry_sql = industry_mssql
-        elif self.source == 'oracle':
-            self.industry_sql = industry_oracle
+        if not self.skip_update:
+            self.connect_jydb()
+            if self.source == 'mssql':
+                self.industry_sql = industry_mssql
+            elif self.source == 'oracle':
+                self.industry_sql = industry_oracle
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index standard_1_dname_1_date_1 on collection industry')
-        self.db.industry.ensure_index([('standard', 1), ('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index standard_1_dname_1_date_1 on collection industry_info')
-        self.db.industry_info.ensure_index([('standard', 1), ('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
+        pass
 
     def update(self, date):
         """Update industry classification, industry-name/level correspondance for the **same** day before market open."""
@@ -104,6 +100,30 @@ class IndustryUpdater(UpdaterBase):
         f('level2_index',   l2_index)
         f('level3_index',   l3_index)
         self.logger.info('UPSERT documents for {} industry-indice into (c: [{}@standard={}]) of (d: [{}]) on {}', len(ind_index), self.db.industry_info.name, sname, self.db.name, date)
+
+    def monitor(self, date):
+        for standard in self.industry_sql.standards.values():
+            self._update(date, standard)
+
+    def _monitor(self, date, standard):
+        statistics = ('count',)
+        SQL1 = "SELECT * FROM mongo_industry WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_industry SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_industry (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+
+        cursor = self.monitor_connection.cursor()
+        for dname in self.industry_sql.dnames_industry:
+            ser = pd.Series(self.collection.find_one({'standard': standard, 'dname': dname, 'date': date})['dvalue'])
+            for industry, group in ser.groupby(ser):
+                for statistic in statistics:
+                    cursor.execute(SQL1, (date, industry, statistic))
+                    if list(cursor):
+                        cursor.execute(SQL2, (self.compute_statistic(group, statistic), industry, dname, statistic))
+                    else:
+                        cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(group, statistic)))
+            self.logger.info('MONITOR for {}@{} on {}', dname, standard, date)
+        self.monitor_connection.commit()
+
 
 if __name__ == '__main__':
     ind = IndustryUpdater()

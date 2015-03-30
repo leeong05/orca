@@ -26,8 +26,11 @@ def group_by_board(df):
     group = BOARD.ix[df.columns]
     return df.groupby(group, axis=1)
 
-def group_by_industry(df, industry='sector', standard='SW2014', date=None):
+def group_by_industry(df, industry='sector', standard='SW2014', date=None, use_name=False):
     industry = FETCHER.fetch_daily(industry, date=date).dropna()
+    if use_name:
+        ind_name = FETCHER.fetch_info('name')
+        industry = industry.map(lambda x: ind_name[x])
     if isinstance(df, pd.Series):
         sids = industry.index.intersection(df.index)
         return df.ix[sids].groupby(industry.ix[sids])

@@ -31,19 +31,14 @@ class TSMinUpdater(UpdaterBase):
         self.threads = threads
 
     def pre_update(self):
-        self.__dict__.update({
-                'dates': self.db.dates.distinct('date'),
-                'collection': self.db['ts_'+self.bar],
-                'index_collection': self.db['tsindex_'+self.bar],
-                })
+        self.dates = self.db.dates.distinct('date'),
+        self.collection = self.db['ts_'+self.bar]
+        self.index_collection = self.db['tsindex_'+self.bar]
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.collection.name)
-        self.collection.ensure_index([('dname', 1), ('date', 1)], background=True)
-        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.index_collection.name)
-        self.index_collection.ensure_index([('dname', 1), ('date', 1)], background=True)
+        pass
 
     def update(self, date):
         """Update TinySoft minute-bar data for the **same** day after market close."""
@@ -86,6 +81,25 @@ class TSMinUpdater(UpdaterBase):
         pool.close()
         pool.join()
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', grouped.count().max().ix[0], self.collection.name, self.db.name, date)
+
+    def monitor(self, date):
+        statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
+        SQL1 = "SELECT * FROM mongo_{} WHERE trading_day=%s AND data=%s AND statistic=%s".format(self.collection.name)
+        SQL2 = "UPDATE mongo_{} SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s".format(self.collection.name)
+        SQL3 = "INSERT INTO mongo_{} (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)".format(self.collection.name)
+
+        cursor = self.monitor_connection.cursor()
+        for dname in self.collection.distinct('dname'):
+            ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date, 'time': '150000'})['dvalue'])
+            for statistic in statistics:
+                cursor.execute(SQL1, (date, dname, statistic))
+                if list(cursor):
+                    cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, dname, statistic))
+                else:
+                    cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
+            self.logger.info('MONITOR for {} on {}', dname, date)
+        self.monitor_connection.commit()
+
 
 if __name__ == '__main__':
     ts_30min = TSMinUpdater(bar='30min')

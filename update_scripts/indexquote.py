@@ -2,12 +2,10 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-import numpy as np
 import pandas as pd
 
 from base import UpdaterBase
 import indexquote_mssql
-import indexquote_oracle
 
 
 class IndexQuoteUpdater(UpdaterBase):
@@ -18,12 +16,9 @@ class IndexQuoteUpdater(UpdaterBase):
         UpdaterBase.__init__(self, timeout)
 
     def pre_update(self):
-        self.connect_jydb()
         self.dates = self.db.dates.distinct('date')
-        if self.source == 'mssql':
-            self.indexquote_sql = indexquote_mssql
-        elif self.source == 'oracle':
-            self.indexquote_sql = indexquote_oracle
+        self.connect_wind()
+        self.indexquote_sql = indexquote_mssql
 
     def pro_update(self):
         return
@@ -41,17 +36,19 @@ class IndexQuoteUpdater(UpdaterBase):
             self.logger.error('No records found for {} on {}', self.db.index_quote.name, date)
             return
 
-        df.columns = ['sid', 'market'] + self.indexquote_sql.dnames
-        df.index = ['SH'+sid if mkt == 83 else 'SZ'+sid for mkt, sid in zip(df.market, df.sid)]
+        df.columns = ['sid'] + self.indexquote_sql.dnames
+        df = df.ix[[sid[-2:] in ('SH', 'SZ') and len(sid) == 9 for sid in df.sid]]
+        df.index = [sid[-2:]+sid[:6] for sid in df.sid]
+        for dname in self.indexquote_sql.dnames:
+            df[dname] = df[dname].astype(float)
+        df['vwap'] = df['amount']/df['volume']
+        df['returns'] = df['close']/df['prev_close'] - 1.
 
         for _, row in df.iterrows():
             key = {'index': row.name, 'date': date}
             res = {}
-            for dname in self.indexquote_sql.dnames:
-                try:
-                    res[dname] = float(str(row[dname]))
-                except:
-                    res[dname] = np.nan
+            for dname in self.indexquote_sql.dnames+['vwap', 'returns']:
+                res[dname] = row[dname]
             self.db.index_quote.update(key, {'$set': res}, upsert=True)
         self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}',
                 len(df), self.db.index_quote.name, self.db.name, date)

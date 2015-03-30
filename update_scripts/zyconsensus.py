@@ -34,21 +34,15 @@ class ZYConsensusUpdater(UpdaterBase):
         self.cutoff = cutoff
 
     def pre_update(self):
-        self.connect_zyyx()
-        self.__dict__.update({
-            'dates': self.db.dates.distinct('date'),
-            'collection': self.db.zyconsensus,
-            })
+        self.dates = self.db.dates.distinct('date'),
+        self.collection = self.db.zyconsensus
+        if not self.skip_update:
+            self.connect_zyyx()
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index date_1_dname_1 on collection {}', self.collection.name)
-        self.collection.ensure_index([('date', 1), ('dname', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.collection.name)
-        self.collection.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
+        pass
 
     def update(self, date):
         """Update target prices, consensus data for the **previous** day before market open."""
@@ -94,6 +88,24 @@ class ZYConsensusUpdater(UpdaterBase):
             self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().to_dict()}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}@dname=consensus]) of (d: [{}]) on {}', len(df), self.collection.name, self.db.name, prev_date)
 
+    def monitor(self, date):
+        date = self.dates[self.dates.index(date)-1]
+        statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
+        SQL1 = "SELECT * FROM mongo_zyconsensus WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_zyconsensus SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_zyconsensus (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+
+        cursor = self.monitor_connection.cursor()
+        for dname in self.collection.distinct('dname'):
+            ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue'])
+            for statistic in statistics:
+                cursor.execute(SQL1, (date, dname, statistic))
+                if list(cursor):
+                    cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, dname, statistic))
+                else:
+                    cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
+            self.logger.info('MONITOR for {} on {}', dname, date)
+        self.monitor_connection.commit()
 
 if __name__ == '__main__':
     zy = ZYConsensusUpdater()
