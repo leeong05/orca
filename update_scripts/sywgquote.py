@@ -13,7 +13,7 @@ import sywgquote_mssql
 class SYWGQuoteUpdater(UpdaterBase):
     """The updater class for collection 'sywgindex_quote'."""
 
-    def __init__(self, source=None, timeout=60):
+    def __init__(self, source=None, timeout=600):
         self.source = source
         UpdaterBase.__init__(self, timeout)
 
@@ -38,7 +38,6 @@ class SYWGQuoteUpdater(UpdaterBase):
         df.columns = ['sid'] + self.sywgquote_sql.dnames
         for dname in self.sywgquote_sql.dnames:
             df[dname] = df[dname].astype(float)
-        df.index = [sid[:6] for sid in df.sid]
         df['vwap'] = df['amount']/df['volume']
         df['returns'] = (df['close']/df['prev_close']).astype(float) - 1.
         if df['returns'].isnull().sum():

@@ -8,8 +8,7 @@ os.environ['NLS_LANG'] = 'AMERICAN_AMERICA.UTF8'
 import pandas as pd
 
 from base import UpdaterBase
-import industry_mssql
-import industry_oracle
+import industry_oracle as sql
 
 
 class IndustryUpdater(UpdaterBase):
@@ -24,13 +23,7 @@ class IndustryUpdater(UpdaterBase):
         self.collection = self.db.industry
         if not self.skip_update:
             self.connect_jydb()
-            if self.source == 'mssql':
-                self.sql = industry_mssql
-            elif self.source == 'oracle':
-                self.sql = industry_oracle
         if not self.skip_monitor:
-            if not hasattr(self, 'sql'):
-                self.sql = industry_oracle
             self.connect_monitor()
 
     def pro_update(self):
@@ -38,16 +31,16 @@ class IndustryUpdater(UpdaterBase):
 
     def update(self, date):
         """Update industry classification, industry-name/level correspondance for the **same** day before market open."""
-        for key, val in self.sql.standards.iteritems():
+        for key, val in sql.standards.iteritems():
             self._update(date, key, val)
 
     def _update(self, date, standard, sname):
         if standard == 24 and date < '20140101':
-            CMD = self.sql.CMD1.format(date='20140101', standard=standard)
+            CMD = sql.CMD1.format(date='20140101', standard=standard)
         else:
-            CMD = self.sql.CMD1.format(date=date, standard=standard)
+            CMD = sql.CMD1.format(date=date, standard=standard)
         self.logger.debug('Executing command:\n{}', CMD)
-        self.cursor.execute(self.sql.CMD1.format(date='20140101', standard=standard))
+        self.cursor.execute(sql.CMD1.format(date='20140101', standard=standard))
         DF = pd.DataFrame(list(self.cursor))
         if len(DF) == 0:
             self.logger.warning('No records found for {}[standard={}] on {}', self.db.industry.name, sname, date)
@@ -62,15 +55,15 @@ class IndustryUpdater(UpdaterBase):
             l2_name[l2], ind_name[l2] = n2, n2
             l3_name[l3], ind_name[l3] = n3, n3
 
-        df.columns = ['sid'] + self.sql.dnames_industry
+        df.columns = ['sid'] + sql.dnames_industry
         df.index = df.sid
 
-        for dname in self.sql.dnames_industry:
+        for dname in sql.dnames_industry:
             key = {'standard': sname, 'dname': dname, 'date': date}
             self.collection.update(key, {'$set': {'dvalue': df[dname].to_dict()}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}@standard={}]) of (d: [{}]) on {}', len(df), self.db.industry.name, sname, self.db.name, date)
 
-        CMD = self.sql.CMD2.format(date=date, standard=standard)
+        CMD = sql.CMD2.format(date=date, standard=standard)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         l1_index, l2_index, l3_index, ind_index = {}, {}, {}, {}
@@ -105,7 +98,7 @@ class IndustryUpdater(UpdaterBase):
         self.logger.info('UPSERT documents for {} industry-indice into (c: [{}@standard={}]) of (d: [{}]) on {}', len(ind_index), self.db.industry_info.name, sname, self.db.name, date)
 
     def monitor(self, date):
-        for standard in self.sql.standards.values():
+        for standard in sql.standards.values():
             self._monitor(date, standard)
 
     def _monitor(self, date, standard):

@@ -5,8 +5,10 @@
 import os
 import json
 
+import pandas as pd
+
 from base import UpdaterBase
-import barra_sql
+import barra_sql as sql
 
 
 class BarraUpdater(UpdaterBase):
@@ -16,15 +18,15 @@ class BarraUpdater(UpdaterBase):
     """
 
     def __init__(self, model='daily', timeout=600, iterates=3, update_idmaps=True):
-        UpdaterBase.__init__(self, timeout, iterates)
         self.model = model
         self.update_idmaps = update_idmaps
+        super(BarraUpdater, self).__init__(timeout=timeout, iterates=iterates)
 
     def pre_update(self):
-        self.__dict__.update({'dates': self.db.dates.distinct('date')})
+        self.dates = self.db.dates.distinct('date')
         if self.model == 'daily':
             self.__dict__.update({
-                    'barra_idmaps': self.db.barra_idmaps,
+                    'idmaps': self.db.barra_idmaps,
                     'exposure': self.db.barra_D_exposure,
                     'facret': self.db.barra_D_returns,
                     'faccov': self.db.barra_D_covariance,
@@ -33,53 +35,66 @@ class BarraUpdater(UpdaterBase):
                     })
         else:
             self.__dict__.update({
-                    'barra_idmaps': self.db.barra_idmaps,
+                    'idmaps': self.db.barra_idmaps,
                     'exposure': self.db.barra_S_exposure,
                     'facret': self.db.barra_S_returns,
                     'faccov': self.db.barra_S_covariance,
                     'precov': self.db.barra_S_precovariance,
                     'specifics': self.db.barra_S_specifics,
                     })
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index date_1 on collection {}', self.barra_idmaps.name)
-        self.barra_idmaps.ensure_index([('date', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.exposure.name)
-        self.exposure.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index factor_1_date_1 on collection {}', self.facret.name)
-        self.facret.ensure_index([('factor', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_factor_1 on collection {}', self.faccov.name)
-        self.faccov.ensure_index([('date', 1), ('factor', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index date_1_factor_1 on collection {}', self.precov.name)
-        self.precov.ensure_index([('date', 1), ('factor', 1)],
-                unique=True, dropDups=True, background=True)
-        self.logger.debug('Ensuring index dname_1_date_1 on collection {}', self.specifics.name)
-        self.specifics.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
+        pass
 
     def update(self, date):
         """Update factor exposure, factor returns, factor covariance and stocks specifics for **previous** day before market open."""
         date = self.dates[self.dates.index(date)-1]
-        if not os.path.exists(barra_sql.gp_idmaps(date, self.model)):
+        if not os.path.exists(sql.gp_idmaps(date, self.model)):
             self.logger.error('Barra model data does not exist on {}', date)
-            barra_sql.fetch_and_parse(date)
-        self.idmaps = json.load(open(barra_sql.gp_idmaps(date, self.model)))
+            sql.fetch_and_parse(date)
+        self.idmaps = json.load(open(sql.gp_idmaps(date, self.model)))
         if self.update_idmaps:
-            self.barra_idmaps.update({'date': date}, {'date': date, 'idmaps': self.idmaps}, upsert=True)
+            self.idmaps.update({'date': date}, {'$set': {'idmaps': self.idmaps}}, upsert=True)
         self.update_exposure(date)
         self.update_facret(date)
         self.update_faccov(date)
         self.update_precov(date)
         self.update_specifics(date)
 
+    def monitor(self, date):
+        date = self.dates[self.dates.index(date)-1]
+
+        statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
+        SQL1 = "SELECT * FROM mongo_barra WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_barra SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_barra (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+
+        cursor = self.monitor_connection.cursor()
+
+        idmaps = self.idmaps.findOne({'date': date})['idmaps']
+        cursor.execute(SQL1, (date, 'idmaps', 'count'))
+        if list(cursor):
+            cursor.execute(SQL2, (len(idmaps), date, 'idmaps', 'count'))
+        else:
+            cursor.execute(SQL3, (date, 'idmaps', 'count', len(idmaps)))
+        self.logger.info('MONITOR for {} on {}', 'idmaps', date)
+
+        for collection in [self.exposure, self.specifics]:
+            for dname in collection.distinct('dname'):
+                ser = pd.Series(collection.find_one({'dname': dname, 'date': date})['dvalue'])
+                for statistic in statistics:
+                    cursor.execute(SQL1, (date, dname, statistic))
+                    if list(cursor):
+                        cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, dname, statistic))
+                    else:
+                        cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
+            self.logger.info('MONITOR for {} on {}', dname, date)
+        self.monitor_connection.commit()
+
     def update_exposure(self, date):
-        expjson = barra_sql.gp_expjson(date, self.model)
+        expjson = sql.gp_expjson(date, self.model)
         if not os.path.exists(expjson):
             self.logger.error('No record found for {} on {}', self.exposure.name, date)
             return
@@ -91,7 +106,7 @@ class BarraUpdater(UpdaterBase):
         self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', len(expjson), self.exposure.name, self.db.name, date)
 
     def update_facret(self, date):
-        facret = barra_sql.gp_facret(date, self.model)
+        facret = sql.gp_facret(date, self.model)
         if not os.path.exists(facret):
             self.logger.error('No record found for {} on {}', self.facret.name, date)
             return
@@ -110,7 +125,7 @@ class BarraUpdater(UpdaterBase):
         self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', cnt, self.facret.name, self.db.name, date)
 
     def update_faccov(self, date):
-        faccov = barra_sql.gp_faccov(date, self.model)
+        faccov = sql.gp_faccov(date, self.model)
         if not os.path.exists(faccov):
             self.logger.error('No record found for {} on {}', self.faccov.name, date)
             return
@@ -133,7 +148,7 @@ class BarraUpdater(UpdaterBase):
         self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', len(res), self.faccov.name, self.db.name, date)
 
     def update_precov(self, date):
-        precov = barra_sql.gp_precov(date, self.model)
+        precov = sql.gp_precov(date, self.model)
         if not os.path.exists(precov):
             self.logger.error('No record found for {} on {}', self.precov.name, date)
             return
@@ -156,8 +171,8 @@ class BarraUpdater(UpdaterBase):
         self.logger.info('UPSERT documents for {} factors into (c: [{}]) of (d: [{}]) on {}', len(res), self.precov.name, self.db.name, date)
 
     def update_specifics(self, date):
-        specret = barra_sql.gp_specret(date, self.model)
-        specs = barra_sql.gp_specs(date, self.model)
+        specret = sql.gp_specret(date, self.model)
+        specs = sql.gp_specs(date, self.model)
         if not os.path.exists(specs) or not os.path.exists(specret):
             self.logger.error('No record found for {} on {}', self.specifics.name, date)
             return

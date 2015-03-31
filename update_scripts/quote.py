@@ -5,7 +5,7 @@
 import pandas as pd
 
 from base import UpdaterBase
-import quote_mssql
+import quote_mssql as sql
 
 
 class QuoteUpdater(UpdaterBase):
@@ -20,7 +20,6 @@ class QuoteUpdater(UpdaterBase):
         self.collection = self.db.quote
         if not self.skip_update:
             self.connect_wind()
-            self.sql = quote_mssql
         if not self.skip_monitor:
             self.connect_monitor()
 
@@ -29,7 +28,7 @@ class QuoteUpdater(UpdaterBase):
 
     def update(self, date):
         """Update daily quote data for the **same** day after market close."""
-        CMD = self.sql.CMD.format(date=date)
+        CMD = sql.CMD.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
@@ -37,8 +36,8 @@ class QuoteUpdater(UpdaterBase):
             self.logger.error('No records found for {} on {}', self.collection.name, date)
             return
 
-        df.columns = ['sid'] + self.sql.dnames
-        for dname in self.sql.dnames:
+        df.columns = ['sid'] + sql.dnames
+        for dname in sql.dnames:
             df[dname] = df[dname].astype(float)
         df = df.ix[df['volume'] > 0]
         df['returns'] = df['close']/df['prev_close'] - 1.
@@ -63,7 +62,7 @@ class QuoteUpdater(UpdaterBase):
         for sid in nsids:
             fclose[sid] = prev_fclose[sid]
 
-        for dname in self.sql.dnames:
+        for dname in sql.dnames:
             key = {'dname': dname, 'date': date}
             self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
         self.collection.update({'dname': 'fclose', 'date': date}, {'$set': {'dvalue': fclose}}, upsert=True)
