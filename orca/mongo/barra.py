@@ -381,7 +381,7 @@ class BarraCovarianceFetcher(BarraFetcher):
         """
         suppress_warning = kwargs.get('suppress_warning', self.suppress_warning)
 
-        sids = sids and SIDS
+        sids = sids or SIDS
 
         exposure = self.fexp.fetch_daily(date, offset=offset).ix[sids]
         exposure = exposure.dropna(axis=0, how='all').fillna(0)

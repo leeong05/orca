@@ -10,9 +10,6 @@ db.calendar.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, back
 db.universe.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.universe.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
-db.cax.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
-db.cax.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
-
 db.shares.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.shares.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
