@@ -169,9 +169,10 @@ class UpdaterBase(object):
                             break
                     self.logger.info('END updating')
                 if not self.skip_monitor:
-                    self.logger.info('START monitoring')
-                    self.monitor(date)
-                    self.logger.info('END monitoring')
+                    if not hasattr(self, 'dates') or date in self.dates:
+                        self.logger.info('START monitoring')
+                        self.monitor(date)
+                        self.logger.info('END monitoring')
             self.pro_update()
             self.disconnect_mongo()
 

@@ -1,20 +1,14 @@
 CMD = """
 SELECT
-  sm.SecuCode, qt.PrevClosePrice, qt.OpenPrice,
-  qt.HighPrice, qt.LowPrice, qt.ClosePrice, qt.TurnoverVolume, qt.TurnoverValue,
-  qt.TurnoverValue / qt.TurnoverVolume, qt.ClosePrice / qt.PrevClosePrice - 1.
+  LEFT(s_info_windcode, 6), s_dq_preclose, s_dq_open, s_dq_high, s_dq_low,
+  s_dq_close, s_dq_pctchange*0.01, s_dq_volume, s_dq_amount, s_dq_avgprice,
+  s_dq_adjpreclose, s_dq_adjopen, s_dq_adjhigh, s_dq_adjlow,
+  s_dq_adjclose, s_dq_adjfactor
 FROM
-  QT_DailyQuote qt JOIN SecuMain sm ON qt.InnerCode = sm.InnerCode
+  AShareEODPrices
 WHERE
-  qt.TradingDay = CONVERT(DATE, '{date}')
-  AND
-  qt.TurnoverVolume > 0
-  AND
-  sm.SecuCategory = 1
-  AND
-  sm.SecuMarket IN (83, 90)
-  AND
-  LEFT(sm.SecuCode, 2) IN ('60', '00', '30')
+  trade_dt = '{date}'
 """
 
-dnames = ['prev_close', 'open', 'high', 'low', 'close', 'volume', 'amount', 'vwap', 'returns']
+dnames = ['prev_close', 'open', 'high', 'low', 'close', 'returns', 'volume', 'amount', 'vwap',
+        'adj_prev_close', 'adj_open', 'adj_high', 'adj_low', 'adj_close', 'adj_factor']

@@ -62,6 +62,12 @@ class UnivUpdater(UpdaterBase):
         self.update_universe(date, 'FloatCap70Q', FloatCap70Q)
         self.update_universe(date, 'FloatCap70S', FloatCap70S)
         self.update_universe(date, 'FloatCap70Y', FloatCap70Y)
+        FreeFloatCap70Q = common.FreeFloatCapFilter(common.DAYS_IN_QUARTER, rules.avg_rank_pct_lte(70))
+        FreeFloatCap70S = common.FreeFloatCapFilter(common.DAYS_IN_QUARTER*2, rules.avg_rank_pct_lte(70))
+        FreeFloatCap70Y = common.FreeFloatCapFilter(common.DAYS_IN_YEAR, rules.avg_rank_pct_lte(70))
+        self.update_universe(date, 'FreeFloatCap70Q', FreeFloatCap70Q)
+        self.update_universe(date, 'FreeFloatCap70S', FreeFloatCap70S)
+        self.update_universe(date, 'FreeFloatCap70Y', FreeFloatCap70Y)
 
         Liq70Q = common.AmountFilter(common.DAYS_IN_QUARTER, rules.sum_rank_pct_lte(70))
         Liq70S = common.AmountFilter(common.DAYS_IN_QUARTER*2, rules.sum_rank_pct_lte(70))
