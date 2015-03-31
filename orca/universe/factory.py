@@ -43,7 +43,7 @@ def create_divide_data_filter(clsname, data1, data2):
 def create_cap_filter(clsname, shares):
     """Special case of :py:func:`create_multiply_data_filter` with one of the data being ``close``.
 
-    :param str shares: Shares definition, must be one of the following 4: ('a_shares', 'a_float', 'a_float_listed', 'a_float_nonrestricted'). Default: 'a_shares')
+    :param str shares: Shares definition, must be one of the following 3: ('total_shares', 'float_shares', 'free_float_shares'). Default: 'total_shares'
     """
     def init(self, *args, **kwargs):
         DataFilter.__init__(self, [('close', QuoteFetcher), (shares, SharesFetcher)], multiply, *args, **kwargs)

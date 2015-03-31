@@ -56,7 +56,7 @@ ReturnsFilter = create_quote_filter('ReturnsFilter', 'returns')
 ZDT = ReturnsFilter(1, rules.avg_abs_lte(0.098))
 
 """cap filters"""
-TotalCapFilter = create_cap_filter('TotalCapFilter', 'a_shares')
+TotalCapFilter = create_cap_filter('TotalCapFilter', 'total_shares')
 TotalCap70Q = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(70))
 TotalCap60Q = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(60))
 
@@ -64,13 +64,21 @@ TotalCapT30Q = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30))
 TotalCapB30Q = TotalCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30, ascending=True))
 TotalCapM40Q = NegateFilter(UnionFilter([TotalCapT30Q, TotalCapB30Q]))
 
-FloatCapFilter = create_cap_filter('FloatCapFilter', 'a_float_nonrestricted')
+FloatCapFilter = create_cap_filter('FloatCapFilter', 'float_shares')
 FloatCap70Q = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(70))
 FloatCap60Q = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(60))
 
 FloatCapT30Q = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30))
 FloatCapB30Q = FloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30, ascending=True))
 FloatCapM40Q = NegateFilter(UnionFilter([FloatCapT30Q, FloatCapB30Q]))
+
+FreeFloatCapFilter = create_cap_filter('FreeFloatCapFilter', 'free_float_shares')
+FreeFloatCap70Q = FreeFloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(70))
+FreeFloatCap60Q = FreeFloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(60))
+
+FreeFloatCapT30Q = FreeFloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30))
+FreeFloatCapB30Q = FreeFloatCapFilter(DAYS_IN_QUARTER, rules.avg_rank_pct_lte(30, ascending=True))
+FreeFloatCapM40Q = NegateFilter(UnionFilter([FreeFloatCapT30Q, FreeFloatCapB30Q]))
 
 """liquidity filters"""
 AmountFilter = create_quote_filter('AmountFilter', 'amount')
