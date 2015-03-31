@@ -10,21 +10,6 @@ from orca import (
 from base import KDayFetcher
 
 
-class CaxFetcher(KDayFetcher):
-    """Class to fetch adjusting factors data."""
-
-    dnames = DB.cax.distinct('dname')
-
-    def __init__(self, **kwargs):
-        self.collection = DB.cax
-        super(CaxFetcher, self).__init__(**kwargs)
-
-    def fetch_window(self, *args, **kwargs):
-        """This will fill all missing value as 1."""
-        df = super(CaxFetcher, self).fetch_window(*args, **kwargs)
-        return df.fillna(method='ffill').fillna(1)
-
-
 class SharesFetcher(KDayFetcher):
     """Class to fetch shares structure data."""
 
@@ -126,3 +111,23 @@ class CalendarFetcher(KDayFetcher):
     def __init__(self, **kwargs):
         self.collection = DB.calendar
         super(CalendarFetcher, self).__init__(**kwargs)
+
+
+class MoneyflowFetcher(KDayFetcher):
+    """Class to fetch moneyflow data."""
+
+    dnames = DB.moneyflow.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.moneyflow
+        super(MoneyflowFetcher, self).__init__(**kwargs)
+
+
+class L2IndicatorFetcher(KDayFetcher):
+    """Class to fetch level2 indicator data."""
+
+    dnames = DB.l2indicator.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.l2indicator
+        super(L2IndicatorFetcher, self).__init__(**kwargs)

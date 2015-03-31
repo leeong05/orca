@@ -57,7 +57,6 @@ class IndexQuoteFetcher(KDayFetcher):
             proj.update({d: 1})
         cursor = self.collection.find(query, proj)
         df = pd.DataFrame(list(cursor))
-        print df
         del cursor
         df.index = df.date
         if datetime_index:
