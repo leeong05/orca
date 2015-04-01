@@ -24,11 +24,11 @@ class TSMinUpdater(UpdaterBase):
     """The updater class for collections 'ts_1min', 'ts_5min', 'ts_min30'."""
 
     def __init__(self, bar='1min', timeout=300, threads=cpu_count()):
-        UpdaterBase.__init__(self, timeout)
         self.bar = bar
         self.srcdir1 = os.path.join(tsmin_sql.srcdir1, self.bar)
         self.srcdir2 = os.path.join(tsmin_sql.srcdir2, self.bar)
         self.threads = threads
+        super(TSMinUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date'),
@@ -84,9 +84,9 @@ class TSMinUpdater(UpdaterBase):
 
     def monitor(self, date):
         statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
-        SQL1 = "SELECT * FROM mongo_{} WHERE trading_day=%s AND data=%s AND statistic=%s".format(self.collection.name)
-        SQL2 = "UPDATE mongo_{} SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s".format(self.collection.name)
-        SQL3 = "INSERT INTO mongo_{} (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)".format(self.collection.name)
+        SQL1 = "SELECT * FROM mongo_{} WHERE trading_day=%s AND data=%s AND statistic=%s".format(''.join(self.collection.name.split('_')))
+        SQL2 = "UPDATE mongo_{} SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s".format(''.join(self.collection.name.split('_')))
+        SQL3 = "INSERT INTO mongo_{} (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)".format(''.join(self.collection.name.split('_')))
 
         cursor = self.monitor_connection.cursor()
         for dname in self.collection.distinct('dname'):

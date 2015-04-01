@@ -4,12 +4,12 @@
 
 import os
 
-#import pandas as pd
+import pandas as pd
 
 from orca.universe import common
 
 from base import UpdaterBase
-import misc_sql
+import misc_sql as sql
 
 
 class MiscUpdater(UpdaterBase):
@@ -24,11 +24,7 @@ class MiscUpdater(UpdaterBase):
         self.collection = self.db.misc
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index dname_1_date_1 on collection quote')
-        self.db.quote.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
+        pass
 
     def update_universe(self, date, univ_name, univ_filter):
         univ = univ_filter.filter_daily(date)
@@ -40,7 +36,7 @@ class MiscUpdater(UpdaterBase):
 
     def update_tradable(self, date):
         """Update daily tradable data for the **same** day before market open."""
-        fpath = misc_sql.gp_tradable(date)
+        fpath = sql.gp_tradable(date)
         if not os.path.exists(fpath):
             self.logger.warning('File not exists on {}', date)
             return
@@ -70,6 +66,30 @@ class MiscUpdater(UpdaterBase):
         self.update_universe(date, 'BTOP70Q', BCap70Liq70Q)
         self.update_universe(date, 'BTOP70S', BCap70Liq70S)
         self.update_universe(date, 'BTOP70Y', BCap70Liq70Y)
+
+    def monitor(self, date):
+        self.monitor_tradable(date)
+
+    def monitor_tradable(self, date):
+        statistics = ('count',)
+        SQL1 = "SELECT * FROM mongo_universe WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_universe SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_universe (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+
+        cursor = self.monitor_connection.cursor()
+        for dname in self.collection.distinct('dname'):
+            try:
+                ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue'])
+            except:
+                continue
+            for statistic in statistics:
+                cursor.execute(SQL1, (date, dname, statistic))
+                if list(cursor):
+                    cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, dname, statistic))
+                else:
+                    cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
+            self.logger.info('MONITOR for {} on {}', dname, date)
+        self.monitor_connection.commit()
 
 
 if __name__ == '__main__':

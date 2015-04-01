@@ -22,6 +22,8 @@ class UnivUpdater(UpdaterBase):
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
         self.collection = self.db.universe
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
         pass
@@ -99,7 +101,10 @@ class UnivUpdater(UpdaterBase):
 
         cursor = self.monitor_connection.cursor()
         for dname in self.collection.distinct('dname'):
-            ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue'])
+            try:
+                ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue'])
+            except:
+                continue
             for statistic in statistics:
                 cursor.execute(SQL1, (date, dname, statistic))
                 if list(cursor):
@@ -108,6 +113,7 @@ class UnivUpdater(UpdaterBase):
                     cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
             self.logger.info('MONITOR for {} on {}', dname, date)
         self.monitor_connection.commit()
+
 
 if __name__ == '__main__':
     univ = UnivUpdater()

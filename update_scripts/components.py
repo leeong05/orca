@@ -6,8 +6,7 @@ from multiprocessing import Pool, cpu_count
 import pandas as pd
 
 from base import UpdaterBase
-import components_mssql
-import components_oracle
+import components_oracle as sql
 
 
 def worker(args):
@@ -27,27 +26,23 @@ class ComponentsUpdater(UpdaterBase):
 
     def __init__(self, source=None, timeout=600, threads=cpu_count()):
         self.source = source
-        UpdaterBase.__init__(self, timeout)
         self.threads = threads
+        super(ComponentsUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
-        self.connect_jydb()
         self.dates = self.db.dates.distinct('date')
-        if self.source == 'mssql':
-            self.components_sql = components_mssql
-        elif self.source == 'oracle':
-            self.components_sql = components_oracle
+        self.collection = self.db.components
+        if not self.skip_update:
+            self.connect_jydb()
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index dname_1_date_1 on collection index_components')
-        self.db.index_components.ensure_index([('dname', 1), ('date', 1)],
-                unique=True, dropDups=True, background=True)
+        pass
 
     def update(self, date):
         """Update index components (and weight) for the **same** day before market open."""
-        CMD = self.components_sql.CMD1.format(date=date)
+        CMD = sql.CMD1.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df1 = pd.DataFrame(list(self.cursor))
@@ -59,7 +54,7 @@ class ComponentsUpdater(UpdaterBase):
         df1.dname = ['SH'+dname if mkt == 83 else 'SZ'+dname for mkt, dname in zip(df1.market, df1.dname)]
         df1.index = df1.sid
 
-        CMD = self.components_sql.CMD2.format(date=date)
+        CMD = sql.CMD2.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         try:
@@ -77,6 +72,30 @@ class ComponentsUpdater(UpdaterBase):
         pool.join()
 
         self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}', len(grouped), self.db.index_components.name, self.db.name, date)
+
+    def monitor(self, date):
+        statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
+        SQL1 = "SELECT * FROM mongo_components WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_components SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_components (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+
+        cursor = self.monitor_connection.cursor()
+        index_dname = {
+                'SH50': 'SH000016',
+                'HS300': 'SH000300',
+                'CS500': 'SH000905',
+                }
+        for index, dname in index_dname.iteritems():
+            ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue']).dropna()
+            for statistic in statistics:
+                cursor.execute(SQL1, (date, index, statistic))
+                if list(cursor):
+                    cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, index, statistic))
+                else:
+                    cursor.execute(SQL3, (date, index, statistic, self.compute_statistic(ser, statistic)))
+            self.logger.info('MONITOR for {} on {}', index, date)
+        self.monitor_connection.commit()
+
 
 if __name__ == '__main__':
     comp = ComponentsUpdater()

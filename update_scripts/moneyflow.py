@@ -5,14 +5,13 @@
 import pandas as pd
 
 from base import UpdaterBase
-import moneyflow_mssql
+import moneyflow_mssql as sql
 
 
 class MoneyflowUpdater(UpdaterBase):
     """The updater class for collection 'moneyflow'."""
 
-    def __init__(self, source=None, timeout=60):
-        self.source = source
+    def __init__(self, timeout=60):
         super(MoneyflowUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
@@ -20,7 +19,6 @@ class MoneyflowUpdater(UpdaterBase):
         self.collection = self.db.moneyflow
         if not self.skip_update:
             self.connect_wind()
-            self.sql = moneyflow_mssql
         if not self.skip_monitor:
             self.connect_monitor()
 
@@ -29,7 +27,7 @@ class MoneyflowUpdater(UpdaterBase):
 
     def update(self, date):
         """Update daily moneyflow data for the **same** day after market open."""
-        CMD = self.sql.CMD.format(date=date)
+        CMD = sql.CMD.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
@@ -37,7 +35,7 @@ class MoneyflowUpdater(UpdaterBase):
             self.logger.error('No records found for {} on {}', self.collection.name, date)
             return
 
-        df.columns = ['sid'] + self.sql.dnames
+        df.columns = ['sid'] + sql.dnames
         df = df.ix[[sid[-2:] in ('SH', 'SZ') and len(sid) == 9 and sid[:2] in ('00', '60', '30') for sid in df.sid]]
         df.index = [sid[:6] for sid in df.sid]
 
@@ -52,7 +50,7 @@ class MoneyflowUpdater(UpdaterBase):
         df['amount_diff'] = df['amount_diff_exlarge']+df['amount_diff_large']+df['amount_diff_medium']+df['amount_diff_small']
         df['amount_diff_act'] = df['amount_diff_exlarge_act']+df['amount_diff_large_act']+df['amount_diff_medium_act']+df['amount_diff_small_act']
 
-        for dname in self.sql.dnames + ['buy_amount', 'sell_amount', 'buy_volume', 'sell_volume',
+        for dname in sql.dnames + ['buy_amount', 'sell_amount', 'buy_volume', 'sell_volume',
                 'buy_trades', 'sell_trades', 'volume_diff', 'amount_diff', 'volume_diff_act', 'amount_diff_act']:
             key = {'dname': dname, 'date': date}
             self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
@@ -76,6 +74,7 @@ class MoneyflowUpdater(UpdaterBase):
                     cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
             self.logger.info('MONITOR for {} on {}', dname, date)
         self.monitor_connection.commit()
+
 
 if __name__ == '__main__':
     value = MoneyflowUpdater()

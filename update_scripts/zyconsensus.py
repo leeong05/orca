@@ -29,9 +29,9 @@ class ZYConsensusUpdater(UpdaterBase):
     """The updater class for collection 'zyconsensus'."""
 
     def __init__(self, threads=cpu_count(), cutoff='08:30:00', timeout=60):
-        UpdaterBase.__init__(self, timeout)
         self.threads = threads
         self.cutoff = cutoff
+        super(ZYConsensusUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date'),
@@ -106,6 +106,7 @@ class ZYConsensusUpdater(UpdaterBase):
                     cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
             self.logger.info('MONITOR for {} on {}', dname, date)
         self.monitor_connection.commit()
+
 
 if __name__ == '__main__':
     zy = ZYConsensusUpdater()

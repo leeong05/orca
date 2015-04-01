@@ -76,7 +76,6 @@ class QuoteUpdater(UpdaterBase):
         SQL3 = "INSERT INTO mongo_quote (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
 
         cursor = self.monitor_connection.cursor()
-
         for dname in self.collection.distinct('dname'):
             ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue'])
             for statistic in statistics:

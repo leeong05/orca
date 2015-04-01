@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from base import UpdaterBase
-import zyadjust_oracle as zysql
+import zyadjust_oracle as sql
 
 
 class ZYAdjustUpdater(UpdaterBase):
@@ -20,32 +20,16 @@ class ZYAdjustUpdater(UpdaterBase):
         self.cutoff = cutoff
 
     def pre_update(self):
-        self.connect_zyyx()
-        self.__dict__.update({
-            'dates': self.db.dates.distinct('date'),
-            'sadj': self.db.zyscore_adjust,
-            'radj': self.db.zyreport_adjust,
-            })
+        self.dates = self.db.dates.distinct('date')
+        self.sadj = self.db.zyscore_adjust
+        self.radj = self.db.zyreport_adjust
+        if not self.skip_update:
+            self.connect_zyyx()
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
-        return
-
-        self.logger.debug('Ensuring index date_1_org_id_1 on collection {}', self.sadj.name)
-        self.sadj.ensure_index([('date', 1), ('org_id', 1)], background=True)
-        self.logger.debug('Ensuring index date_1_report_type_1 on collection {}', self.sadj.name)
-        self.sadj.ensure_index([('date', 1), ('report_type', 1)], background=True)
-        self.logger.debug('Ensuring index report_date_1_org_id_1 on collection {}', self.sadj.name)
-        self.sadj.ensure_index([('report_date', 1), ('org_id', 1)], background=True)
-        self.logger.debug('Ensuring index report_date_1_report_type_1 on collection {}', self.sadj.name)
-        self.sadj.ensure_index([('report_date', 1), ('report_type', 1)], background=True)
-        self.logger.debug('Ensuring index date_1_org_id_1 on collection {}', self.radj.name)
-        self.radj.ensure_index([('date', 1), ('org_id', 1)], background=True)
-        self.logger.debug('Ensuring index date_1_report_type_1 on collection {}', self.radj.name)
-        self.radj.ensure_index([('date', 1), ('report_type', 1)], background=True)
-        self.logger.debug('Ensuring index report_date_1_org_id_1 on collection {}', self.radj.name)
-        self.radj.ensure_index([('report_date', 1), ('org_id', 1)], background=True)
-        self.logger.debug('Ensuring index report_date_1_report_type_1 on collection {}', self.radj.name)
-        self.radj.ensure_index([('report_date', 1), ('report_type', 1)], background=True)
+        pass
 
     def update(self, date):
         """Update score/report adjust for the **previous** day before market open."""
@@ -55,7 +39,7 @@ class ZYAdjustUpdater(UpdaterBase):
 
     def update_score_adjust(self, date, prev_date):
         if date <= '20121130':
-            CMD = zysql.CMD1_0.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
+            CMD = sql.CMD1_0.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
             self.logger.debug('Executing command:\n{}', CMD)
             self.cursor.execute(CMD)
             df = pd.DataFrame(list(self.cursor))
@@ -63,7 +47,7 @@ class ZYAdjustUpdater(UpdaterBase):
                 self.logger.warning('No records found for {} on {}', self.sadj.name, prev_date)
                 return
 
-            df.columns = ['sid', 'org_id', 'report_date'] + zysql.dnames1[:-1]
+            df.columns = ['sid', 'org_id', 'report_date'] + sql.dnames1[:-1]
             df['date'] = prev_date
             df.report_date.fillna(prev_date, inplace=True)
             df['score_adjust_flag'] =  4
@@ -72,7 +56,7 @@ class ZYAdjustUpdater(UpdaterBase):
             df.score_adjust_flag[flag >  0] = 2
             df.score_adjust_flag[flag <  0] = 3
         else:
-            CMD = zysql.CMD1.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
+            CMD = sql.CMD1.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
             self.logger.debug('Executing command:\n{}', CMD)
             self.cursor.execute(CMD)
             df = pd.DataFrame(list(self.cursor))
@@ -80,7 +64,7 @@ class ZYAdjustUpdater(UpdaterBase):
                 self.logger.warning('No records found for {} on {}', self.sadj.name, prev_date)
                 return
 
-            df.columns = ['sid', 'org_id', 'report_date'] + zysql.dnames1
+            df.columns = ['sid', 'org_id', 'report_date'] + sql.dnames1
             df['date'] = prev_date
             df.report_date.fillna(prev_date, inplace=True)
             df.score_adjust_flag.fillna(4, inplace=True)
@@ -92,7 +76,7 @@ class ZYAdjustUpdater(UpdaterBase):
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', len(df.sid.unique()), self.sadj.name, self.db.name, prev_date)
 
     def update_report_adjust(self, date, prev_date):
-        CMD = zysql.CMD2.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
+        CMD = sql.CMD2.format(date=date, prev_date=prev_date, cutoff=self.cutoff)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
@@ -100,7 +84,7 @@ class ZYAdjustUpdater(UpdaterBase):
             self.logger.warning('No records found for {} on {}', self.radj.name, prev_date)
             return
 
-        df.columns = ['sid', 'org_id', 'report_type', 'report_id', 'forecast_year', 'report_date', 'previous_report_date'] + zysql._dnames2
+        df.columns = ['sid', 'org_id', 'report_type', 'report_id', 'forecast_year', 'report_date', 'previous_report_date'] + sql._dnames2
         df.report_date.fillna(prev_date, inplace=True)
 
         for report_date, sdf in df.groupby('report_date'):
@@ -110,7 +94,7 @@ class ZYAdjustUpdater(UpdaterBase):
                 doc['report_type'] = ssdf.iloc[0].report_type
                 doc['report_id'] = ssdf.iloc[0].report_id
                 doc['previous_report_date'] = ssdf.iloc[0].previous_report_date
-                for _dname in zysql._dnames2:
+                for _dname in sql._dnames2:
                     for i in range(3):
                         try:
                             record = ssdf.iloc[i]
@@ -119,6 +103,38 @@ class ZYAdjustUpdater(UpdaterBase):
                             doc[_dname+'_'+str(i)] = np.nan
                 self.radj.update(key, doc, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', len(df.sid.unique()), self.radj.name, self.db.name, prev_date)
+
+    def monitor(self, date):
+        date = self.dates[self.dates.index(date)-1]
+
+        SQL1 = "SELECT * FROM mongo_zyadjust WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL2 = "UPDATE mongo_zyadjust SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
+        SQL3 = "INSERT INTO mongo_zyadjust (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
+
+        score_df = pd.DataFrame(list(self.sadj.find({'date': date}, {'_id': 0})))
+        report_df = pd.DataFrame(list(self.radj.find({'date': date}, {'_id': 0})))
+
+        cursor = self.monitor_connection.cursor()
+        cursor.execute(SQL1, (date, 'score_number', 'count'))
+        if list(cursor):
+            cursor.execute(SQL2, (len(score_df), date, 'score_number', 'count'))
+        else:
+            cursor.execute(SQL3, (date, 'score_number', 'count', len(score_df)))
+        cursor.execute(SQL1, (date, 'score_stock_number', 'count'))
+        if list(cursor):
+            cursor.execute(SQL2, (len(score_df.sid.unique()), date, 'score_stock_number', 'count'))
+        else:
+            cursor.execute(SQL3, (date, 'score_stock_number', 'count', len(score_df.sid.unique())))
+        if list(cursor):
+            cursor.execute(SQL2, (len(report_df), date, 'report_number', 'count'))
+        else:
+            cursor.execute(SQL3, (date, 'report_number', 'count', len(report_df)))
+        cursor.execute(SQL1, (date, 'report_stock_number', 'count'))
+        if list(cursor):
+            cursor.execute(SQL2, (len(report_df.sid.unique()), date, 'report_stock_number', 'count'))
+        else:
+            cursor.execute(SQL3, (date, 'report_stock_number', 'count', len(report_df.sid.unique())))
+
 
 
 if __name__ == '__main__':

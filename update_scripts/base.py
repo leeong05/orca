@@ -78,6 +78,10 @@ class UpdaterBase(object):
             return float(ser.quantile(0.25))
         elif statistic == 'quartile3':
             return float(ser.quantile(0.75))
+        elif statistic == 'decile1':
+            return float(ser.quantile(0.1))
+        elif statistic == 'decile9':
+            return float(ser.quantile(0.9))
         elif statistic == 'skew':
             return float(ser.skew())
         elif statistic == 'kurt':

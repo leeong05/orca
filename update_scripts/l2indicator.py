@@ -5,7 +5,7 @@
 import pandas as pd
 
 from base import UpdaterBase
-import l2indicator_mssql
+import l2indicator_mssql as sql
 
 
 class L2IndicatorUpdater(UpdaterBase):
@@ -20,7 +20,6 @@ class L2IndicatorUpdater(UpdaterBase):
         self.collection = self.db.l2indicator
         if not self.skip_update:
             self.connect_wind()
-            self.sql = l2indicator_mssql
         if not self.skip_monitor:
             self.connect_monitor()
 
@@ -29,7 +28,7 @@ class L2IndicatorUpdater(UpdaterBase):
 
     def update(self, date):
         """Update daily l2indicator data for the **same** day after market open."""
-        CMD = self.sql.CMD.format(date=date)
+        CMD = sql.CMD.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
         df = pd.DataFrame(list(self.cursor))
@@ -37,11 +36,11 @@ class L2IndicatorUpdater(UpdaterBase):
             self.logger.error('No records found for {} on {}', self.collection.name, date)
             return
 
-        df.columns = ['sid'] + self.sql.dnames
+        df.columns = ['sid'] + sql.dnames
         df = df.ix[[sid[-2:] in ('SH', 'SZ') and len(sid) == 9 and sid[:2] in ('00', '60', '30') for sid in df.sid]]
         df.index = [sid[:6] for sid in df.sid]
 
-        for dname in self.sql.dnames:
+        for dname in sql.dnames:
             key = {'dname': dname, 'date': date}
             self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}',
@@ -64,6 +63,7 @@ class L2IndicatorUpdater(UpdaterBase):
                     cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
             self.logger.info('MONITOR for {} on {}', dname, date)
         self.monitor_connection.commit()
+
 
 if __name__ == '__main__':
     value = L2IndicatorUpdater()
