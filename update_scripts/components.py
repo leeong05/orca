@@ -24,14 +24,13 @@ def worker(args):
 class ComponentsUpdater(UpdaterBase):
     """The updater class for collection 'index_components'."""
 
-    def __init__(self, source=None, timeout=600, threads=cpu_count()):
-        self.source = source
+    def __init__(self, timeout=600, threads=cpu_count()):
         self.threads = threads
         super(ComponentsUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
-        self.collection = self.db.components
+        self.collection = self.db.index_components
         if not self.skip_update:
             self.connect_jydb()
         if not self.skip_monitor:
@@ -86,6 +85,7 @@ class ComponentsUpdater(UpdaterBase):
                 'CS500': 'SH000905',
                 }
         for index, dname in index_dname.iteritems():
+            print index
             ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue']).dropna()
             for statistic in statistics:
                 cursor.execute(SQL1, (date, index, statistic))

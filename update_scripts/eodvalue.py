@@ -11,7 +11,7 @@ import eodvalue_mssql as sql
 class EODValueUpdater(UpdaterBase):
     """The updater class for collection 'eod_value'."""
 
-    def __init__(self, timeout=600):
+    def __init__(self, timeout=3000):
         super(EODValueUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):

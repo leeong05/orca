@@ -21,7 +21,8 @@ class MiscUpdater(UpdaterBase):
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
-        self.collection = self.db.misc
+        if not self.skip_monitor:
+            self.connect_monitor()
 
     def pro_update(self):
         pass
@@ -77,9 +78,9 @@ class MiscUpdater(UpdaterBase):
         SQL3 = "INSERT INTO mongo_universe (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
 
         cursor = self.monitor_connection.cursor()
-        for dname in self.collection.distinct('dname'):
+        for dname in self.db.universe.distinct('dname'):
             try:
-                ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue'])
+                ser = pd.Series(self.db.universe.find_one({'dname': dname, 'date': date})['dvalue'])
             except:
                 continue
             for statistic in statistics:

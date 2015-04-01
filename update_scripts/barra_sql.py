@@ -17,8 +17,8 @@ Dfile2 = 'SMD_CNE5D_100_UnadjCov_%s.zip'
 Sfile1 = 'SMD_CNE5S_100_%s.zip'
 Sfile2 = 'SMD_CNE5S_100_UnadjCov_%s.zip'
 
-zipdir = '/home/SambaServer/extended_data/Barra/src'
-dirdir = '/home/SambaServer/extended_data/Barra'
+zipdir = '/home/SambaServer/extend_data/Barra/src'
+dirdir = '/home/SambaServer/extend_data/Barra'
 
 def fetch_files(date):
     ftp = FTP(server, usr, pwd)

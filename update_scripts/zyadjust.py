@@ -125,6 +125,8 @@ class ZYAdjustUpdater(UpdaterBase):
             cursor.execute(SQL2, (len(score_df.sid.unique()), date, 'score_stock_number', 'count'))
         else:
             cursor.execute(SQL3, (date, 'score_stock_number', 'count', len(score_df.sid.unique())))
+
+        cursor.execute(SQL1, (date, 'report_number', 'count'))
         if list(cursor):
             cursor.execute(SQL2, (len(report_df), date, 'report_number', 'count'))
         else:
@@ -135,6 +137,7 @@ class ZYAdjustUpdater(UpdaterBase):
         else:
             cursor.execute(SQL3, (date, 'report_stock_number', 'count', len(report_df.sid.unique())))
 
+        self.monitor_connection.commit()
 
 
 if __name__ == '__main__':

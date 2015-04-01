@@ -11,12 +11,12 @@ import indexquote_mssql as sql
 class IndexQuoteUpdater(UpdaterBase):
     """The updater class for collection 'index_quote'."""
 
-    def __init__(self, timeout=600):
+    def __init__(self, timeout=3000):
         super(IndexQuoteUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
-        self.collection = self.collection
+        self.collection = self.db.index_quote
         if not self.skip_update:
             self.connect_wind()
         if not self.skip_monitor:

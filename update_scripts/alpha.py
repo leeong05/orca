@@ -56,17 +56,17 @@ class AlphaUpdater(UpdaterBase):
                 tser = rser.ix[psids]
                 cursor.execute(SQL1, (date, dname, statistic))
                 if list(cursor):
-                    cursor.execute(SQL2, tser.mean(), date, dname, statistic)
+                    cursor.execute(SQL2, (self.sql_float(tser.mean()), date, dname, statistic))
                 else:
-                    cursor.execute(SQL3, (date, dname, statistic, tser.mean()))
+                    cursor.execute(SQL3, (date, dname, statistic, self.sql_float(tser.mean())))
             for q, statistic in zip((0.05, 0.10), ('pb5p_mean', 'pb10p_mean')):
                 psids = pser[pser < pser.quantile(q)].index
                 tser = rser.ix[psids]
                 cursor.execute(SQL1, (date, dname, statistic))
                 if list(cursor):
-                    cursor.execute(SQL2, tser.mean(), date, dname, statistic)
+                    cursor.execute(SQL2, (self.sql_float(tser.mean()), date, dname, statistic))
                 else:
-                    cursor.execute(SQL3, (date, dname, statistic, tser.mean()))
+                    cursor.execute(SQL3, (date, dname, statistic, self.sql_float(tser.mean())))
             for statistic in diff_statistics:
                 cursor.execute(SQL1, (date, dname, 'diff_'+statistic))
                 if list(cursor):

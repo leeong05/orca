@@ -26,7 +26,7 @@ class BarraUpdater(UpdaterBase):
         self.dates = self.db.dates.distinct('date')
         if self.model == 'daily':
             self.__dict__.update({
-                    'idmaps': self.db.barra_idmaps,
+                    'barra_idmaps': self.db.barra_idmaps,
                     'exposure': self.db.barra_D_exposure,
                     'facret': self.db.barra_D_returns,
                     'faccov': self.db.barra_D_covariance,
@@ -35,7 +35,7 @@ class BarraUpdater(UpdaterBase):
                     })
         else:
             self.__dict__.update({
-                    'idmaps': self.db.barra_idmaps,
+                    'barra_idmaps': self.db.barra_idmaps,
                     'exposure': self.db.barra_S_exposure,
                     'facret': self.db.barra_S_returns,
                     'faccov': self.db.barra_S_covariance,
@@ -56,7 +56,7 @@ class BarraUpdater(UpdaterBase):
             sql.fetch_and_parse(date)
         self.idmaps = json.load(open(sql.gp_idmaps(date, self.model)))
         if self.update_idmaps:
-            self.idmaps.update({'date': date}, {'$set': {'idmaps': self.idmaps}}, upsert=True)
+            self.barra_idmaps.update({'date': date}, {'$set': {'idmaps': self.idmaps}}, upsert=True)
         self.update_exposure(date)
         self.update_facret(date)
         self.update_faccov(date)
@@ -73,7 +73,7 @@ class BarraUpdater(UpdaterBase):
 
         cursor = self.monitor_connection.cursor()
 
-        idmaps = self.idmaps.findOne({'date': date})['idmaps']
+        idmaps = self.barra_idmaps.find_one({'date': date})['idmaps']
         cursor.execute(SQL1, (date, 'idmaps', 'count'))
         if list(cursor):
             cursor.execute(SQL2, (len(idmaps), date, 'idmaps', 'count'))
@@ -90,7 +90,7 @@ class BarraUpdater(UpdaterBase):
                         cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, dname, statistic))
                     else:
                         cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
-            self.logger.info('MONITOR for {} on {}', dname, date)
+                self.logger.info('MONITOR for {} on {}', dname, date)
         self.monitor_connection.commit()
 
     def update_exposure(self, date):

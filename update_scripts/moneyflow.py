@@ -11,7 +11,7 @@ import moneyflow_mssql as sql
 class MoneyflowUpdater(UpdaterBase):
     """The updater class for collection 'moneyflow'."""
 
-    def __init__(self, timeout=60):
+    def __init__(self, timeout=3000):
         super(MoneyflowUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):

@@ -31,7 +31,7 @@ class TSMinUpdater(UpdaterBase):
         super(TSMinUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
-        self.dates = self.db.dates.distinct('date'),
+        self.dates = self.db.dates.distinct('date')
         self.collection = self.db['ts_'+self.bar]
         self.index_collection = self.db['tsindex_'+self.bar]
         if not self.skip_monitor:

@@ -9,6 +9,7 @@ from datetime import datetime
 import argparse
 from multiprocessing import Process
 
+import numpy as np
 import pandas as pd
 import logbook
 logbook.set_datetime_format('local')
@@ -46,7 +47,6 @@ class UpdaterBase(object):
         db.authenticate(user, password)
         self.__dict__.update({'client': client, 'db': db})
         self.connected = True
-        self.logger.debug('Connected to {} using database {}', host, db)
 
     def disconnect_mongo(self):
         self.client.close()
@@ -63,29 +63,42 @@ class UpdaterBase(object):
         pass
 
     @staticmethod
+    def sql_float(f):
+        return (not np.isfinite(f)) and 'NULL' or float(f)
+
+    @staticmethod
     def compute_statistic(ser, statistic):
         if statistic == 'mean':
-            return float(ser.mean())
+            return UpdaterBase.sql_float(ser.mean())
         elif statistic == 'min':
-            return float(ser.min())
+            return UpdaterBase.sql_float(ser.min())
         elif statistic == 'max':
-            return float(ser.max())
+            return UpdaterBase.sql_float(ser.max())
         elif statistic == 'median':
-            return float(ser.median())
+            return UpdaterBase.sql_float(ser.median())
         elif statistic == 'std':
-            return float(ser.std())
+            try:
+                return UpdaterBase.sql_float(ser.std())
+            except:
+                return UpdaterBase.sql_float(np.nan)
         elif statistic == 'quartile1':
-            return float(ser.quantile(0.25))
+            return UpdaterBase.sql_float(ser.quantile(0.25))
         elif statistic == 'quartile3':
-            return float(ser.quantile(0.75))
+            return UpdaterBase.sql_float(ser.quantile(0.75))
         elif statistic == 'decile1':
-            return float(ser.quantile(0.1))
+            return UpdaterBase.sql_float(ser.quantile(0.1))
         elif statistic == 'decile9':
-            return float(ser.quantile(0.9))
+            return UpdaterBase.sql_float(ser.quantile(0.9))
         elif statistic == 'skew':
-            return float(ser.skew())
+            try:
+                return UpdaterBase.sql_float(ser.skew())
+            except:
+                return UpdaterBase.sql_float(np.nan)
         elif statistic == 'kurt':
-            return float(ser.kurt())
+            try:
+                return UpdaterBase.sql_float(ser.kurt())
+            except:
+                return UpdaterBase.sql_float(np.nan)
         else:
             return int(ser.count())
 
@@ -102,26 +115,22 @@ class UpdaterBase(object):
             import pymssql
             connection = pymssql.connect('192.168.1.181', 'sa', 'Nm,.hjkl', 'jydb')
             cursor = connection.cursor()
-            self.logger.debug('Connected to MSSQL Database jydb on 192.168.1.181')
         elif self.source == 'oracle':
             import cx_Oracle
             connection = cx_Oracle.connect('jydb/jydb@jydb')
             cursor = connection.cursor()
-            self.logger.debug('Connected to Oracle Database jydb on 192.168.1.181')
         self.__dict__.update({'connection': connection, 'cursor': cursor})
 
     def connect_wind(self):
         import pymssql
         connection = pymssql.connect('192.168.1.181', 'sa', 'Nm,.hjkl', 'wind')
         cursor = connection.cursor()
-        self.logger.debug('Connected to MSSQL Database wind on 192.168.1.181')
         self.__dict__.update({'connection': connection, 'cursor': cursor})
 
     def connect_zyyx(self):
         import cx_Oracle
         connection = cx_Oracle.connect('zyyx/zyyx@zyyx')
         cursor = connection.cursor()
-        self.logger.debug('Connected to Oracle Database zyyx/zyyx@zyyx')
         self.__dict__.update({'connection': connection, 'cursor': cursor})
 
     def connect_monitor(self):
@@ -132,7 +141,6 @@ class UpdaterBase(object):
                 password='123456',
                 database='monitor',
                 )
-        self.logger.debug('Connected to Monitor Database monitor@anjuta')
         self.__dict__.update({'monitor_connection': connection})
 
     def run(self):

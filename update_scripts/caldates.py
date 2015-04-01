@@ -45,7 +45,7 @@ class CalendarUpdater(UpdaterBase):
         SQL3 = "INSERT INTO mongo_calendar (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
 
         cursor = self.monitor_connection.cursor()
-        for dname in self.collection.distint('dname'):
+        for dname in self.collection.distinct('dname'):
             try:
                 res = self.collection.findOne({'dname': dname, 'date': date})['dvalue']
             except:
@@ -55,7 +55,7 @@ class CalendarUpdater(UpdaterBase):
                 cursor.execute(SQL2, (len(res), date, dname, 'count'))
             else:
                 cursor.execute(SQL3, (date, dname, 'count', len(res)))
-            self.logger.info('MONITOR for {} on {}', 'idmaps', date)
+            self.logger.info('MONITOR for {} on {}', dname, date)
         self.monitor_connection.commit()
 
     def update_financial_report(self, date, prev_date):

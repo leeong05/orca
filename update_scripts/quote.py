@@ -11,7 +11,7 @@ import quote_mssql as sql
 class QuoteUpdater(UpdaterBase):
     """The updater class for collection 'quote'."""
 
-    def __init__(self, source=None, timeout=60):
+    def __init__(self, source=None, timeout=600):
         self.source = source
         super(QuoteUpdater, self).__init__(timeout=timeout)
 
