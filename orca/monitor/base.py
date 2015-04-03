@@ -21,6 +21,15 @@ class MonitorFetcherBase(object):
             database='monitor',
             )
 
+    @classmethod
+    def connect_monitor(cls):
+        cls.MONITOR = mysql.connector.connect(
+                host='192.168.1.183',
+                user='kbars',
+                password='123456',
+                database='monitor',
+                )
+
     def __init__(self, datetime_index=False, date_check=False, delay=1, **kwargs):
         self.logger = logbook.Logger(MonitorFetcherBase.LOGGER_NAME)
         self.datetime_index = datetime_index

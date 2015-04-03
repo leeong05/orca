@@ -19,3 +19,12 @@ def twinx_plot(y1, y2, params1={'color': 'red'}, params2={'color': 'blue'}):
     ax.set_ylabel(y2.name or 'y2', color=params2.get('color', 'blue'))
     return fig
 
+def plot_intervals(ser, intervals):
+    fig, ax = plt.subplots()
+    ax.plot(ser.index, ser)
+    ax.xaxis.set_major_formatter(DateFormatter('%Y%m%d'))
+    for interval in intervals:
+        ser_slice = ser.ix[interval[0]: interval[1]]
+        ax.plot(ser_slice.index, ser_slice, 'r')
+    fig.autofmt_xdate()
+    return fig

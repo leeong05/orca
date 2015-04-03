@@ -27,7 +27,11 @@ class BetaFetcher(MonitorFetcherBase):
     def fetch_window(self, dname, window, **kwargs):
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
 
-        cursor = self.MONITOR.cursor()
+        try:
+            cursor = self.MONITOR.cursor()
+        except:
+            self.connect_monitor()
+            cursor = self.MONITOR.cursor()
         sql = ("SELECT trading_day, industry, {} FROM industry_beta WHERE "
                "trading_day>='{}' AND trading_day<='{}'").format(dname, window[0], window[-1])
         cursor.execute(sql)

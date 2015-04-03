@@ -28,11 +28,14 @@ class IndicatorFetcher(MonitorFetcherBase):
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
         if not indicator:
             indicator = None
-
-        cursor = self.MONITOR.cursor()
+        try:
+            cursor = self.MONITOR.cursor()
+        except:
+            self.connect_monitor()
+            cursor = self.MONITOR.cursor()
         sql = ("SELECT * FROM indicator WHERE "
                "trading_day>='{}' AND trading_day<='{}'").format(window[0], window[-1])
-        if isinstance(indicator, str):
+        if isinstance(indicator, str) or isinstance(indicator, unicode):
             sql += " AND name={!r}".format(indicator)
         elif indicator is not None:
             sql += " AND name IN {!r}".format(tuple(indicator))
@@ -56,3 +59,12 @@ class IndicatorFetcher(MonitorFetcherBase):
         di -= delay
         window = DATES[di-backdays+1:di+1]
         return self.fetch_window(indicator, window, **kwargs)
+
+    def fetch_sql(self, sql):
+        try:
+            cursor = self.MONITOR.cursor()
+        except:
+            self.connect_monitor()
+            cursor = self.MONITOR.cursor()
+        cursor.execute(sql)
+        return cursor
