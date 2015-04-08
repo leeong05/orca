@@ -2,25 +2,25 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
-import os
-
 import pandas as pd
 
 from orca.universe import common
 
 from base import UpdaterBase
-import misc_sql as sql
+import misc_mssql as sql
 
 
 class MiscUpdater(UpdaterBase):
     """The updater class for collection 'misc'."""
 
-    def __init__(self, source=None, timeout=60):
-        self.source = source
+    def __init__(self, timeout=3000):
         super(MiscUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
+        self.collection = self.db.misc
+        if not self.skip_update:
+            self.connect_wind()
         if not self.skip_monitor:
             self.connect_monitor()
 
@@ -37,20 +37,23 @@ class MiscUpdater(UpdaterBase):
 
     def update_tradable(self, date):
         """Update daily tradable data for the **same** day before market open."""
-        fpath = sql.gp_tradable(date)
-        if not os.path.exists(fpath):
-            self.logger.warning('File not exists on {}', date)
-            return
+        pdate = self.dates[self.dates.index(date)-1]
+        CMD = sql.CMD0.format(date=pdate)
+        self.logger.debug('Executing command:\n{}', CMD)
+        self.cursor.execute(CMD)
+        sids = [sid[0] for sid in self.cursor]
 
-        tradable = {}
-        with open(fpath) as file:
-            for line in file:
-                try:
-                    sid = line.strip()
-                    assert len(sid) == 6 and sid[:2] in ('00', '30', '60')
-                    tradable[sid] = 1
-                except:
-                    pass
+        CMD = sql.CMD1.format(date=date)
+        self.logger.debug('Executing command:\n{}', CMD)
+        self.cursor.execute(CMD)
+        sids1 = [sid[0] for sid in self.cursor]
+        CMD = sql.CMD2.format(date=date)
+        self.logger.debug('Executing command:\n{}', CMD)
+        self.cursor.execute(CMD)
+        sids2 = [sid[0] for sid in self.cursor]
+
+        tradable = {sid: 1 for sid in sids if sid not in sids1 and sid not in sids2}
+
         self.collection.update({'dname': 'tradable', 'date': date}, {'$set': {'dvalue': tradable}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}@dname={}]) of (d: [{}]) on {}',
                 len(tradable), self.collection.name, 'tradable', self.db.name, date)

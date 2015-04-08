@@ -97,6 +97,9 @@ class Performance(object):
         """**Be sure** to use this method when either the alpha is neutralized or you know what you are doing."""
         return Analyser(self.alpha, Performance.get_returns(self.startdate))
 
+    def get_shift(self, n):
+        return Analyser(self.alpha.shift(n), Performance.get_returns(self.alpha.index[n]))
+
     def get_longshort(self):
         """Pretend the alpha can be made into a long/short portfolio."""
         return Analyser(api.neutralize(self.alpha), Performance.get_returns(self.startdate))

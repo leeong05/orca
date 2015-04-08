@@ -4,6 +4,9 @@
 
 import pandas as pd
 
+from orca.mongo.components import ComponentsFetcher
+components_fetcher = ComponentsFetcher(as_bool=False)
+
 from base import UpdaterBase
 
 
@@ -27,6 +30,11 @@ class AlphaUpdater(UpdaterBase):
         pass
 
     def monitor(self, date):
+        hs300 = components_fetcher.fetch_daily('HS300', date)
+        hs300 = set(hs300[hs300>0].index)
+        cs500 = components_fetcher.fetch_daily('CS500', date)
+        cs500 = set(cs500[cs500>0].index)
+
         pdate = self.dates[self.dates.index(date)-1]
 
         statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3', 'decile1', 'decile9', 'skew', 'kurt')
@@ -51,8 +59,68 @@ class AlphaUpdater(UpdaterBase):
                     cursor.execute(SQL2, (self.compute_statistic(ser, statistic), date, dname, statistic))
                 else:
                     cursor.execute(SQL3, (date, dname, statistic, self.compute_statistic(ser, statistic)))
+            for q, prefix in zip((0.95, 0.90, 0.8), ('t5p', 't10p', 't20p')):
+                while True:
+                    sids = ser[ser >= ser.quantile(q)].index
+                    if len(sids):
+                        break
+                    q -= 0.01
+                hs300_sids = [sid for sid in sids if sid in hs300]
+                cursor.execute(SQL1, (date, dname, prefix+'_hs300'))
+                if list(cursor):
+                    cursor.execute(SQL2, (len(hs300_sids)*1./len(sids), date, dname, prefix+'_hs300'))
+                else:
+                    cursor.execute(SQL3, (date, dname, prefix+'_hs300', len(hs300_sids)*1./len(sids)))
+                cs500_sids = [sid for sid in sids if sid in cs500]
+                cursor.execute(SQL1, (date, dname, prefix+'_cs500'))
+                if list(cursor):
+                    cursor.execute(SQL2, (len(cs500_sids)*1./len(sids), date, dname, prefix+'_cs500'))
+                else:
+                    cursor.execute(SQL3, (date, dname, prefix+'_cs500', len(cs500_sids)*1./len(sids)))
+                cyb_sids = [sid for sid in sids if sid.startswith('30')]
+                cursor.execute(SQL1, (date, dname, prefix+'_cyb'))
+                if list(cursor):
+                    cursor.execute(SQL2, (len(cyb_sids)*1./len(sids), date, dname, prefix+'_cyb'))
+                else:
+                    cursor.execute(SQL3, (date, dname, prefix+'_cyb', len(cyb_sids)*1./len(sids)))
+                zxb_sids = [sid for sid in sids if sid.startswith('002')]
+                cursor.execute(SQL1, (date, dname, prefix+'_zxb'))
+                if list(cursor):
+                    cursor.execute(SQL2, (len(zxb_sids)*1./len(sids), date, dname, prefix+'_zxb'))
+                else:
+                    cursor.execute(SQL3, (date, dname, prefix+'_zxb', len(zxb_sids)*1./len(sids)))
+            for q, prefix in zip((0.05, 0.10, 0.2), ('b5p', 'b10p', 'b20p')):
+                while True:
+                    sids = ser[ser <= ser.quantile(q)].index
+                    if len(sids):
+                        break
+                    q += 0.01
+                hs300_sids = [sid for sid in sids if sid in hs300]
+                cursor.execute(SQL1, (date, dname, prefix+'_hs300'))
+                if list(cursor):
+                    cursor.execute(SQL2, (len(hs300_sids)*1./len(sids), date, dname, prefix+'_hs300'))
+                else:
+                    cursor.execute(SQL3, (date, dname, prefix+'_hs300', len(hs300_sids)*1./len(sids)))
+                cs500_sids = [sid for sid in sids if sid in cs500]
+                cursor.execute(SQL1, (date, dname, prefix+'_cs500'))
+                if list(cursor):
+                    cursor.execute(SQL2, (len(cs500_sids)*1./len(sids), date, dname, prefix+'_cs500'))
+                else:
+                    cursor.execute(SQL3, (date, dname, prefix+'_cs500', len(cs500_sids)*1./len(sids)))
+                cyb_sids = [sid for sid in sids if sid.startswith('30')]
+                cursor.execute(SQL1, (date, dname, prefix+'_cyb'))
+                if list(cursor):
+                    cursor.execute(SQL2, (len(cyb_sids)*1./len(sids), date, dname, prefix+'_cyb'))
+                else:
+                    cursor.execute(SQL3, (date, dname, prefix+'_cyb', len(cyb_sids)*1./len(sids)))
+                zxb_sids = [sid for sid in sids if sid.startswith('002')]
+                cursor.execute(SQL1, (date, dname, prefix+'_zxb'))
+                if list(cursor):
+                    cursor.execute(SQL2, (len(zxb_sids)*1./len(sids), date, dname, prefix+'_zxb'))
+                else:
+                    cursor.execute(SQL3, (date, dname, prefix+'_zxb', len(zxb_sids)*1./len(sids)))
             for q, statistic in zip((0.95, 0.90), ('pt5p_mean', 'pt10p_mean')):
-                psids = pser[pser > pser.quantile(q)].index
+                psids = pser[pser >= pser.quantile(q)].index
                 tser = rser.ix[psids]
                 cursor.execute(SQL1, (date, dname, statistic))
                 if list(cursor):
@@ -60,7 +128,7 @@ class AlphaUpdater(UpdaterBase):
                 else:
                     cursor.execute(SQL3, (date, dname, statistic, self.sql_float(tser.mean())))
             for q, statistic in zip((0.05, 0.10), ('pb5p_mean', 'pb10p_mean')):
-                psids = pser[pser < pser.quantile(q)].index
+                psids = pser[pser <= pser.quantile(q)].index
                 tser = rser.ix[psids]
                 cursor.execute(SQL1, (date, dname, statistic))
                 if list(cursor):
