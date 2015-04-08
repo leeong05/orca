@@ -2,6 +2,7 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import re
 from itertools import product
 
 import pandas as pd
@@ -31,15 +32,24 @@ class PerformanceUpdater(UpdaterBase):
 
     def add_options(self):
         self.options['alphas'] = None
+        self.options['pattern'] = None
         self.options['excludes'] = None
+        self.options['exclude_pattern'] = None
+        self.options['category'] = None
 
     def parse_options(self):
         alphas = self.options['alphas']
         if alphas is not None:
             self.options['alphas'] = alphas.split(',')
+        pattern = self.options['pattern']
+        if pattern is not None:
+            self.options['pattern'] = re.compile(pattern)
         excludes = self.options['excludes']
         if excludes is not None:
             self.options['excludes'] = excludes.split(',')
+        exclude_pattern = self.options['exclude_pattern']
+        if exclude_pattern is not None:
+            self.options['exclude_pattern'] = re.compile(exclude_pattern)
 
     def run(self):
         self.parse_args()
@@ -71,12 +81,20 @@ class PerformanceUpdater(UpdaterBase):
         SQL1 = "SELECT * FROM alpha_category WHERE name=%s"
         SQL2 = "INSERT INTO alpha_category (name, category) VALUES (%s, %s)"
         for dname in dnames:
-            if self.options['alphas'] and dname not in self.options['alphas'] or dname in self.options['excludes']:
+            if self.options['alphas'] and dname not in self.options['alphas']:
                 continue
-
+            if self.options['excludes'] and dname in self.options['excludes']:
+                continue
+            if self.options['pattern'] is not None and not self.options['pattern'].search(dname):
+                continue
+            if self.options['exclude_pattern'] is not None and self.options['exclude_pattern'].search(dname):
+                continue
             cursor.execute(SQL1, (dname,))
             if not list(cursor):
-                category = raw_input('Specify a category for %s: ' % dname)
+                if self.options['category'] is None:
+                    category = raw_input('Specify a category for %s: ' % dname)
+                else:
+                    category = self.options['category']
                 cursor.execute(SQL2, (dname, category))
             cursor.execute(SQL1, (dname,))
             alpha_id = list(cursor)[0][0]
