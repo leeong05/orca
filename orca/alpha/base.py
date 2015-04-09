@@ -58,6 +58,10 @@ class AlphaBase(object):
             return DATES[di-offset]
         raise ValueError('Can\'t get date with the specified offset')
 
+    @staticmethod
+    def filter_date(date):
+        return True
+
     def debug(self, msg):
         """Logs a message with level DEBUG on the alpha logger."""
         if self.debug_on:
@@ -275,8 +279,9 @@ class BacktestingAlpha(AlphaBase):
             dates = self.generate_dates(startdate, enddate)
 
         for date in dates:
-            self.generate(date)
-            self.debug('Generated alpha for {} sids on {}'.format(self[date].count(), date))
+            if self.filter_date(date):
+                self.generate(date)
+                self.debug('Generated alpha for {} sids on {}'.format(self[date].count(), date))
 
 
 class BacktestingIntervalAlpha(IntervalAlphaBase):

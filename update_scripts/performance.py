@@ -89,6 +89,9 @@ class PerformanceUpdater(UpdaterBase):
                 continue
             if self.options['exclude_pattern'] is not None and self.options['exclude_pattern'].search(dname):
                 continue
+
+            self.logger.info('Processing {}', dname)
+
             cursor.execute(SQL1, (dname,))
             if not list(cursor):
                 if self.options['category'] is None:

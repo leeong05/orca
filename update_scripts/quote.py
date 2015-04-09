@@ -39,7 +39,6 @@ class QuoteUpdater(UpdaterBase):
         df.columns = ['sid'] + sql.dnames
         for dname in sql.dnames:
             df[dname] = df[dname].astype(float)
-        df = df.ix[df['volume'] > 0]
         df['returns'] = df['close']/df['prev_close'] - 1.
         df.index = df.sid
 
@@ -64,10 +63,13 @@ class QuoteUpdater(UpdaterBase):
 
         for dname in sql.dnames:
             key = {'dname': dname, 'date': date}
-            self.collection.update(key, {'$set': {'dvalue': df[dname].dropna().astype(float).to_dict()}}, upsert=True)
+            dvalue = df[dname].dropna().astype(float)
+            if not dname.startswith('adj'):
+                dvalue = dvalue.ix[df['volume']>0]
+            self.collection.update(key, {'$set': {'dvalue': dvalue.to_dict()}}, upsert=True)
         self.collection.update({'dname': 'fclose', 'date': date}, {'$set': {'dvalue': fclose}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}',
-                len(df), self.collection.name, self.db.name, date)
+                len(df.ix[df['volume']>0]), self.collection.name, self.db.name, date)
 
     def monitor(self, date):
         statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
