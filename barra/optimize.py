@@ -54,7 +54,7 @@ class BarraOptimizerBase(object):
         self.assets_scost = assets.attrib.get('scost', None)
         # composite_portfolio
         composite = assets.xpath('Composite')[0]
-        self.composites = [config.tag for config in composite]
+        self.composites = [cfg.tag for cfg in composite]
         # init_portfolio
         init_portfolio = self.config.xpath('//InitPortfolio')[0]
         self.init_portfolio_path = Template(init_portfolio.attrib['path'])
@@ -347,13 +347,13 @@ class BarraOptimizerBase(object):
         style_factors = [self.risk_model_name+'_'+style for style in STYLES]
         styles, industries = [], []
         styles.append('%19s %5s %19s' % ('-'*19, 'STYLE', '-'*19))
-        industries.append('%18s %8s %17s' % ('-'*18, 'INDUSTRY', '-'*17))
+        industries.append('%18s %8s %17s' % ('-'*16, 'INDUSTRY(%)', '-'*16))
         for factor in self.factors:
             exposure = self.risk_model.ComputePortExposure(self.output_portfolio, factor)
             long_exposure = self.risk_model.ComputePortExposure(self.output_long_portfolio, factor)
             short_exposure = self.risk_model.ComputePortExposure(self.output_short_portfolio, factor)
             if factor in style_factors:
-                styles.append('%-15s%10.2f%10.2f%10.2f' % (factor, exposure*100, long_exposure*100, short_exposure*100))
+                styles.append('%-15s%10.2f%10.2f%10.2f' % (factor, exposure, long_exposure, short_exposure))
             elif factor != self.risk_model_name+'_'+'COUNTRY':
                 industries.append('%-15s%10.2f%10.2f%10.2f' % (factor, exposure*100, long_exposure*100, short_exposure*100))
         infos.extend(styles)
