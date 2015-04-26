@@ -38,22 +38,37 @@ class MiscUpdater(UpdaterBase):
     def update_tradable(self, date):
         """Update daily tradable data for the **same** day before market open."""
         pdate = self.dates[self.dates.index(date)-1]
-        CMD = sql.CMD0.format(date=pdate)
+        CMD = sql.CMD0_1.format(date=pdate)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
-        sids = [sid[0] for sid in self.cursor]
+        sids0_1 = [sid[0] for sid in self.cursor]
+        CMD = sql.CMD0_2.format(date=date)
+        self.logger.debug('Executing command:\n{}', CMD)
+        self.cursor.execute(CMD)
+        sids0_2 = [sid[0] for sid in self.cursor]
+        sids = set(sids0_1) | set(sids0_2)
 
         CMD = sql.CMD1.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
-        sids1 = [sid[0] for sid in self.cursor]
+        sids1 = set([sid[0] for sid in self.cursor])
         CMD = sql.CMD2.format(date=date)
         self.logger.debug('Executing command:\n{}', CMD)
         self.cursor.execute(CMD)
-        sids2 = [sid[0] for sid in self.cursor]
+        sids2 = set([sid[0] for sid in self.cursor])
 
+        st = {sid: 1 for sid in sids1}
+        suspension = {sid: 1 for sid in sids2}
         tradable = {sid: 1 for sid in sids if sid not in sids1 and sid not in sids2}
 
+        self.collection.update({'dname': 'st', 'date': date}, {'$set': {'dvalue': st}}, upsert=True)
+        self.db.universe.update({'dname': 'ST', 'date': date}, {'$set': {'dvalue': st}}, upsert=True)
+        self.logger.info('UPSERT documents for {} sids into (c: [{}@dname={}]) of (d: [{}]) on {}',
+                len(st), self.collection.name, 'st', self.db.name, date)
+        self.collection.update({'dname': 'suspension', 'date': date}, {'$set': {'dvalue': suspension}}, upsert=True)
+        self.db.universe.update({'dname': 'SUSPENSION', 'date': date}, {'$set': {'dvalue': suspension}}, upsert=True)
+        self.logger.info('UPSERT documents for {} sids into (c: [{}@dname={}]) of (d: [{}]) on {}',
+                len(suspension), self.collection.name, 'suspension', self.db.name, date)
         self.collection.update({'dname': 'tradable', 'date': date}, {'$set': {'dvalue': tradable}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}@dname={}]) of (d: [{}]) on {}',
                 len(tradable), self.collection.name, 'tradable', self.db.name, date)

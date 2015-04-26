@@ -10,10 +10,7 @@ from orca import (
         )
 from orca.utils import dateutil
 
-from base import (
-        KDayFetcher,
-        KMinFetcher,
-        )
+from base import KDayFetcher
 
 
 class IndexQuoteFetcher(KDayFetcher):
@@ -64,7 +61,7 @@ class IndexQuoteFetcher(KDayFetcher):
         return df[dname]
 
 
-class IndexIntervalFetcher(KMinFetcher):
+class IndexIntervalFetcher(KDayFetcher):
     """Class to fetch TinySoft index minute-bar data.
 
     :param str freq: Frequency of minute-bar data, currently only supports: ('5min', '1min')

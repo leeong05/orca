@@ -64,8 +64,9 @@ class UnivFetcher(KDayFetcher):
 
     dnames = DB.universe.distinct('dname')
 
-    def __init__(self, **kwargs):
+    def __init__(self, as_list=False, **kwargs):
         self.collection = DB.universe
+        self.as_list = as_list
         super(UnivFetcher, self).__init__(**kwargs)
 
     def fetch_window(self, *args, **kwargs):
@@ -76,7 +77,7 @@ class UnivFetcher(KDayFetcher):
         """A variant of :py:meth:`orca.mongo.base.KDayFetcher.fetch_daily`.
 
         One can provide a boolean keyword argument ``as_list`` to return the valid sids."""
-        as_list = kwargs.get('as_list', False)
+        as_list = kwargs.get('as_list', self.as_list)
         ser = super(UnivFetcher, self).fetch_daily(*args, **kwargs)
         if as_list:
             return list(ser[ser].index)
