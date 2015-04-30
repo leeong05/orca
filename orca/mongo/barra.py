@@ -87,7 +87,7 @@ class BarraFetcher(KDayFetcher):
         if date is None:
             date = dates[-1]
         else:
-            date = dateutil.parse_date(dates, dateutil.compliment_datestring(date, -1, True), -1)
+            date = dateutil.parse_date(dates, dateutil.compliment_datestring(date, -1, True), -1)[1]
 
         query = {'date': str(date)}
         proj = {'_id': 0, 'idmaps': 1}

@@ -49,6 +49,8 @@ class IFUpdater(UpdaterBase):
 
         for fname in os.listdir(dirname):
             sid = fname[:6]
+            if sid[:2] not in ('IC', 'IF', 'IH'):
+                continue
             fname = os.path.join(dirname, fname)
             df = pd.read_csv(fname)
             df.columns = columns
