@@ -12,12 +12,12 @@ logger = logbook.Logger('universe')
 
 from orca.mongo.barra import BarraFetcher
 barra_fetcher = BarraFetcher('short')
-bid_sid = barra_fetcher.fetch_idmaps()
 
 def generate_path(path_pattern, date):
     return Template(path_pattern).substitute(YYYYMMDD=date, YYYYMM=date[:6], YYYY=date[:4], MM=date[4:6], DD=date[6:8])
 
 def prep_universe_lance(account, date, output):
+    bid_sid = barra_fetcher.fetch_idmaps(date)
     path = os.path.join('/home/liulc/trade_'+account, 'barra', date[:4], date[4:6], date[6:8], 'universe.'+date)
     bid = pd.read_csv(path, header=0, dtype={0: str}).iloc[:,0]
     sid = bid.apply(lambda x: bid_sid.get(x, x))

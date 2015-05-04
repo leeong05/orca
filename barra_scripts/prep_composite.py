@@ -12,8 +12,6 @@ logger = logbook.Logger('composite')
 
 from orca.mongo.barra import BarraFetcher
 barra_fetcher = BarraFetcher('short')
-bid_sid = barra_fetcher.fetch_idmaps()
-sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
 from orca.mongo.components import ComponentsFetcher
 components_fetcher = ComponentsFetcher(as_bool=False)
 
@@ -22,6 +20,7 @@ def generate_path(path_pattern, date, sid):
     return Template(path_pattern).substitute(YYYYMMDD=date, YYYYMM=date[:6], YYYY=date[:4], MM=date[4:6], DD=date[6:8], sid=sid)
 
 def prep_composite_lance(account, date, sid, output):
+    bid_sid = barra_fetcher.fetch_idmaps(date)
     path = os.path.join('/home/liulc/trade_'+account, 'barra', date[:4], date[4:6], date[6:8], 'benchmark.'+date)
     df = pd.read_csv(path, header=0, dtype={0: str})
     df.columns = ['bid', 'weight']
@@ -35,6 +34,8 @@ def prep_composite_lance(account, date, sid, output):
     logger.info('Generated file: {}', output)
 
 def prep_composite_mongo(date, sid, output):
+    bid_sid = barra_fetcher.fetch_idmaps(date)
+    sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
     df = pd.DataFrame(components_fetcher.fetch_daily(sid, date))
     df.columns = ['weight']
     df['sid'] = df.index

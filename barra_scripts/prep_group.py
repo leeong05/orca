@@ -12,8 +12,6 @@ logger = logbook.Logger('assets')
 
 from orca.mongo.barra import BarraFetcher
 barra_fetcher = BarraFetcher('short')
-bid_sid = barra_fetcher.fetch_idmaps()
-sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
 from orca.mongo.industry import IndustryFetcher
 industry_fetcher = IndustryFetcher()
 from orca.mongo.components import ComponentsFetcher
@@ -23,6 +21,8 @@ def generate_path(path_pattern, date):
     return Template(path_pattern).substitute(YYYYMMDD=date, YYYYMM=date[:6], YYYY=date[:4], MM=date[4:6], DD=date[6:8])
 
 def prep_group(group, name, date, output, add):
+    bid_sid = barra_fetcher.fetch_idmaps()
+    sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
     output = generate_path(output, date)
     if add and os.path.exists(output):
         exist = pd.read_csv(output, dtype={0: str})

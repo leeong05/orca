@@ -41,6 +41,9 @@ class BarraOptimizerBase(object):
             idset.Add(e)
         return idset
 
+    def before(self, date):
+        pass
+
     def initialize(self, date):
         prev_date = DATES[DATES.index(date)-1]
         self.workspace = barraopt.CWorkSpace.CreateInstance()
@@ -287,7 +290,7 @@ class BarraOptimizerBase(object):
         self.logger.debug('<<< Optimize')
         self.generate_report(date)
 
-    def pro_optimization(self, date):
+    def after(self, date):
         pass
 
 #-----------
@@ -965,6 +968,7 @@ class BarraOptimizerBase(object):
 
     def run(self, date):
         self.initialize(date)
+        self.before(date)
         self.add_assets(date)
         self.construct_init_portfolio(date)
         self.construct_universe(date)
@@ -972,5 +976,5 @@ class BarraOptimizerBase(object):
         self.construct_composite_portfolios(date)
         self.prepare_case(date)
         self.run_optimization(date)
-        self.pro_optimization(date)
+        self.after(date)
         self.workspace.Release()
