@@ -73,13 +73,15 @@ class IndexIntervalFetcher(KDayFetcher):
             }
 
     index_dname = {
-            'SHZS': 'SH000001',
-            'SZZS': 'SZ399107',
+            'SHZZ': 'SH000001',
+            'SZAZ': 'SZ399107',
             'ZXBZ': 'SZ399005',
             'CYBZ': 'SZ399006',
             'JCAZ': 'SZ399317',
+            'GZAZ': 'SZ399317',
             'HS300':'SH000300',
             'SH50': 'SH000016',
+            'CS500': 'SH000905',
             }
 
     dnames = ['open', 'high', 'low', 'close', 'volume', 'amount', 'vwap']
@@ -130,6 +132,9 @@ class IndexIntervalFetcher(KDayFetcher):
         df.index = pd.to_datetime(df.date + ' ' + df.time)
         df = df[_dname]
         return df[dname] if isinstance(dname, str) else df
+
+    def fetch_daily(self, dname, date, offset=0, **kwargs):
+        return super(IndexIntervalFetcher, self).fetch_history(dname,  date, 1, delay=offset, **kwargs)
 
 
 class IndexIntervalReturnsFetcher(KDayFetcher):
