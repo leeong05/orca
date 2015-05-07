@@ -51,6 +51,7 @@ if __name__ == '__main__':
     from orca.utils.io import read_frame
     import os
     import shutil
+    from lxml import etree
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--alpha', required=True, type=str)
@@ -77,7 +78,7 @@ if __name__ == '__main__':
 
     os.chdir(args.dir)
     alpha, univ = read_frame(args.alpha), read_frame(args.univ)
-    optimizer = BarraOptimizer(args.config, alpha, univ, dates)
+    optimizer = BarraOptimizer(etree(args.config), alpha, univ, dates)
 
     for date in dates:
         optimizer.run(date)

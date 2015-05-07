@@ -5,7 +5,6 @@
 import os
 import json
 
-from lxml import etree
 import numpy as np
 import pandas as pd
 import logbook
@@ -27,7 +26,7 @@ class BarraOptimizerBase(object):
 
     def __init__(self, config):
         self.logger = logbook.Logger('optimizer')
-        self.config = etree.parse(config)
+        self.config = config
 
     def to_portfolio(self, df, name):
         portfolio = self.workspace.CreatePortfolio(name)
@@ -209,7 +208,7 @@ class BarraOptimizerBase(object):
             self.cashflow = float(config.attrib.get('cashflow', 0))
         except:
             self.cashflow = 0
-        self.case = self.workspace.CreateCase('optimize', self.init_portfolio, self.universe, self.booksize, 0)
+        self.case = self.workspace.CreateCase('optimize', self.init_portfolio, self.universe, self.booksize, self.cashflow/self.booksize)
         try:
             self.risk_target = float(config.attrib['risk_target'])
         except:
