@@ -56,7 +56,7 @@ class BarraOptimizerBase(object):
         # add asset from file: alpha, bcost, scost, weight
         config = self.config.xpath('Assets')[0]
         path = util.generate_path(config.attrib['path'], date)
-        self.assets_df = util.read_csv(path, header=0, dtype={0: str})
+        self.assets_df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
         for sid, row in self.assets_df.iterrows():
             asset = self.workspace.CreateAsset(row['bid'], barraopt.eREGULAR)
             row_not_null = row.notnull()
@@ -75,7 +75,7 @@ class BarraOptimizerBase(object):
                 util.set_asset_attribute(asset.AddPWLinearBuyCost, config.attrib['scost'], float, np.isfinite)
         # add group/attribute for assets
         self.group_names = []
-        path = util.generate_path(config.attrib['group_path'], date)
+        path = util.generate_path(config.attrib.get('group_path', ''), date)
         if os.path.exists(path):
             self.groups_df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
             self.group_names = [col for col in self.groups_df.columns if col not in ['sid', 'bid']]
@@ -868,9 +868,9 @@ class BarraOptimizerBase(object):
 # --------
 
     def generate_report(self, date):
-        #self.calculate_factor_exposure(date)
-        self.calculate_group_exposure(date)
-        pass
+        if self.config.xpath('//Solver/Exposure'):
+            self.calculate_factor_exposure(date)
+            self.calculate_group_exposure(date)
 
     def calculate_factor_exposure(self, date):
         self.init_long_portfolio_df = self.init_portfolio_df.query('weight > 0')
@@ -920,8 +920,6 @@ class BarraOptimizerBase(object):
                 util.expand_portfolio(self.init_portfolio_df, self.composite_dfs, self.sid_bid)
         self.expanded_output_long_portfolio_df, self.expanded_output_short_portfolio_df = \
                 util.expand_portfolio(self.output_portfolio_df, self.composite_dfs, self.sid_bid)
-        a = set(self.expanded_output_short_portfolio_df.index)
-        print a == set(self.composite_dfs['HS300'].index)
         self.expanded_init_portfolio_df = util.compact_portfolio(
                 self.expanded_init_long_portfolio_df, self.expanded_init_short_portfolio_df)
         self.expanded_output_portfolio_df = util.compact_portfolio(

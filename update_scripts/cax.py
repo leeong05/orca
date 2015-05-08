@@ -11,8 +11,7 @@ import cax_mssql as sql
 class CaxUpdater(UpdaterBase):
     """The updater class for collections 'date' and 'shares'"""
 
-    def __init__(self, source=None, timeout=3000):
-        self.source = source
+    def __init__(self, timeout=3000):
         super(CaxUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
@@ -21,7 +20,8 @@ class CaxUpdater(UpdaterBase):
         if not self.skip_update:
             self.connect_wind()
         if not self.skip_monitor:
-            self.dates = self.db.dates.distinct('date')
+            if self.skip_update:
+                self.dates = self.db.dates.distinct('date')
             self.connect_monitor()
 
     def pro_update(self):
@@ -67,6 +67,7 @@ class CaxUpdater(UpdaterBase):
         df2.index = df2.sid
         self.collection.update({'date': date, 'dname': 'free_float_shares'}, {'$set': {'dvalue': (df2['free_float_shares'].astype(float)*10000).dropna().astype(int).to_dict()}}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', len(df2), self.collection.name, self.db.name, date)
+        self.dates = self.db.dates.distinct('date')
 
     def monitor(self, date):
         statistics = ('count', 'mean', 'min', 'max', 'median', 'quartile1', 'quartile3')
