@@ -34,7 +34,7 @@ class ZYConsensusUpdater(UpdaterBase):
         super(ZYConsensusUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
-        self.dates = self.db.dates.distinct('date'),
+        self.dates = self.db.dates.distinct('date')
         self.collection = self.db.zyconsensus
         if not self.skip_update:
             self.connect_zyyx()
