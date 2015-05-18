@@ -132,3 +132,13 @@ class L2IndicatorFetcher(KDayFetcher):
     def __init__(self, **kwargs):
         self.collection = DB.l2indicator
         super(L2IndicatorFetcher, self).__init__(**kwargs)
+
+
+class IntervalDerivativeFetcher(KDayFetcher):
+    """Class to fetch interval derivative data."""
+
+    dnames = DB.interval_derivative.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.interval_derivative
+        super(IntervalDerivativeFetcher, self).__init__(**kwargs)
