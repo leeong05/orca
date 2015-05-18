@@ -55,6 +55,13 @@ class IntervalUpdater(UpdaterBase):
         self.collection.update({'dname': 'amount5_sorted_slope2', 'date': date}, {'$set': {'dvalue': s2.ix[np.isfinite(s2)].to_dict()}}, upsert=True)
         self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(s2).sum(), self.collection.name, 'amount5_sorted_slope2', self.db.name, date)
 
+        a1, a2 = amount5_1.div(amount5.sum(axis=0), axis=1), amount5_2.div(amount5.sum(axis=0), axis=1)
+        s1, s2 = a1.apply(func1), a2.apply(func1)
+        self.collection.update({'dname': 'amount5_norm_sorted_slope1', 'date': date}, {'$set': {'dvalue': s1.ix[np.isfinite(s1)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(s1).sum(), self.collection.name, 'amount5_norm_sorted_slope1', self.db.name, date)
+        self.collection.update({'dname': 'amount5_norm_sorted_slope2', 'date': date}, {'$set': {'dvalue': s2.ix[np.isfinite(s2)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(s2).sum(), self.collection.name, 'amount5_norm_sorted_slope2', self.db.name, date)
+
         a1, a2 = amount5_1.div(amount5_1.sum(axis=0), axis=1), amount5_2.div(amount5_2.sum(axis=0), axis=1)
         a1 = a1.iloc[:,::-1]
         s1, s2 = a1.apply(func2), a2.apply(func2)
@@ -62,6 +69,14 @@ class IntervalUpdater(UpdaterBase):
         self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(s1).sum(), self.collection.name, 'amount5_slope1', self.db.name, date)
         self.collection.update({'dname': 'amount5_slope2', 'date': date}, {'$set': {'dvalue': s2.ix[np.isfinite(s2)].to_dict()}}, upsert=True)
         self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(s2).sum(), self.collection.name, 'amount5_slope2', self.db.name, date)
+
+        a1, a2 = amount5_1.div(amount5.sum(axis=0), axis=1), amount5_2.div(amount5.sum(axis=0), axis=1)
+        a1 = a1.iloc[:,::-1]
+        s1, s2 = a1.apply(func2), a2.apply(func2)
+        self.collection.update({'dname': 'amount5_norm_slope1', 'date': date}, {'$set': {'dvalue': s1.ix[np.isfinite(s1)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(s1).sum(), self.collection.name, 'amount5_norm_slope1', self.db.name, date)
+        self.collection.update({'dname': 'amount5_norm_slope2', 'date': date}, {'$set': {'dvalue': s2.ix[np.isfinite(s2)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(s2).sum(), self.collection.name, 'amount5_norm_slope2', self.db.name, date)
 
         a = amount5.div(amount5.sum(axis=0), axis=1)
         s = a.kurt()
