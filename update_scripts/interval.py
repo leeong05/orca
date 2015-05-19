@@ -4,6 +4,7 @@
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 
 from orca.mongo.interval import IntervalFetcher
 from orca.utils.regression import get_slope
@@ -45,6 +46,34 @@ class IntervalUpdater(UpdaterBase):
                 return get_slope(np.log(s))
             except:
                 return np.nan
+        T5 = range(-24, 0) + range(1, 25)
+        def func3(s, i=1):
+            t = pd.Series(T5, index=s.index) ** 2
+            s, t = s.ix[np.isfinite(s)], t.ix[np.isfinite(s)]
+            t = sm.add_constant(t)
+            try:
+                return sm.OLS(s, t).fit().params[i]
+            except:
+                return np.nan
+        def func4(s, i=1):
+            s = pd.Series((-np.sort(-s[:24])).tolist() + np.sort(s[24:]).tolist())
+            t = pd.Series(T5, index=s.index) ** 2
+            s, t = s.ix[np.isfinite(s)], t.ix[np.isfinite(s)]
+            t = sm.add_constant(t)
+            try:
+                return sm.OLS(s, t).fit().params[i]
+            except:
+                return np.nan
+        def func5(s, i=2):
+            t = pd.Series(T5, index=s.index)
+            t = pd.concat([t, t ** 2], axis=1)
+            s, t = s.ix[np.isfinite(s)], t.ix[np.isfinite(s)]
+            t = sm.add_constant(t)
+            try:
+                return sm.OLS(s, t).fit().params[i]
+            except:
+                return np.nan
+
         amount5 = interval_5min.fetch_daily('amount', [], date)
         amount5_1, amount5_2 = amount5.iloc[:24, :], amount5.iloc[24:, :]
 
@@ -82,6 +111,27 @@ class IntervalUpdater(UpdaterBase):
         s = a.kurt()
         self.collection.update({'dname': 'amount5_kurt', 'date': date}, {'$set': {'dvalue': s.ix[np.isfinite(s)].to_dict()}}, upsert=True)
         self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(s).sum(), self.collection.name, 'amount5_kurt', self.db.name, date)
+
+        a = amount5.div(amount5.sum(axis=0), axis=1)
+        a1, a2 = a.apply(func3), a.apply(func4)
+        a3, a4 = a.apply(func3, i=0), a.apply(func4, i=0)
+        self.collection.update({'dname': 'amount5_parabola_symmetric_2nd', 'date': date}, {'$set': {'dvalue': a1.ix[np.isfinite(a1)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(a1).sum(), self.collection.name, 'amount5_parabola_symmetric_2nd', self.db.name, date)
+        self.collection.update({'dname': 'amount5_parabola_sorted_symmetric_2nd', 'date': date}, {'$set': {'dvalue': a2.ix[np.isfinite(a2)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(a2).sum(), self.collection.name, 'amount5_parabola_sorted_symmetric_2nd', self.db.name, date)
+        self.collection.update({'dname': 'amount5_parabola_symmetric_0th', 'date': date}, {'$set': {'dvalue': a3.ix[np.isfinite(a3)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(a3).sum(), self.collection.name, 'amount5_parabola_symmetric_0th', self.db.name, date)
+        self.collection.update({'dname': 'amount5_parabola_sorted_symmetric_0th', 'date': date}, {'$set': {'dvalue': a4.ix[np.isfinite(a4)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(a4).sum(), self.collection.name, 'amount5_parabola_sorted_symmetric_0th', self.db.name, date)
+
+        a = amount5.div(amount5.sum(axis=0), axis=1)
+        a0, a1, a2 = a.apply(func5, i=0), a.apply(func5, i=1), a.apply(func5, i=2)
+        self.collection.update({'dname': 'amount5_parabola_0th', 'date': date}, {'$set': {'dvalue': a0.ix[np.isfinite(a0)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(a0).sum(), self.collection.name, 'amount5_parabola_0th', self.db.name, date)
+        self.collection.update({'dname': 'amount5_parabola_1st', 'date': date}, {'$set': {'dvalue': a1.ix[np.isfinite(a1)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(a1).sum(), self.collection.name, 'amount5_parabola_1st', self.db.name, date)
+        self.collection.update({'dname': 'amount5_parabola_2nd', 'date': date}, {'$set': {'dvalue': a2.ix[np.isfinite(a2)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(a2).sum(), self.collection.name, 'amount5_parabola_2nd', self.db.name, date)
 
     def monitor(self, date):
         return
