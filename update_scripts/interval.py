@@ -52,7 +52,7 @@ class IntervalUpdater(UpdaterBase):
             s, t = s.ix[np.isfinite(s)], t.ix[np.isfinite(s)]
             t = sm.add_constant(t)
             try:
-                return sm.OLS(s, t).fit().params[i]
+                return sm.OLS(s, t).fit().params.iloc[i]
             except:
                 return np.nan
         def func4(s, i=1):
@@ -61,7 +61,7 @@ class IntervalUpdater(UpdaterBase):
             s, t = s.ix[np.isfinite(s)], t.ix[np.isfinite(s)]
             t = sm.add_constant(t)
             try:
-                return sm.OLS(s, t).fit().params[i]
+                return sm.OLS(s, t).fit().params.iloc[i]
             except:
                 return np.nan
         def func5(s, i=2):
@@ -70,7 +70,7 @@ class IntervalUpdater(UpdaterBase):
             s, t = s.ix[np.isfinite(s)], t.ix[np.isfinite(s)]
             t = sm.add_constant(t)
             try:
-                return sm.OLS(s, t).fit().params[i]
+                return sm.OLS(s, t).fit().params.iloc[i]
             except:
                 return np.nan
 
