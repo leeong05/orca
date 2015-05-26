@@ -31,6 +31,29 @@ class IntervalUpdater(UpdaterBase):
     def update(self, date):
         """Update interval derivative data for the **same** day after market open."""
         self.update_amount(date)
+        self.update_price(date)
+
+    def update_price(self, date):
+        T5 = range(0, 48)
+        def func(s, i=2):
+            t = pd.Series(T5, index=s.index)
+            t = pd.concat([t, t ** 2], axis=1)
+            s, t = s.ix[np.isfinite(s)], t.ix[np.isfinite(s)]
+            t = sm.add_constant(t)
+            try:
+                return sm.OLS(s, t).fit().params.iloc[i]
+            except:
+                return np.nan
+        price5 = interval_5min.fetch_daily('close', [], date)
+
+        p = price5.div(price5.sum(axis=0), axis=1)
+        p0, p1, p2 = p.apply(func, i=0), p.apply(func, i=1), p.apply(func, i=2)
+        self.collection.update({'dname': 'price5_parabola_0th', 'date': date}, {'$set': {'dvalue': p0.ix[np.isfinite(p0)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(p0).sum(), self.collection.name, 'price5_parabola_0th', self.db.name, date)
+        self.collection.update({'dname': 'price5_parabola_1st', 'date': date}, {'$set': {'dvalue': p1.ix[np.isfinite(p1)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(p1).sum(), self.collection.name, 'price5_parabola_1st', self.db.name, date)
+        self.collection.update({'dname': 'price5_parabola_2nd', 'date': date}, {'$set': {'dvalue': p2.ix[np.isfinite(p2)].to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', np.isfinite(p2).sum(), self.collection.name, 'price5_parabola_2nd', self.db.name, date)
 
     def update_amount(self, date):
         def func1(s):
