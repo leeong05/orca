@@ -8,6 +8,11 @@ import pandas as pd
 from base import UpdaterBase
 import components_oracle as sql
 
+from orca.mongo.quote import QuoteFetcher
+from orca.mongo.components import ComponentsFetcher
+quote_fetcher = QuoteFetcher()
+components_fetcher = ComponentsFetcher(as_bool=False)
+
 
 def worker(args):
     date, dname, df1, df2 = args
@@ -27,6 +32,11 @@ class ComponentsUpdater(UpdaterBase):
     def __init__(self, timeout=600, threads=cpu_count()):
         self.threads = threads
         super(ComponentsUpdater, self).__init__(timeout=timeout)
+        self.index_dname = {
+                'SH50': 'SH000016',
+                'HS300': 'SH000300',
+                'CS500': 'SH000905',
+                }
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
@@ -70,7 +80,22 @@ class ComponentsUpdater(UpdaterBase):
         pool.close()
         pool.join()
 
-        self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}', len(grouped), self.db.index_components.name, self.db.name, date)
+        pdate = self.dates[self.dates.index(date)-1]
+        returns = quote_fetcher.fetch_daily('returns', pdate).fillna(0)
+        for sid, dname in self.index_dname.iteritems():
+            CMD = sql.CMD3.format(date=date, sid=dname[2:])
+            self.cursor.execute(CMD)
+            date_ = list(self.cursor)[0][0]
+            if pdate < date_ and date_ <= date:
+                continue
+            weight = components_fetcher.fetch_daily(sid, pdate)
+            new_weight = weight * (1+returns.ix[weight.index])
+            new_weight *= weight.sum()/new_weight.sum()
+            dvalue = new_weight.dropna().to_dict()
+            COLLECTION.update({'date': date, 'dname': dname}, {'$set': {'dvalue': dvalue}}, upsert=True)
+            self.logger.info('Adjusting components weight for {} on date {}', sid, date)
+
+        self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}', len(grouped), COLLECTION.name, self.db.name, date)
 
     def monitor(self, date):
         statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
@@ -79,13 +104,7 @@ class ComponentsUpdater(UpdaterBase):
         SQL3 = "INSERT INTO mongo_components (trading_day, data, statistic, value) VALUES (%s, %s, %s, %s)"
 
         cursor = self.monitor_connection.cursor()
-        index_dname = {
-                'SH50': 'SH000016',
-                'HS300': 'SH000300',
-                'CS500': 'SH000905',
-                }
-        for index, dname in index_dname.iteritems():
-            print index
+        for index, dname in self.index_dname.iteritems():
             ser = pd.Series(self.collection.find_one({'dname': dname, 'date': date})['dvalue']).dropna()
             for statistic in statistics:
                 cursor.execute(SQL1, (date, index, statistic))

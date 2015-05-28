@@ -135,3 +135,18 @@ WHERE
   AND
   sm1.SecuCode IN (%s)
 """ % ', '.join([repr(i) for i in indice])
+
+CMD3 = """
+SELECT
+  MAX(TO_CHAR(cw.EndDate, 'yyyymmdd'))
+FROM
+  SecuMain sm JOIN LC_IndexComponentsWeight cw ON sm.InnerCode = cw.IndexCode
+WHERE
+  cw.EndDate <= TO_DATE({date}, 'yyyymmdd')
+  AND
+  sm.SecuMarket IN (83, 90)
+  AND
+  sm.SecuCategory = 4
+  AND
+  sm.SecuCode = {sid!r}
+"""
