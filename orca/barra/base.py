@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import logbook
 logbook.set_datetime_format('local')
+from lxml import etree
 
 import barraopt
 
@@ -27,6 +28,11 @@ class BarraOptimizerBase(object):
     def __init__(self, config):
         self.logger = logbook.Logger('optimizer')
         self.config = config
+        if isinstance(self.config, str):
+            try:
+                self.config = etree.parse(self.config)
+            except:
+                self.config = etree.XML(self.config)
 
     def to_portfolio(self, df, name):
         portfolio = self.workspace.CreatePortfolio(name)

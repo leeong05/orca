@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     os.chdir(args.dir)
     alpha, univ = read_frame(args.alpha), read_frame(args.univ)
-    optimizer = BarraOptimizer(etree(args.config), alpha, univ, dates)
+    optimizer = BarraOptimizer(etree.parse(args.config), alpha, univ, dates)
 
     for date in dates:
         optimizer.run(date)

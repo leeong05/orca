@@ -9,6 +9,8 @@ import pandas as pd
 import logbook
 logbook.set_datetime_format('local')
 logger = logbook.Logger('assets')
+from orca.mongo.barra import BarraFetcher
+barra_fetcher = BarraFetcher('short')
 
 def generate_path(path_pattern, date):
     return Template(path_pattern).substitute(YYYYMMDD=date, YYYYMM=date[:6], YYYY=date[:4], MM=date[4:6], DD=date[6:8])
@@ -24,11 +26,28 @@ def prep_assets_lance(account, date, output):
     df.to_csv(output, index=False, float_format='%.6f')
     logger.info('Generated file: {}', output)
 
+def prep_assets_alpha(alpha, date, output):
+    df = pd.DataFrame({'alpha': alpha.ix[date]})
+    df['sid'] = df.index
+    bid_sid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1])
+    sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
+    df = df.ix[df['sid'].apply(lambda x: x in sid_bid)]
+    df['bid'] = df['sid'].apply(lambda x: sid_bid[x])
+    df = df.reindex(columns=['sid', 'bid', 'alpha'])
+    df = df.ix[df['alpha'].notnull()]
+
+    output = generate_path(output, date)
+    if not os.path.exists(os.path.dirname(output)):
+        os.makedirs(os.path.dirname(output))
+    df.to_csv(output, index=False, float_format='%.6f')
+    logger.info('Generated file: {}', output)
+
 
 if __name__ == '__main__':
     import argparse
     from datetime import datetime
     from orca import DATES
+    from orca.utils.io import read_frame
 
     parser = argparse.ArgumentParser()
     parser.add_argument('date', default=datetime.now().strftime('%Y%m%d'), nargs='?')
@@ -59,3 +78,7 @@ if __name__ == '__main__':
     if args.source == 'lance':
         for date in dates:
             prep_assets_lance(args.account, date, args.output)
+    elif args.source == 'alpha':
+        alpha = read_frame('/home/liulc/model/product/ols/alpha.univ0')
+        for date in dates:
+            prep_assets_alpha(alpha, date, args.output)

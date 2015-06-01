@@ -17,7 +17,7 @@ def generate_path(path_pattern, date):
     return Template(path_pattern).substitute(YYYYMMDD=date, YYYYMM=date[:6], YYYY=date[:4], MM=date[4:6], DD=date[6:8])
 
 def prep_universe_lance(account, date, output):
-    bid_sid = barra_fetcher.fetch_idmaps(date)
+    bid_sid = barra_fetcher.fetch_idmaps(DATES[DATES.index(date)-1])
     path = os.path.join('/home/liulc/trade_'+account, 'barra', date[:4], date[4:6], date[6:8], 'universe.'+date)
     bid = pd.read_csv(path, header=0, dtype={0: str}).iloc[:,0]
     sid = bid.apply(lambda x: bid_sid.get(x, x))
@@ -31,19 +31,37 @@ def prep_universe_lance(account, date, output):
     df.to_csv(output, index=False)
     logger.info('Generated file: {}', output)
 
+def prep_universe_univ(univ, date, output):
+    df = pd.DataFrame({'valid': univ.ix[date]})
+    df['sid'] = df.index
+    bid_sid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1])
+    sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
+    df = df.ix[df['sid'].apply(lambda x: x in sid_bid)]
+    df['bid'] = df['sid'].apply(lambda x: sid_bid[x])
+    df = df.ix[df['valid'] > 0]
+    df = df.reindex(columns=['sid', 'bid'])
+
+    output = generate_path(output, date)
+    if not os.path.exists(os.path.dirname(output)):
+        os.makedirs(os.path.dirname(output))
+    df.to_csv(output, index=False, float_format='%.6f')
+    logger.info('Generated file: {}', output)
+
 
 if __name__ == '__main__':
     import argparse
     from datetime import datetime
     from orca import DATES
+    from orca.utils.io import read_frame
 
     parser = argparse.ArgumentParser()
     parser.add_argument('date', default=datetime.now().strftime('%Y%m%d'), nargs='?')
     parser.add_argument('-s', '--start', type=str)
     parser.add_argument('-e', '--end', type=str)
     parser.add_argument('--shift', type=int, default=0)
-    parser.add_argument('--source', type=str, choices=('lance', 'alpha', 'other'))
+    parser.add_argument('--source', type=str, choices=('lance', 'univ', 'other'))
     parser.add_argument('-a', '--account', type=str)
+    parser.add_argument('-u', '--univ', type=str)
     parser.add_argument('-i', '--input', type=str)
     parser.add_argument('-o', '--output', type=str, default='universe.${YYYYMMDD}')
     args = parser.parse_args()
@@ -60,8 +78,14 @@ if __name__ == '__main__':
         args.source = 'lance'
     if args.input:
         args.source = 'other'
+    if args.univ:
+        args.source = 'univ'
     assert args.source
 
     if args.source == 'lance':
         for date in dates:
             prep_universe_lance(args.account, date, args.output)
+    elif args.source == 'univ':
+        univ = read_frame('/home/liulc/model/universe/universe_'+args.univ)
+        for date in dates:
+            prep_universe_univ(univ, date, args.output)
