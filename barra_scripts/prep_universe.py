@@ -12,15 +12,18 @@ logger = logbook.Logger('universe')
 
 from orca.mongo.barra import BarraFetcher
 barra_fetcher = BarraFetcher('short')
+bid_sid = barra_fetcher.fetch_idmaps()
 
 def generate_path(path_pattern, date):
     return Template(path_pattern).substitute(YYYYMMDD=date, YYYYMM=date[:6], YYYY=date[:4], MM=date[4:6], DD=date[6:8])
 
 def prep_universe_lance(account, date, output):
-    bid_sid = barra_fetcher.fetch_idmaps(DATES[DATES.index(date)-1])
     path = os.path.join('/home/liulc/trade_'+account, 'barra', date[:4], date[4:6], date[6:8], 'universe.'+date)
     bid = pd.read_csv(path, header=0, dtype={0: str}).iloc[:,0]
-    sid = bid.apply(lambda x: bid_sid.get(x, x))
+    bid = bid.ix[bid.apply(lambda x: x in bid_sid)]
+    sid = bid.map(bid_sid)
+    sid_bid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1], barra_key=False)
+    bid = sid.map(sid_bid)
     is_regular = sid.apply(lambda x: len(x) == 6 and x[:2] in ('00', '30', '60'))
     df = pd.concat([sid.ix[is_regular], bid.ix[is_regular]], axis=1)
     df.columns = ['sid', 'bid']
@@ -34,8 +37,7 @@ def prep_universe_lance(account, date, output):
 def prep_universe_univ(univ, date, output):
     df = pd.DataFrame({'valid': univ.ix[date]})
     df['sid'] = df.index
-    bid_sid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1])
-    sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
+    sid_bid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1], barra_key=False)
     df = df.ix[df['sid'].apply(lambda x: x in sid_bid)]
     df['bid'] = df['sid'].apply(lambda x: sid_bid[x])
     df = df.ix[df['valid'] > 0]

@@ -53,7 +53,7 @@ class BarraOptimizer(BarraOptimizerBase):
             self.returns_ser, self.ir_ser = pd.Series(self.returns_ser), pd.Series(self.ir_ser)
             self.factor_risk_ser, self.specific_risk_ser = pd.Series(self.factor_risk_ser), pd.Series(self.specific_risk_ser)
             self.turnover_ser, self.risk_ser = pd.Series(self.turnover_ser), pd.Series(self.risk_ser)
-            df = pd.concat([self.returns_ser, self.ir_ser, 
+            df = pd.concat([self.returns_ser, self.ir_ser,
                     self.factor_risk_ser, self.specific_risk_ser,
                     self.turnover_ser, self.risk_ser], axis=1)
             df.columns = ['returns', 'ir', 'factor_risk', 'specific_risk', 'turnover', 'risk']
@@ -62,7 +62,8 @@ class BarraOptimizer(BarraOptimizerBase):
 
         self.positions[date] = self.output_portfolio_df['weight']
         if date == self.dates[-1]:
-            self.positions = pd.DataFrame(self.positions)
+            self.positions = pd.DataFrame(self.positions).T
+            self.positions.index = pd.to_datetime(self.positions.index)
             self.positions.to_csv('positions', index=True, float_format='%.6f')
             return
         ndate = self.dates[self.dates.index(date)+1]
@@ -72,7 +73,7 @@ class BarraOptimizer(BarraOptimizerBase):
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         self.output_portfolio_df.to_csv(path, index=True, float_format='%.6f')
-       
+
 
 if __name__ == '__main__':
     import argparse
@@ -80,7 +81,6 @@ if __name__ == '__main__':
     from orca.utils.io import read_frame
     import os
     import shutil
-    from lxml import etree
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--alpha', required=True, type=str)
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     os.chdir(args.dir)
     alpha, univ = read_frame(args.alpha), read_frame(args.univ)
-    optimizer = BarraOptimizer(etree.parse(args.config), args.debug_on, alpha, univ, dates)
+    optimizer = BarraOptimizer(args.config, args.debug_on, alpha, univ, dates)
 
     for date in dates:
         optimizer.run(date)

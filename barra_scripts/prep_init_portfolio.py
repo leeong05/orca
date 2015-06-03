@@ -23,7 +23,11 @@ def prep_init_portfolio_lance(account, date, remove_suspension, output, output_s
     path = os.path.join('/home/liulc/trade_'+account, 'barra', date[:4], date[4:6], date[6:8], 'init_portfolio.'+date)
     df = pd.read_csv(path, header=0, dtype={0: str})
     df.columns = ['bid', 'weight']
-    df['sid'] = [bid_sid.get(bid, bid) for bid in df.bid]
+    df = df.ix[df['bid'].apply(lambda x: x in bid_sid)]
+    df['sid'] = bid_sid['bid'].map(bid_sid)
+    sid_bid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1], barra_key=False)
+    df['sid'] = df.ix[df['sid'].apply(lambda x: x in sid_bid)]
+    df['bid'] = df['sid'].map(sid_bid)
     df = df.reindex(columns=['sid', 'bid', 'weight'])
     is_cash = df['sid'].apply(lambda x: x.upper() == 'CASH')
     df = df.ix[~is_cash]

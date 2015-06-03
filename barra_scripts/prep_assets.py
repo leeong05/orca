@@ -29,8 +29,7 @@ def prep_assets_lance(account, date, output):
 def prep_assets_alpha(alpha, date, output):
     df = pd.DataFrame({'alpha': alpha.ix[date]})
     df['sid'] = df.index
-    bid_sid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1])
-    sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
+    sid_bid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1], barra_key=False)
     df = df.ix[df['sid'].apply(lambda x: x in sid_bid)]
     df['bid'] = df['sid'].apply(lambda x: sid_bid[x])
     df = df.reindex(columns=['sid', 'bid', 'alpha'])

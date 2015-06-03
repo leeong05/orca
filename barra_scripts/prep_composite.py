@@ -34,8 +34,7 @@ def prep_composite_lance(account, date, sid, output):
     logger.info('Generated file: {}', output)
 
 def prep_composite_mongo(date, sid, output):
-    bid_sid = barra_fetcher.fetch_idmaps(date)
-    sid_bid = {sid: bid for bid, sid in bid_sid.iteritems()}
+    sid_bid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1], barra_key=False)
     df = pd.DataFrame(components_fetcher.fetch_daily(sid, date))
     df.columns = ['weight']
     df['sid'] = df.index

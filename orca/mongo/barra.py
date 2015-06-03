@@ -94,7 +94,11 @@ class BarraFetcher(KDayFetcher):
         dct = cls.idmaps.find_one(query, proj)['idmaps']
         if barra_key:
             return dct
-        return {v: k for k, v in dct.iteritems()}
+        inv_dct = {}
+        for k, v in dct.iteritems():
+            if v not in inv_dct or inv_dct[v] > k:
+                inv_dct[v] = k
+        return inv_dct
 
 BarraFetcher.idmaps = DB.barra_idmaps
 

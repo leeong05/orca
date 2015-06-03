@@ -4,6 +4,7 @@
 
 import os
 import json
+from StringIO import StringIO
 
 import numpy as np
 import pandas as pd
@@ -29,10 +30,11 @@ class BarraOptimizerBase(object):
         self.logger = logbook.Logger('optimizer', level=0 if debug_on else 2)
         self.config = config
         if isinstance(self.config, str):
+            parser = etree.XMLParser(remove_comments=True)
             if os.path.exists(self.config):
-                self.config = etree.parse(self.config)
+                self.config = etree.parse(StringIO(open(self.config).read()), parser)
             else:
-                self.config = etree.XML(self.config)
+                self.config = etree.parse(StringIO(self.config), parser)
 
     def to_portfolio(self, df, name):
         portfolio = self.workspace.CreatePortfolio(name)
@@ -54,7 +56,7 @@ class BarraOptimizerBase(object):
         self.workspace = barraopt.CWorkSpace.CreateInstance()
         self.regular_bids = set()
         self.bid_sid = barra_fetcher.fetch_idmaps(date=prev_date)
-        self.sid_bid = {sid: bid for bid, sid in self.bid_sid.iteritems()}
+        self.sid_bid = barra_fetcher.fetch_idmaps(date=prev_date, barra_key=False)
 
     def add_assets(self, date):
         # add cash asset
@@ -63,9 +65,13 @@ class BarraOptimizerBase(object):
         config = self.config.xpath('Assets')[0]
         path = util.generate_path(config.attrib['path'], date)
         self.assets_df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
+        self.assets_df = self.assets_df.ix[self.assets_df['bid'].notnull()]
         for sid, row in self.assets_df.iterrows():
             asset = self.workspace.CreateAsset(row['bid'], barraopt.eREGULAR)
             row_not_null = row.notnull()
+            if row['bid'] not in self.bid_sid:
+                self.logger.warning('Barra id {} not recognized in assets', row['bid'])
+                continue
             self.regular_bids.add(row['bid'])
             if 'alpha' in row.index and row_not_null['alpha']:
                 util.set_asset_attribute(asset.SetAlpha, row['alpha'], float, np.isfinite)
@@ -84,6 +90,7 @@ class BarraOptimizerBase(object):
         path = util.generate_path(config.attrib.get('group_path', ''), date)
         if os.path.exists(path):
             self.groups_df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
+            self.groups_df = self.groups_df.ix[self.groups_df['bid'].notnull()]
             self.group_names = [col for col in self.groups_df.columns if col not in ['sid', 'bid']]
             for group in self.group_names:
                 self.groups_df[group] = self.groups_df[group].astype(str)
@@ -107,11 +114,14 @@ class BarraOptimizerBase(object):
 
                 path = util.generate_path(elem.attrib['path'], date)
                 df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
-                df = df.dropna()
+                df = df.ix[df['bid'].notnull()]
                 self.composite_dfs[bid] = df
 
                 portfolio = self.workspace.CreatePortfolio(bid)
                 for sbid, weight in zip(df['bid'], df['weight']):
+                    if sbid not in self.bid_sid:
+                        self.logger.warning('Barra id {} not recognized in composite {}', sbid, bid)
+                        continue
                     portfolio.AddAsset(sbid, float(weight))
                     self.regular_bids.add(sbid)
                 self.composite_portfolios[bid] = portfolio
@@ -133,6 +143,9 @@ class BarraOptimizerBase(object):
             self.workspace.CreateAsset(row['bid'], str2enum[row['type']])
             self.init_portfolio.AddAsset(row['bid'], float(row['weight']))
             if row['type'] == 'eREGULAR':
+                if row['bid'] not in self.bid_sid:
+                    self.logger.warning('Barra id {} not recognized in initial portfolio', row['bid'])
+                    continue
                 self.regular_bids.add(row['bid'])
 
         self.init_portfolio.AddAsset('CASH', 1)
@@ -156,6 +169,9 @@ class BarraOptimizerBase(object):
             self.workspace.CreateAsset(bid, barraopt.eREGULAR)
             if not alpha_only or bid in self.assets_df['bid']:
                 self.universe.AddAsset(bid)
+                if bid not in self.bid_sid:
+                    self.logger.warning('Barra id {} not recognized in universe', bid)
+                    continue
                 self.regular_bids.add(bid)
                 self.universe_bids.add(bid)
         # do not forget to add composites into trading universe
