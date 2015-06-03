@@ -25,13 +25,13 @@ STYLE_FACTORS = ['BETA', 'BTOP', 'EARNYILD', 'GROWTH', 'LEVERAGE', 'LIQUIDTY', '
 
 class BarraOptimizerBase(object):
 
-    def __init__(self, config):
-        self.logger = logbook.Logger('optimizer')
+    def __init__(self, config, debug_on=True):
+        self.logger = logbook.Logger('optimizer', level=0 if debug_on else 2)
         self.config = config
         if isinstance(self.config, str):
-            try:
+            if os.path.exists(self.config):
                 self.config = etree.parse(self.config)
-            except:
+            else:
                 self.config = etree.XML(self.config)
 
     def to_portfolio(self, df, name):
@@ -107,6 +107,7 @@ class BarraOptimizerBase(object):
 
                 path = util.generate_path(elem.attrib['path'], date)
                 df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
+                df = df.dropna()
                 self.composite_dfs[bid] = df
 
                 portfolio = self.workspace.CreatePortfolio(bid)
@@ -120,12 +121,12 @@ class BarraOptimizerBase(object):
         config = self.config.xpath('InitPortfolio')[0]
         path = util.generate_path(config.attrib['path'], date)
         self.init_portfolio = self.workspace.CreatePortfolio('init_portfolio')
-        self.init_portfolio.AddAsset('CASH', 1)
         if not os.path.exists(path):
             # add CASH asset
             self.logger.warning('No such file exists: {}', path)
             self.init_portfolio_df = pd.DataFrame(columns=['bid', 'type', 'weight'])
             self.init_portfolio_df.index.name = 'sid'
+            self.init_portfolio.AddAsset('CASH', float(config.attrib.get('cash', 1)))
             return
         self.init_portfolio_df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
         for _, row in self.init_portfolio_df.iterrows():
@@ -134,6 +135,7 @@ class BarraOptimizerBase(object):
             if row['type'] == 'eREGULAR':
                 self.regular_bids.add(row['bid'])
 
+        self.init_portfolio.AddAsset('CASH', 1)
         regular = self.init_portfolio_df.query('type == "eREGULAR"')
         composite = self.init_portfolio_df.query('type == "eCOMPOSITE"')
         self.logger.debug('Initial Portfolio: Regular({:.2f}, {:.2f}), Composite({:.2f}, {:.2f})',
@@ -237,7 +239,7 @@ class BarraOptimizerBase(object):
             self.solver.SetOption('MAX_OPTIMAL_TIME', float(solver.attrib['timeout']))
         if solver.attrib.get('input', None):
             path = util.generate_path(solver.attrib['input'], date)
-            self.solver.WriteInputToFile(path)
+            self.solver.WriteInputToFile(str(path))
             self.logger.debug('Write Input File: {}', path)
         self.status = self.solver.Optimize()
         self.status_code = self.status.GetStatusCode()
@@ -252,7 +254,7 @@ class BarraOptimizerBase(object):
         self.output = self.solver.GetPortfolioOutput()
         self.output_portfolio = self.output.GetPortfolio()
         path = util.generate_path(solver.attrib['output'], date)
-        self.output.WriteToFile(path)
+        self.output.WriteToFile(str(path))
         self.logger.debug('Write Output File: {}', path)
 
         self.output_portfolio_df = []
@@ -276,15 +278,21 @@ class BarraOptimizerBase(object):
         self.logger.debug('Ideal Weight File: {}', path)
 
         infos = []
-        infos.append('=' * 45)
-        infos.append('%-14s:%15.4f%15.4f' % ('Return', self.solver.Evaluate(barraopt.eRETURN), self.solver.Evaluate(barraopt.eRETURN, self.output_portfolio)))
-        infos.append('%-14s:%15.4f%15.4f' % ('Factor_Risk', self.solver.Evaluate(barraopt.eFACTOR_RISK), self.solver.Evaluate(barraopt.eFACTOR_RISK, self.output_portfolio)))
-        infos.append('%-14s:%15.4f%15.4f' % ('Specific_Risk', self.solver.Evaluate(barraopt.eSPECIFIC_RISK), self.solver.Evaluate(barraopt.eSPECIFIC_RISK, self.output_portfolio)))
+        infos.append('=' * 15 + ' '+ (date[:4]+'-'+date[4:6]+'-'+date[6:8]) + ' ' + '=' * 15)
+        self.returns = self.solver.Evaluate(barraopt.eRETURN, self.output_portfolio)
+        infos.append('%-14s:%15.4f%15.4f' % ('Return', self.solver.Evaluate(barraopt.eRETURN), self.returns))
+        self.factor_risk = self.solver.Evaluate(barraopt.eFACTOR_RISK, self.output_portfolio)
+        infos.append('%-14s:%15.4f%15.4f' % ('Factor_Risk', self.solver.Evaluate(barraopt.eFACTOR_RISK), self.factor_risk))
+        self.specific_risk = self.solver.Evaluate(barraopt.eSPECIFIC_RISK, self.output_portfolio)
+        infos.append('%-14s:%15.4f%15.4f' % ('Specific_Risk', self.solver.Evaluate(barraopt.eSPECIFIC_RISK), self.specific_risk))
         init_ir = self.solver.Evaluate(barraopt.eINFO_RATIO)
-        infos.append('%-14s:%15.4f%15.4f' % ('IR', init_ir if np.abs(init_ir) < 100 else np.nan, self.solver.Evaluate(barraopt.eINFO_RATIO, self.output_portfolio)))
+        self.ir = self.solver.Evaluate(barraopt.eINFO_RATIO, self.output_portfolio)
+        infos.append('%-14s:%15.4f%15.4f' % ('IR', init_ir if np.abs(init_ir) < 100 else np.nan, self.ir))
         infos.append('-' * 45)
-        infos.append('%-14s:%15.4f' % ('Turnover', self.output.GetTurnover()))
-        infos.append('%-14s:%15.4f' % ('Risk', self.output.GetRisk()))
+        self.turnover = self.output.GetTurnover()
+        infos.append('%-14s:%15.4f' % ('Turnover', self.turnover))
+        self.risk = self.output.GetRisk()
+        infos.append('%-14s:%15.4f' % ('Risk', self.risk))
         infos.append('=' * 45)
         self.logger.info('Portfolio Statistics: Long(Regular: {}, Composite: {}), Short(Regular: {}, Composite: {})\n{}',
                 len(self.output_portfolio_df.query('type == "eREGULAR" & weight > 0')),
@@ -601,7 +609,7 @@ class BarraOptimizerBase(object):
                 constraint.SetLowerBound(0, barraopt.eABSOLUTE)
 
         for bid in self.regular_bids:
-            if self.bid_sid[bid] in file_sids:
+            if bid not in self.bid_sid or self.bid_sid[bid] in file_sids:
                 continue
             constraint = self.linear_constraints.SetAssetRange(bid)
             constraint.SetUpperBound(float(config.attrib['upper']), get_relative('u_relative', config))

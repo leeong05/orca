@@ -45,6 +45,9 @@ def prep_composite_mongo(date, sid, output):
     df['weight'] /= df['weight'].sum()
 
     output = generate_path(output, date, sid)
+    dirname = os.path.dirname(output)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
     df.to_csv(output, index=False, float_format='%.6f')
     logger.info('Generated file: {}', output)
 
