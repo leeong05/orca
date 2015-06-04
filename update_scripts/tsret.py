@@ -52,7 +52,10 @@ class TSRetUpdater(UpdaterBase):
         for index in indice:
             query = {'dname': index, 'date': date}
             proj = {'_id': 0, 'close': 1}
-            ser = pd.DataFrame(list(self.db.tsindex_1min.find(query, proj))).close
+            try:
+                ser = pd.DataFrame(list(self.db.tsindex_1min.find(query, proj)))['close']
+            except:
+                continue
             ser.index = self.times
             prev_close = self.indexquote.fetch_daily('prev_close', date, index=index)
             ser.ix['093000'] = prev_close
