@@ -159,3 +159,38 @@ def get_endwith(l, x, n):
     """Get a sub-list with length ``n`` and the last element <= ``x``."""
     i, x = parse_date(l, x, -1)
     return l[i-n+1: i+1]
+
+def get_markers(dates, by, end=True, loc=False):
+    assert by in ('A', 'Q', 'M', 'W')
+    pddates = to_pddatetime(dates)
+    markers = []
+    for i, date in enumerate(pddates):
+        if by == 'A':
+            if i > 0:
+                if pddates[i-1].year != date.year:
+                    if end:
+                        markers.append(not loc and dates[i-1] or i-1)
+                    else:
+                        markers.append(not loc and dates[i] or i)
+        elif by == 'Q':
+            if i > 0:
+                if pddates[i-1].quarter != date.quarter:
+                    if end:
+                        markers.append(not loc and dates[i-1] or i-1)
+                    else:
+                        markers.append(not loc and dates[i] or i)
+        elif by == 'M':
+            if i > 0:
+                if pddates[i-1].month != date.month:
+                    if end:
+                        markers.append(not loc and dates[i-1] or i-1)
+                    else:
+                        markers.append(not loc and dates[i] or i)
+        elif by == 'W':
+            if i > 0:
+                if pddates[i-1].week != date.week:
+                    if end:
+                        markers.append(not loc and dates[i-1] or i-1)
+                    else:
+                        markers.append(not loc and dates[i] or i)
+    return markers

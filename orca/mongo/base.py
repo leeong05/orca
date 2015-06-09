@@ -122,6 +122,18 @@ class FetcherBase(object):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def fetch_dates(self, dname, dates, offset=0, **kwargs):
+        """Override(**mandatory**) to fetch data series on a certain date.
+
+        :param str dname: Name of the data
+        :param dates: The base points
+        :param int offset: The offset w.r.t. the ``date``. The actual fetched date is calculated from date in ``dates`` and ``offset``. Default: 0
+        :returns: Series
+        :raises: NotImplementedError
+        """
+        raise NotImplementedError
+
 
 class RecordFetcher(FetcherBase):
     """Base class to fetch time-stamped records as DataFrame.
@@ -172,6 +184,22 @@ class RecordFetcher(FetcherBase):
     def fetch_daily(self, date, offset=0, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
         return self.fetch_history(date, 1, delay=offset, **kwargs)
+
+    def fetch_dates(self, dates, rshift=0, lshift=0, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
+        dates_str = dateutil.to_datestr(dates)
+        res = {}
+        for dt, date in zip(dates, dates_str):
+            di, date = dateutil.parse_date(DATES, date, -1)
+            if di-lshift < 0 or di+rshift >= len(DATES):
+                continue
+            if rshift+lshift == 0:
+                res[dt] = self.fetch_daily(DATES[di-lshift], **kwargs)
+            else:
+                res[dt] = self.fetch_window(DATES[di-lshift: di+rshift+1], **kwargs)
+        if rshift+lshift == 0:
+            res = pd.DataFrame(res).T
+        return res
 
 
 class KDayFetcher(FetcherBase):
@@ -224,6 +252,22 @@ class KDayFetcher(FetcherBase):
     def fetch_daily(self, dname, date, offset=0, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
         return self.fetch_history(dname, date, 1, delay=offset, **kwargs).iloc[0]
+
+    def fetch_dates(self, dname, dates, rshift=0, lshift=0, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
+        dates_str = dateutil.to_datestr(dates)
+        res = {}
+        for dt, date in zip(dates, dates_str):
+            di, date = dateutil.parse_date(DATES, date, -1)
+            if di-lshift < 0 or di+rshift >= len(DATES):
+                continue
+            if rshift+lshift == 0:
+                res[dt] = self.fetch_daily(dname, DATES[di-lshift], **kwargs)
+            else:
+                res[dt] = self.fetch_window(dname, DATES[di-lshift: di+rshift+1], **kwargs)
+        if rshift+lshift == 0:
+            res = pd.DataFrame(res).T
+        return res
 
 
 class KMinFetcher(FetcherBase):
@@ -370,3 +414,17 @@ class KMinFetcher(FetcherBase):
         if reindex:
             df = df.reindex(columns=SIDS)
         return df.iloc[0] if num is None else df
+
+    def fetch_dates(self, dname, times, dates, rshift=0, lshift=0, **kwargs):
+        """Use :py:meth:`fetch_window` behind the scene."""
+        dates_str = dateutil.to_datestr(dates)
+        res = {}
+        for dt, date in zip(dates, dates_str):
+            di, date = dateutil.parse_date(DATES, date, -1)
+            if di-lshift < 0 or di+rshift >= len(DATES):
+                continue
+            if rshift+lshift == 0:
+                res[dt] = self.fetch_daily(dname, times, DATES[di-lshift], **kwargs)
+            else:
+                res[dt] = self.fetch_window(dname, times, DATES[di-lshift: di+rshift+1], **kwargs)
+        return res
