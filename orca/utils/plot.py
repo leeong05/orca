@@ -2,6 +2,7 @@
 .. moduleauthor:: Li, Wang <wangziqi@foreseefund.com>
 """
 
+import numpy as np
 import pandas as pd
 
 import matplotlib.pyplot as plt
@@ -10,6 +11,19 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from orca.perf import util as perf_util
 from orca.utils import dateutil as date_util
+
+def plot_ser_bar(y, **kwargs):
+    width = 0.8
+    fig, ax = plt.subplots(figsize=(14, 7))
+    rects = ax.bar(np.arange(len(y)), y, width, color='r')
+    if y.name:
+        ax.set_ylabel(y.name)
+    ax.set_xticks(np.arange(len(y))+width/2)
+    ax.set_xticklabels(y.index)
+    for i, rect in enumerate(rects):
+        height = rect.get_height()
+        ax.text(rect.get_x()+rect.get_width()/2, 1.05*height, '%.2f' % y.iloc[i], ha='center', va='bottom')
+    return fig
 
 def plot_ts(y, **kwargs):
     fig, ax = plt.subplots(figsize=(14, 7))

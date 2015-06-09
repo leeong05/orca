@@ -188,17 +188,19 @@ class RecordFetcher(FetcherBase):
     def fetch_dates(self, dates, rshift=0, lshift=0, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
         dates_str = dateutil.to_datestr(dates)
-        res = {}
+        res, is_df = {}, False
         for dt, date in zip(dates, dates_str):
             di, date = dateutil.parse_date(DATES, date, -1)
-            if di-lshift < 0 or di+rshift >= len(DATES):
+            if di-lshift < 0 or di+rshift+1 > len(DATES):
                 continue
             if rshift+lshift == 0:
                 res[dt] = self.fetch_daily(DATES[di-lshift], **kwargs)
+                if isinstance(res[dt], pd.DataFrame):
+                    is_df = True
             else:
                 res[dt] = self.fetch_window(DATES[di-lshift: di+rshift+1], **kwargs)
         if rshift+lshift == 0:
-            res = pd.DataFrame(res).T
+            res = pd.Panel(res).transpose(1, 2, 0) if is_df else pd.DataFrame(res).T
         return res
 
 
@@ -256,17 +258,19 @@ class KDayFetcher(FetcherBase):
     def fetch_dates(self, dname, dates, rshift=0, lshift=0, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
         dates_str = dateutil.to_datestr(dates)
-        res = {}
+        res, is_df = {}, False
         for dt, date in zip(dates, dates_str):
             di, date = dateutil.parse_date(DATES, date, -1)
-            if di-lshift < 0 or di+rshift >= len(DATES):
+            if di-lshift < 0 or di+rshift+1 > len(DATES):
                 continue
             if rshift+lshift == 0:
                 res[dt] = self.fetch_daily(dname, DATES[di-lshift], **kwargs)
+                if isinstance(res[dt], pd.DataFrame):
+                    is_df = True
             else:
                 res[dt] = self.fetch_window(dname, DATES[di-lshift: di+rshift+1], **kwargs)
         if rshift+lshift == 0:
-            res = pd.DataFrame(res).T
+            res = pd.Panel(res).transpose(1, 2, 0) if is_df else pd.DataFrame(res).T
         return res
 
 
@@ -418,13 +422,18 @@ class KMinFetcher(FetcherBase):
     def fetch_dates(self, dname, times, dates, rshift=0, lshift=0, **kwargs):
         """Use :py:meth:`fetch_window` behind the scene."""
         dates_str = dateutil.to_datestr(dates)
-        res = {}
+        res, is_df = {}, False
         for dt, date in zip(dates, dates_str):
             di, date = dateutil.parse_date(DATES, date, -1)
-            if di-lshift < 0 or di+rshift >= len(DATES):
+            if di-lshift < 0 or di+rshift+1 > len(DATES):
                 continue
             if rshift+lshift == 0:
                 res[dt] = self.fetch_daily(dname, times, DATES[di-lshift], **kwargs)
+                if isinstance(res[dt], pd.DataFrame):
+                    is_df = True
             else:
                 res[dt] = self.fetch_window(dname, times, DATES[di-lshift: di+rshift+1], **kwargs)
+
+        if rshift+lshift == 0:
+            res = pd.Panel(res).transpose(1, 2, 0) if is_df else pd.DataFrame(res).T
         return res
