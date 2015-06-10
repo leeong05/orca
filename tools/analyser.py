@@ -11,8 +11,9 @@ from orca.utils.misc import (
 from orca.mongo.barra import BarraExposureFetcher
 barra_exposure_fetcher = BarraExposureFetcher('short')
 from orca.utils.plot import (
+        plot_pnl,
         plot_ser_bar,
-        save_fig,
+        save_figs,
         )
 
 
@@ -44,6 +45,9 @@ if __name__ == '__main__':
 
     returns = fetch_returns(univ.index, args.rshift, args.lshift)
     univ = univ.ix[returns.index]
+    ret = returns[univ].mean(axis=1)
+    ret.name = 'returns'
+    fig1 = plot_pnl(ret, by=None)
 
     for k, v in exts.iteritems():
         exts[k] = fetch_dates(v, univ.index)
@@ -53,12 +57,16 @@ if __name__ == '__main__':
     for factor in exps.major_axis:
         exts[factor] = exps.major_xs(factor)
 
-    irs = {}
+    irs, rank_irs = {}, {}
     for k, v in exts.iteritems():
         v_univ = v[univ]
         v_ic = v_univ.corrwith(returns, axis=1)
+        v_rank_ic = v_univ.rank(axis=1).corrwith(returns.rank(axis=1), axis=1)
         irs[k] = v_ic.mean()/v_ic.std()
-    irs = pd.Series(irs)
+        rank_irs[k] = v_rank_ic.mean()/v_rank_ic.std()
+    irs, rank_irs = pd.Series(irs), pd.Series(rank_irs)
     irs.sort(ascending=False)
-    fig = plot_ser_bar(irs)
-    save_fig(fig, args.pdf)
+    rank_irs.sort(ascending=False)
+    irs.name, rank_irs.name = 'IR', 'rIR'
+    fig2, fig3 = plot_ser_bar(irs), plot_ser_bar(rank_irs)
+    save_figs([fig1, fig2, fig3], args.pdf)

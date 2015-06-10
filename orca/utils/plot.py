@@ -49,24 +49,31 @@ def plot_ts(y, **kwargs):
     return fig
 
 def plot_pnl(y, by='A', title='', **kwargs):
-    assert by in ('A', 'Q', 'M')
+    assert by in (None, 'A', 'Q', 'M')
     fig, ax = plt.subplots(figsize=(14, 7))
     pnl = y.cumsum()
     ax.plot(y.index, pnl)
     ax.xaxis.set_major_formatter(DateFormatter('%Y%m%d'))
     # summary
-    colors = ['darkgray', 'silver']
-    markers = date_util.get_markers(y.index, by=by, end=True)
-    markers.insert(0, y.index[0])
-    markers.append(y.index[-1])
-    for i, (m1, m2) in enumerate(zip(markers[:-1], markers[1:])):
-        ax.axvspan(m1, m2, facecolor=colors[i%2], alpha=0.3)
-
-    summary = pd.DataFrame({
-        'AAR': y.resample(by, how=perf_util.annualized_returns) * 100,
-        'perwin': y.resample(by, how=perf_util.perwin),
-        'Sharpe': y.resample(by, how=perf_util.Sharpe),
-        })
+    if by is not None:
+        colors = ['darkgray', 'silver']
+        markers = date_util.get_markers(y.index, by=by, end=True)
+        markers.insert(0, y.index[0])
+        markers.append(y.index[-1])
+        for i, (m1, m2) in enumerate(zip(markers[:-1], markers[1:])):
+            ax.axvspan(m1, m2, facecolor=colors[i%2], alpha=0.3)
+    if by is not None:
+        summary = pd.DataFrame({
+            'AAR': y.resample(by, how=perf_util.annualized_returns) * 100,
+            'perwin': y.resample(by, how=perf_util.perwin),
+            'Sharpe': y.resample(by, how=perf_util.Sharpe),
+            })
+    else:
+        summary = pd.DataFrame({
+            'AAR': [perf_util.annualized_returns(y) * 100],
+            'perwin': [perf_util.perwin(y)],
+            'Sharpe': [perf_util.Sharpe(y)],
+            })
     max_pnl, min_pnl = pnl.max(), pnl.min()
     interval = (max_pnl - min_pnl)/16
     for period, row in summary.iterrows():
@@ -85,6 +92,8 @@ def plot_pnl(y, by='A', title='', **kwargs):
                 period_slice = y.ix[period+'01': str(int(period[:4])+1)+'0101']
             else:
                 period_slice = y.ix[period+'01': period[:4]+str(int(period[4:])+1)+'01']
+        else:
+            period_slice = y
         AAR, perwin, Sharpe = row['AAR'], row['perwin'], row['Sharpe']
         dd_start, dd_end, dd = perf_util.drawdown(period_slice)
         dd_slice = pnl.ix[dd_start: dd_end]
