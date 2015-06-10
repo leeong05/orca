@@ -29,10 +29,15 @@ if __name__ == '__main__':
     parser.add_argument('--pdf', type=str, required=True)
     args = parser.parse_args()
 
+    if args.ext is None:
+        args.ext = []
+    if args.label is None:
+        args.label = []
+
     if len(args.label) != len(args.ext):
         args.label = ['factor_'+str(i) for i in range(len(args.ext))]
 
-    univ = read_frame(args.univ).astype(bool)
+    univ = read_frame(args.univ).fillna(False).astype(bool)
     exts = {}
     for label, ext in zip(args.label, args.ext):
         exts[label] = read_frame(ext)

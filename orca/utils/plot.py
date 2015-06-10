@@ -15,14 +15,21 @@ from orca.utils import dateutil as date_util
 def plot_ser_bar(y, **kwargs):
     width = 0.8
     fig, ax = plt.subplots(figsize=(14, 7))
-    rects = ax.bar(np.arange(len(y)), y, width, color='r')
+    rects = ax.bar(np.arange(len(y)), y, width)
     if y.name:
         ax.set_ylabel(y.name)
     ax.set_xticks(np.arange(len(y))+width/2)
-    ax.set_xticklabels(y.index)
+    ax.set_xticklabels(y.index, rotation='vertical')
     for i, rect in enumerate(rects):
         height = rect.get_height()
-        ax.text(rect.get_x()+rect.get_width()/2, 1.05*height, '%.2f' % y.iloc[i], ha='center', va='bottom')
+        if y.iloc[i] < 0:
+            rect.set_color('g')
+            height *= -0.95
+            ax.text(rect.get_x()+rect.get_width()/2, height, '%.2f' % y.iloc[i], ha='center', va='top')
+        else:
+            rect.set_color('r')
+            height *= 0.95
+            ax.text(rect.get_x()+rect.get_width()/2, height, '%.2f' % y.iloc[i], ha='center', va='bottom')
     return fig
 
 def plot_ts(y, **kwargs):

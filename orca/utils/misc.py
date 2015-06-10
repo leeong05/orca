@@ -32,13 +32,13 @@ def fetch_returns(dt_index, rshift, lshift=-1):
         if di-lshift < 0 or di+rshift+1 > len(DATES):
             continue
         r = quote_fetcher.fetch_window('returns', DATES[di-lshift: di+rshift+1])
-        res[dt] = (1+r).cumprod()[-1]-1.
+        res[dt] = (1+r).cumprod().iloc[-1]-1.
     res = pd.DataFrame(res).T
     return res
 
 def fetch_dates(df, dt_index, rshift=0, lshift=0):
     df_dates = dateutil.to_datestr(dt_index)
-    res = []
+    res = {}
     for dt, date in zip(dt_index, dateutil.to_datestr(dt_index)):
         try:
             di, date = dateutil.parse_date(df_dates, date, -1)
@@ -49,8 +49,8 @@ def fetch_dates(df, dt_index, rshift=0, lshift=0):
                 res[dt] = df.iloc[di-lshift:di+rshift+1]
         except ValueError:
             pass
-        else:
-            raise
+        except Exception, e:
+            raise e
     if rshift+lshift == 0:
         res = pd.DataFrame(res).T
     return res
