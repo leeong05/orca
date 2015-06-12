@@ -142,3 +142,13 @@ class IntervalDerivativeFetcher(KDayFetcher):
     def __init__(self, **kwargs):
         self.collection = DB.interval_derivative
         super(IntervalDerivativeFetcher, self).__init__(**kwargs)
+
+
+class AuctionFetcher(KDayFetcher):
+    """Class to fetch auction data."""
+
+    dnames = DB.auction.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.auction
+        super(AuctionFetcher, self).__init__(**kwargs)

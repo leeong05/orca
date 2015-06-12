@@ -159,9 +159,9 @@ class UpdaterBase(object):
             if not self.connected:
                 self.connect_mongo()
             self.pre_update()
+            if hasattr(self, 'dates'):
+                self._dates = [date for date in self._dates if date in self.dates]
             for date in self._dates:
-                if hasattr(self, 'dates') and date not in self.dates:
-                    continue
                 if not self.skip_update:
                     self.logger.info('START updating')
                     iterates = self.iterates

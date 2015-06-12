@@ -66,6 +66,9 @@ db.tsindex_ret.ensureIndex({index: 1, date: 1, dname: 1}, {unique: true, dropDup
 db.interval_derivative.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.interval_derivative.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
+db.auction.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.auction.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+
 db.barra_idmaps.ensureIndex({date: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_S_exposure.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
