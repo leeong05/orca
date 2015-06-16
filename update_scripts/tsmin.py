@@ -10,11 +10,11 @@ import numpy as np
 import pandas as pd
 
 from base import UpdaterBase
-import tsmin_sql
+import tsmin_sql as sql
 
 def worker(args):
     date, time, df = args
-    for dname in tsmin_sql.dnames:
+    for dname in sql.dnames:
         key = {'dname': dname, 'time': time, 'date': date}
         dvalue = df[dname].dropna().to_dict()
         COLLECTION.update(key, {'$set': {'dvalue': dvalue}}, upsert=True)
@@ -25,8 +25,8 @@ class TSMinUpdater(UpdaterBase):
 
     def __init__(self, bar='1min', timeout=300, threads=cpu_count()):
         self.bar = bar
-        self.srcdir1 = os.path.join(tsmin_sql.srcdir1, self.bar)
-        self.srcdir2 = os.path.join(tsmin_sql.srcdir2, self.bar)
+        self.srcdir1 = os.path.join(sql.srcdir1, self.bar)
+        self.srcdir2 = os.path.join(sql.srcdir2, self.bar)
         self.threads = threads
         super(TSMinUpdater, self).__init__(timeout=timeout)
 
@@ -54,20 +54,20 @@ class TSMinUpdater(UpdaterBase):
             self.logger.error('No records found for {} on {}', self.collection.name, date)
             return
 
-        df = pd.read_csv(srcfile, header=0, usecols=tsmin_sql.col_index, names=tsmin_sql.col_names, dtype={0: np.str})
+        df = pd.read_csv(srcfile, header=0, usecols=sql.col_index, names=sql.col_names, dtype={0: np.str})
         df['date'] = date
         df['time'] = [dt[11:13]+dt[14:16]+dt[17:19] for dt in df.datetime]
         vwap = df.amount / df.volume
         vwap[np.isinf(vwap)] = np.nan
         df['vwap'] = vwap
         df.drop('datetime', axis=1, inplace=True)
-        is_stock = df.sid.apply(tsmin_sql.is_stock)
+        is_stock = df.sid.apply(sql.is_stock)
 
         idf = df.ix[~is_stock].copy()
         idf.index = idf.sid
         for sid, ser in idf.iterrows():
             key = {'dname': sid, 'date': date, 'time': ser['time']}
-            ser = ser.ix[tsmin_sql.index_dnames]
+            ser = ser.ix[sql.index_dnames]
             self.index_collection.update(key, {'$set': ser.to_dict()}, upsert=True)
         self.logger.info('UPSERT documents for {} sids into (c: [{}]) of (d: [{}]) on {}', len(idf.sid.unique()), self.index_collection.name, self.db.name, date)
 

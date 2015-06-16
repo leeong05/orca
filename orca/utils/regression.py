@@ -18,7 +18,7 @@ def get_beta(y, x, add_intercept=True, half_life=None):
         w = pd.Series({date: 0.5**(i*1./half_life) for i, date in enumerate(reversed(x.index))})
     else:
         w = pd.Series({date: 1 for date in x.index})
-    return sm.WLS(y, x, weights=1./w).fit().params[1]
+    return sm.WLS(y, x, weights=1./w).fit().params.iloc[1]
 
 def get_slope(y, add_intercept=True, half_life=None):
     x = pd.Series(range(len(y)), index=y.index)
