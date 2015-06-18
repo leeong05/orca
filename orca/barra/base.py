@@ -835,6 +835,8 @@ class BarraOptimizerBase(object):
                 self.setup_specific_constraint(elem, date)
             elif elem.tag == 'Total':
                 self.setup_total_constraint(elem, date)
+            elif elem.tag == 'Total':
+                self.setup_risk_parity(elem, date)
         self.logger.debug('<<< Risk Constraints')
 
     def setup_factor_constraint(self, config, date):
@@ -894,6 +896,24 @@ class BarraOptimizerBase(object):
             constraint = self.risk_contraints.AddTotalConstraint(bids, factors, True, benchmark, relative, False, soft)
             constraint.SetUpperBound(float(elem.attrib['upper']))
         self.logger.debug('... AddTotalConstraint ...')
+
+    def setup_risk_parity(self, config, date):
+        assets = []
+        assets_path = config.attrib.get('assets', '')
+        if os.path.exists(assets_path):
+            for sid in json.load(open(assets_path)):
+                if sid in self.sid_bid:
+                    assets.append(self.sid_bid[sid])
+        composites = config.attrib.get('composites', [])
+        if composites:
+            composites = composites.split(',')
+        for i in range(self.universe.GetCount()):
+            asset = i == 0 and self.universe.GetFirst() or self.universe.GetNext()
+            bid = asset.GetID()
+            if bid not in assets or bid not in composites:
+                asset.SetExcludeFromRiskParity(True)
+        self.risk_constraints.SetRiskParity(True)
+        self.logger.debug('... SetRiskParity ...')
     # <<< risk constraints
 # --------
 
