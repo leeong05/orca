@@ -63,28 +63,31 @@ class BarraOptimizerBase(object):
         self.workspace.CreateAsset('CASH', barraopt.eCASH)
         # add asset from file: alpha, bcost, scost, weight
         config = self.config.xpath('Assets')[0]
+        self.assets_df = pd.DataFrame(columns=['bid'])
+        self.assets_df.index.name = 'sid'
         path = util.generate_path(config.attrib['path'], date)
-        self.assets_df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
-        self.assets_df = self.assets_df.ix[self.assets_df['bid'].notnull()]
-        for sid, row in self.assets_df.iterrows():
-            asset = self.workspace.CreateAsset(row['bid'], barraopt.eREGULAR)
-            row_not_null = row.notnull()
-            if row['bid'] not in self.bid_sid:
-                self.logger.warning('Barra id {} not recognized in assets', row['bid'])
-                continue
-            self.regular_bids.add(row['bid'])
-            if 'alpha' in row.index and row_not_null['alpha']:
-                util.set_asset_attribute(asset.SetAlpha, row['alpha'], float, np.isfinite)
-            if 'weight' in row.index and row_not_null['weight']:
-                util.set_asset_attribute(asset.SetResidualAlphaWeight, row['weight'], float, np.isfinite)
-            if 'bcost' in row.index and row_not_null['bcost']:
-                util.set_asset_attribute(asset.AddPWLinearBuyCost, row['bcost'], float, np.isfinite)
-            elif config.attrib.get('bcost', None):
-                util.set_asset_attribute(asset.AddPWLinearBuyCost, config.attrib['bcost'], float, np.isfinite)
-            if 'scost' in row.index and row_not_null['scost']:
-                util.set_asset_attribute(asset.AddPWLinearSellCost, row['scost'], float, np.isfinite)
-            elif config.attrib.get('scost', None):
-                util.set_asset_attribute(asset.AddPWLinearBuyCost, config.attrib['scost'], float, np.isfinite)
+        if os.path.exists(path):
+            self.assets_df = util.read_csv(path, header=0, dtype={0: str}, index_col=0)
+            self.assets_df = self.assets_df.ix[self.assets_df['bid'].notnull()]
+            for sid, row in self.assets_df.iterrows():
+                asset = self.workspace.CreateAsset(row['bid'], barraopt.eREGULAR)
+                row_not_null = row.notnull()
+                if row['bid'] not in self.bid_sid:
+                    self.logger.warning('Barra id {} not recognized in assets', row['bid'])
+                    continue
+                self.regular_bids.add(row['bid'])
+                if 'alpha' in row.index and row_not_null['alpha']:
+                    util.set_asset_attribute(asset.SetAlpha, row['alpha'], float, np.isfinite)
+                if 'weight' in row.index and row_not_null['weight']:
+                    util.set_asset_attribute(asset.SetResidualAlphaWeight, row['weight'], float, np.isfinite)
+                if 'bcost' in row.index and row_not_null['bcost']:
+                    util.set_asset_attribute(asset.AddPWLinearBuyCost, row['bcost'], float, np.isfinite)
+                elif config.attrib.get('bcost', None):
+                    util.set_asset_attribute(asset.AddPWLinearBuyCost, config.attrib['bcost'], float, np.isfinite)
+                if 'scost' in row.index and row_not_null['scost']:
+                    util.set_asset_attribute(asset.AddPWLinearSellCost, row['scost'], float, np.isfinite)
+                elif config.attrib.get('scost', None):
+                    util.set_asset_attribute(asset.AddPWLinearBuyCost, config.attrib['scost'], float, np.isfinite)
         # add group/attribute for assets
         self.group_names = []
         path = util.generate_path(config.attrib.get('group_path', ''), date)
