@@ -8,12 +8,6 @@ import pandas as pd
 from base import UpdaterBase
 import components_oracle as sql
 
-from orca.mongo.quote import QuoteFetcher
-from orca.mongo.components import ComponentsFetcher
-quote_fetcher = QuoteFetcher()
-components_fetcher = ComponentsFetcher(as_bool=False)
-
-
 def worker(args):
     date, dname, df1, df2 = args
     dvalue = {}
@@ -31,12 +25,12 @@ class ComponentsUpdater(UpdaterBase):
 
     def __init__(self, timeout=600, threads=cpu_count()):
         self.threads = threads
-        super(ComponentsUpdater, self).__init__(timeout=timeout)
         self.index_dname = {
-                'SH50': 'SH000016',
-                'HS300': 'SH000300',
-                'CS500': 'SH000905',
-                }
+            'HS300': 'SH000300',
+            'SH50': 'SH000016',
+            'CS500': 'SH000905',
+            }
+        super(ComponentsUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
@@ -79,21 +73,6 @@ class ComponentsUpdater(UpdaterBase):
         pool.imap_unordered(worker, [(date, dname, _df1, df2) for dname, _df1 in grouped], self.threads)
         pool.close()
         pool.join()
-
-        pdate = self.dates[self.dates.index(date)-1]
-        returns = quote_fetcher.fetch_daily('returns', pdate).fillna(0)
-        for sid, dname in self.index_dname.iteritems():
-            CMD = sql.CMD3.format(date=date, sid=dname[2:])
-            self.cursor.execute(CMD)
-            date_ = list(self.cursor)[0][0]
-            if pdate < date_ and date_ <= date:
-                continue
-            weight = components_fetcher.fetch_daily(sid, pdate)
-            new_weight = weight * (1+returns.ix[weight.index])
-            new_weight *= weight.sum()/new_weight.sum()
-            dvalue = new_weight.dropna().to_dict()
-            COLLECTION.update({'date': date, 'dname': dname}, {'$set': {'dvalue': dvalue}}, upsert=True)
-            self.logger.info('Adjusting components weight for {} on date {}', sid, date)
 
         self.logger.info('UPSERT documents for {} indice into (c: [{}]) of (d: [{}]) on {}', len(grouped), COLLECTION.name, self.db.name, date)
 

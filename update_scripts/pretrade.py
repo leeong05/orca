@@ -45,6 +45,7 @@ class PreTradeUpdater(UpdaterBase):
         is_stock = df.sid.apply(sql.is_stock)
         df = df.ix[is_stock]
         df['sid'] = df['sid'].apply(lambda x: x[2:])
+        df.index = df.datetime
         df.to_msgpack(sql.msgpack_path.format(date=date))
         self.logger.info('Updating data for {} sids on {}', len(df['sid'].unique()), date)
 
@@ -63,6 +64,28 @@ class PreTradeUpdater(UpdaterBase):
         ntrd = df.groupby('sid').apply(func2).dropna()
         self.collection.update({'dname': 'ntrd', 'date': date}, {'$set': {'dvalue': ntrd.to_dict()}}, upsert=True)
         self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', len(ntrd), self.collection.name, 'ntrd', self.db.name, date)
+
+        def func3(df):
+            return (df['bds2']-df['aks2']).skew()
+
+        imbl2_skew = df.groupby('sid').apply(func3).dropna()
+        self.collection.update({'dname': 'imbl2_skew', 'date': date}, {'$set': {'dvalue': imbl2_skew.to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', len(imbl2_skew), self.collection.name, 'imbl2_skew', self.db.name, date)
+
+        def func4(df):
+            return df['aks2'].diff().skew()
+
+        aks2_skew = df.groupby('sid').apply(func4).dropna()
+        self.collection.update({'dname': 'aks2_skew', 'date': date}, {'$set': {'dvalue': aks2_skew.to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', len(aks2_skew), self.collection.name, 'aks2_skew', self.db.name, date)
+
+        def func5(df):
+            a, b = df['aks1'].resample('min', how='mean'), df['bds1'].resample('min', how='mean')
+            return (a.iloc[-1]+b.iloc[-1])*0.5
+
+        lstv = df.groupby('sid').apply(func5).dropna()
+        self.collection.update({'dname': 'lstv', 'date': date}, {'$set': {'dvalue': lstv.to_dict()}}, upsert=True)
+        self.logger.info('UPSERT {} document into (c: [{}@dname={}]) of (d: [{}]) on {}', len(lstv), self.collection.name, 'lstv', self.db.name, date)
 
     def monitor(self, date):
         return
