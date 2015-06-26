@@ -83,11 +83,14 @@ if __name__ == '__main__':
 
     di = DATES.index(dates[0])
     shift_dates = DATES[di+1:di+len(dates)+1]
+    sids = set()
     for i, position in enumerate(positions):
         position.index = pd.to_datetime(shift_dates)
         positions[i] = position
+        sids = sids | set(position.columns)
 
     stock_returns = quote_fetcher.fetch_window('returns', shift_dates)
+    stock_returns = stock_returns.reindex(columns=list(sids | set(stock_returns.columns))).fillna(0)
 
     regular_sids = [sid for sid in sids if sid in SIDS]
     composite_sids = [sid for sid in sids if sid not in SIDS]

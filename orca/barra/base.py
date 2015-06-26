@@ -134,7 +134,8 @@ class BarraOptimizerBase(object):
         config = self.config.xpath('InitPortfolio')[0]
         path = util.generate_path(config.attrib['path'], date)
         self.init_portfolio = self.workspace.CreatePortfolio('init_portfolio')
-        if not os.path.exists(path):
+        self.is_first_day = not os.path.exists(path)
+        if self.is_first_day:
             # add CASH asset
             self.logger.warning('No such file exists: {}', path)
             self.init_portfolio_df = pd.DataFrame(columns=['bid', 'type', 'weight'])
@@ -806,7 +807,10 @@ class BarraOptimizerBase(object):
             'net': 'SetNetConstraint',
             }
         constraint = getattr(self.turnover_constraints, category_map[category])()
-        constraint.SetSoft(util.parse_bool(config.attrib.get('soft', False)))
+        if not self.is_first_day:
+            constraint.SetSoft(util.parse_bool(config.attrib.get('soft', False)))
+        else:
+            constraint.SetSoft(True)
         constraint.SetUpperBound(float(config.attrib['upper']))
         self.logger.debug('... ' + category_map[category] + ' ...')
 
