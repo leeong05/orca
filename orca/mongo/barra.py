@@ -285,6 +285,8 @@ class BarraFactorFetcher(BarraFetcher):
         return res
 
     def fetch_variance(self, factor, *args, **kwargs):
+        if factor.find('_') == -1:
+            factor = self.prefix + '_' + factor
         return self.fetch_covariance(factor, *args, **kwargs)[factor]
 
     def fetch(self, *args, **kwargs):
@@ -378,7 +380,7 @@ class BarraCovarianceFetcher(BarraFetcher):
         """
         raise NotImplementedError
 
-    def fetch_daily(self, date, offset=0, sids=[], **kwargs):
+    def fetch_daily(self, date, offset=0, sids=[], factor_only=False, **kwargs):
         """Fetch the covariance matrix for a given set of stocks.
 
         :param list sids: The given set of stock ids
@@ -397,4 +399,7 @@ class BarraCovarianceFetcher(BarraFetcher):
         if len(nsids) != len(sids) and not suppress_warning:
             self.warning('Some sids may not be in Barra universe and will be dropped from the result')
         factor_cov = self.fcov.fetch_daily('covariance', date, offset=offset)
-        return exposure.dot(factor_cov).dot(exposure.T) + pd.DataFrame(np.diag(specific_risk ** 2), index=nsids, columns=nsids)
+        if factor_only:
+            return exposure.dot(factor_cov).dot(exposure.T)
+        else:
+            return exposure.dot(factor_cov).dot(exposure.T) + pd.DataFrame(np.diag(specific_risk ** 2), index=nsids, columns=nsids)
