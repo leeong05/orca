@@ -5,7 +5,7 @@
 import pandas as pd
 
 from base import UpdaterBase
-import moneyflow_mssql as sql
+import moneyflow_sql as sql
 
 
 class MoneyflowUpdater(UpdaterBase):
