@@ -25,7 +25,8 @@ class UpdaterBase(object):
 
     LOGGER_NAME = 'update'
 
-    def __init__(self, timeout=600, iterates=1):
+    def __init__(self, offset=0, timeout=600, iterates=1):
+        self.offset = offset
         self.timeout = timeout
         self.iterates = iterates
         self.logger = logbook.Logger(UpdaterBase.LOGGER_NAME)
@@ -160,7 +161,8 @@ class UpdaterBase(object):
                 self.connect_mongo()
             self.pre_update()
             if hasattr(self, 'dates'):
-                self._dates = [date for date in self._dates if date in self.dates]
+                self._dates = [self.dates.index(date) for date in self._dates if date in self.dates]
+                self._dates = [self.dates[di-self.offset] for di in self._dates if di >= self.offset]
             for date in self._dates:
                 if not self.skip_update:
                     self.logger.info('START updating')
@@ -196,6 +198,7 @@ class UpdaterBase(object):
         parser.add_argument('-s', '--start', help='start date(included)', type=str)
         parser.add_argument('-e', '--end', help='end date(included); default: today', default=today, nargs='?')
         parser.add_argument('date', help='the date to be updated', default=today, nargs='?')
+        parser.add_argument('--offset', type=int, default=None)
         parser.add_argument('--source', choices=('mssql', 'oracle'), help='type of source database', default='oracle')
         parser.add_argument('--skip_update', action='store_true')
         parser.add_argument('--skip_monitor', action='store_true')
@@ -218,6 +221,9 @@ class UpdaterBase(object):
 
         if args.source:
             self.source = args.source
+
+        if isinstance(args.offset, int):
+            self.offset = args.offset
 
         if args.logfile:
             args.logoff = False
