@@ -11,8 +11,7 @@ import l2indicator_mssql as sql
 class L2IndicatorUpdater(UpdaterBase):
     """The updater class for collection 'l2indicator'."""
 
-    def __init__(self, source=None, timeout=3000):
-        self.source = source
+    def __init__(self, timeout=3000):
         super(L2IndicatorUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
