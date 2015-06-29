@@ -5,7 +5,7 @@
 import pandas as pd
 
 from base import UpdaterBase
-import quote_mssql as sql
+import quote_sql as sql
 
 
 class QuoteUpdater(UpdaterBase):

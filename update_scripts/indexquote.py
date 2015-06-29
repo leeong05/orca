@@ -5,7 +5,7 @@
 import pandas as pd
 
 from base import UpdaterBase
-import indexquote_mssql as sql
+import indexquote_sql as sql
 
 
 class IndexQuoteUpdater(UpdaterBase):

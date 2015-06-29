@@ -5,7 +5,7 @@
 import pandas as pd
 
 from base import UpdaterBase
-import cax_mssql as sql
+import cax_sql as sql
 
 
 class CaxUpdater(UpdaterBase):

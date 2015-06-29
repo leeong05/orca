@@ -5,7 +5,7 @@
 import pandas as pd
 
 from base import UpdaterBase
-import eodvalue_mssql as sql
+import eodvalue_sql as sql
 
 
 class EODValueUpdater(UpdaterBase):
