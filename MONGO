@@ -30,6 +30,8 @@ db.moneyflow.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, bac
 db.moneyflow.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 db.l2indicator.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.l2indicator.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.margin.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.margin.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
 db.index_quote.ensureIndex({index: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.index_quote.ensureIndex({date: 1, index: 1}, {unique: true, dropDups: true, background: true})
