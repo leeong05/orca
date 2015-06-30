@@ -17,10 +17,10 @@ class BarraUpdater(UpdaterBase):
     :param str model: Model version, currently only supports: ('daily', 'short')
     """
 
-    def __init__(self, model='daily', timeout=600, iterates=3, update_idmaps=True):
+    def __init__(self, model='daily', offset=1, timeout=600, iterates=3, update_idmaps=True):
         self.model = model
         self.update_idmaps = update_idmaps
-        super(BarraUpdater, self).__init__(timeout=timeout, iterates=iterates)
+        super(BarraUpdater, self).__init__(offset=offset, timeout=timeout, iterates=iterates)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
@@ -50,7 +50,6 @@ class BarraUpdater(UpdaterBase):
 
     def update(self, date):
         """Update factor exposure, factor returns, factor covariance and stocks specifics for **previous** day before market open."""
-        date = self.dates[self.dates.index(date)-1]
         if not os.path.exists(sql.gp_idmaps(date, self.model)):
             self.logger.error('Barra model data does not exist on {}', date)
             sql.fetch_and_parse(date)
@@ -64,8 +63,6 @@ class BarraUpdater(UpdaterBase):
         self.update_specifics(date)
 
     def monitor(self, date):
-        date = self.dates[self.dates.index(date)-1]
-
         statistics = ('count', 'mean', 'min', 'max', 'median', 'std', 'quartile1', 'quartile3')
         SQL1 = "SELECT * FROM mongo_barra WHERE trading_day=%s AND data=%s AND statistic=%s"
         SQL2 = "UPDATE mongo_barra SET value=%s WHERE trading_day=%s AND data=%s AND statistic=%s"
