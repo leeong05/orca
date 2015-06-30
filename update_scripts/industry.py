@@ -14,9 +14,8 @@ import industry_oracle as sql
 class IndustryUpdater(UpdaterBase):
     """The updater class for collection 'industry', 'industry_info'."""
 
-    def __init__(self, source=None, timeout=10):
-        self.source = source
-        UpdaterBase.__init__(self, timeout)
+    def __init__(self, timeout=10):
+        UpdaterBase.__init__(self, timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')

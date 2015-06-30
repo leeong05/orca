@@ -7,7 +7,7 @@ import pandas as pd
 from orca.universe import common
 
 from base import UpdaterBase
-import misc_mssql as sql
+import misc_sql as sql
 
 
 class MiscUpdater(UpdaterBase):

@@ -5,7 +5,7 @@
 import pandas as pd
 
 from base import UpdaterBase
-import l2indicator_mssql as sql
+import l2indicator_sql as sql
 
 
 class L2IndicatorUpdater(UpdaterBase):

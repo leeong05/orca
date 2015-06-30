@@ -7,7 +7,7 @@ import warnings
 warnings.simplefilter(action="ignore", category=pd.core.common.SettingWithCopyWarning)
 
 from base import UpdaterBase
-import sywgquote_mssql as sql
+import sywgquote_sql as sql
 
 
 class SYWGQuoteUpdater(UpdaterBase):

@@ -16,7 +16,7 @@ class ZYAdjustUpdater(UpdaterBase):
     """The updater class for collections 'zyscore_adjust', 'zyreport_adjust'."""
 
     def __init__(self, cutoff='08:30:00', timeout=60):
-        UpdaterBase.__init__(self, timeout)
+        UpdaterBase.__init__(self, timeout=timeout)
         self.cutoff = cutoff
 
     def pre_update(self):

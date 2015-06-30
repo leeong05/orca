@@ -5,11 +5,11 @@
 from base import IndicatorBase
 
 
-class BarraIndicatorBase(IndicatorBase):
+class MarketIndicatorBase(IndicatorBase):
 
     def __init__(self, name, offset=1, **kwargs):
-        super(BarraIndicatorBase, self).__init__(offset=offset, **kwargs)
-        self.collection = self.db.barra_indicator
+        super(MarketIndicatorBase, self).__init__(offset=1, **kwargs)
+        self.collection = self.db.market_indicator
         self.name = name
 
     def upsert(self, date, value, market=None):

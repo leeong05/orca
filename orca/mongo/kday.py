@@ -134,6 +134,16 @@ class L2IndicatorFetcher(KDayFetcher):
         super(L2IndicatorFetcher, self).__init__(**kwargs)
 
 
+class MarginFetcher(KDayFetcher):
+    """Class to fetch margin trading data."""
+
+    dnames = DB.margin.distinct('dname')
+
+    def __init__(self, **kwargs):
+        self.collection = DB.margin
+        super(MarginFetcher, self).__init__(**kwargs)
+
+
 class IntervalDerivativeFetcher(KDayFetcher):
     """Class to fetch interval derivative data."""
 
