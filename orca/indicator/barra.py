@@ -8,7 +8,7 @@ from base import IndicatorBase
 class BarraIndicatorBase(IndicatorBase):
 
     def __init__(self, name, offset=1, **kwargs):
-        super(BarraIndicatorBase, self).__init__(offset=1, **kwargs)
+        super(BarraIndicatorBase, self).__init__(offset=offset, **kwargs)
         self.collection = self.db.barra_indicator
         self.name = name
 

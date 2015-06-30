@@ -104,4 +104,5 @@ db.performance.ensureIndex({alpha: 1, mode: 1, date: 1}, {unique: true, dropDups
 db.performance.ensureIndex({mode: 1, alpha: 1, date: 1}, {unique: true, dropDups: true, background: true})
 
 db.barra_indicator.ensureIndex({market: 1, indicator: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.cax_indicator.ensureIndex({market: 1, indicator: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.market_indicator.ensureIndex({market: 1, indicator: 1, date: 1}, {unique: true, dropDups: true, background: true})
