@@ -22,7 +22,7 @@ def run(script, start, end, num, offset=None):
     progs = []
     for dates in generate_dates(start, end, num):
         if offset is not None:
-            prog = subprocess.Popen(['python', script, '--logoff', '-s', dates[0], '-e', dates[-1], '--offset', offset])
+            prog = subprocess.Popen(['python', script, '--logoff', '-s', dates[0], '-e', dates[-1], '--offset', str(offset)])
         else:
             prog = subprocess.Popen(['python', script, '--logoff', '-s', dates[0], '-e', dates[-1]])
         progs.append(prog)
