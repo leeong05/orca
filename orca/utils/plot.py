@@ -37,13 +37,13 @@ def plot_ts(y, **kwargs):
     if isinstance(y, pd.Series):
         ax.plot(y.index, y, **kwargs)
         if y.name:
-            ax.set_ylabel(y.name)
+            ax.set_title(y.name, position=(0.5, 1.085))
     else:
         for l, c in y.iteritems():
             ax.plot(y.index, c, label=l, **kwargs)
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05), ncol=3, fancybox=True, shadow=True)
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.095), ncol=3, fancybox=True, shadow=True, fontsize='small')
         if y.columns.name:
-            ax.set_title(y.columns.name)
+            ax.set_title(y.columns.name, position=(0.5, 1.085))
     ax.xaxis.set_major_formatter(DateFormatter('%Y%m%d'))
     fig.autofmt_xdate()
     return fig
@@ -151,8 +151,22 @@ def save_fig(fig, pdf=None, png=None):
     elif png:
         fig.savefig(png)
 
-def save_figs(figs, pdf):
-    pp = PdfPages(pdf)
-    for fig in figs:
-        pp.savefig(fig)
-    pp.close()
+def save_figs(figs, pdf, n=None):
+    if n is None or len(figs) <= n:
+        pp = PdfPages(pdf)
+        for fig in figs:
+            pp.savefig(fig)
+        pp.close()
+    else:
+        nf = len(figs)/n
+        dot_i = len(pdf)-1-pdf[::-1].find('.')
+        if dot_i >= len(pdf):
+            a, b = pdf, ''
+        else:
+            a, b = pdf[:dot_i], pdf[dot_i+1:]
+        for i in range(nf+1):
+            pp = PdfPages(a+'_'+str(i)+'.'+b)
+            _figs = figs[i*n:(i+1)*n]
+            for fig in _figs:
+                pp.savefig(fig)
+            pp.close()
