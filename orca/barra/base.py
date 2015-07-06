@@ -524,22 +524,28 @@ class BarraOptimizerBase(object):
                 if elem.attrib.get('reference', config.attrib.get('reference', None)):
                     constraint.SetReference(elem.attrib.get('reference', config.attrib['reference']))
                 constraint.SetSoft(util.parse_bool(elem.attrib.get('soft', config.attrib.get('soft', False))))
-                constraint.SetUpperBound(float(elem.attrib['upper']), get_relative('u_relative'))
-                constraint.SetLowerBound(float(elem.attrib['lower']), get_relative('l_relative'))
+                if elem.attrib.get('lower', None):
+                    constraint.SetLowerBound(float(elem.attrib['lower']), get_relative('l_relative'))
+                if elem.attrib.get('upper', None):
+                    constraint.SetUpperBound(float(elem.attrib['upper']), get_relative('u_relative'))
                 self.logger.debug('... SetLongSideLeverageRange ...')
             elif elem.tag == 'Short':
                 constraint = self.hedge_constraints.SetShortSideLeverageRange(util.parse_bool(elem.attrib.get('nochange', False)))
                 if elem.attrib.get('reference', config.attrib.get('reference', None)):
                     constraint.SetReference(elem.attrib.get('reference', config.attrib['reference']))
                 constraint.SetSoft(util.parse_bool(elem.attrib.get('soft', config.attrib.get('soft', False))))
-                constraint.SetUpperBound(float(elem.attrib['upper']), get_relative('u_relative'))
-                constraint.SetLowerBound(float(elem.attrib['lower']), get_relative('l_relative'))
+                if elem.attrib.get('lower', None):
+                    constraint.SetLowerBound(float(elem.attrib['lower']), get_relative('l_relative'))
+                if elem.attrib.get('upper', None):
+                    constraint.SetUpperBound(float(elem.attrib['upper']), get_relative('u_relative'))
                 self.logger.debug('... SetShortSideLeverageRange ...')
             elif elem.tag == 'Total':
                 constraint = self.hedge_constraints.SetTotalLeverageRange(util.parse_bool(elem.attrib.get('nochange', False)))
                 constraint.SetSoft(util.parse_bool(elem.attrib.get('soft', config.attrib.get('soft', False))))
-                constraint.SetUpperBound(float(elem.attrib['upper']), get_relative('u_relative'))
-                constraint.SetLowerBound(float(elem.attrib['lower']), get_relative('l_relative'))
+                if elem.attrib.get('lower', None):
+                    constraint.SetLowerBound(float(elem.attrib['lower']), get_relative('l_relative'))
+                if elem.attrib.get('upper', None):
+                    constraint.SetUpperBound(float(elem.attrib['upper']), get_relative('u_relative'))
                 self.logger.debug('... SetTotalLeverageRange ...')
 
     def setup_leverage_ratio_range(self, config, date):
@@ -632,8 +638,10 @@ class BarraOptimizerBase(object):
             if bid not in self.bid_sid or self.bid_sid[bid] in file_sids:
                 continue
             constraint = self.linear_constraints.SetAssetRange(bid)
-            constraint.SetUpperBound(float(config.attrib['upper']), get_relative('u_relative', config))
-            constraint.SetLowerBound(float(config.attrib['lower']), get_relative('l_relative', config))
+            if config.attrib.get('lower', None):
+                constraint.SetLowerBound(float(config.attrib['lower']), get_relative('l_relative', config))
+            if config.attrib.get('upper', None):
+                constraint.SetUpperBound(float(config.attrib['upper']), get_relative('u_relative', config))
 
         # third: composite assets
         composite_config = config.xpath('Composite')[0]
@@ -649,8 +657,10 @@ class BarraOptimizerBase(object):
                     u_relative = get_relative('u_relative', config, default=None)
                 except:
                     u_relative = get_relative('u_relative', composite_config)
-                constraint.SetLowerBound(float(config.attrib['lower']), l_relative)
-                constraint.SetUpperBound(float(config.attrib['upper']), u_relative)
+                if config.attrib.get('lower', None):
+                    constraint.SetLowerBound(float(config.attrib['lower']), l_relative)
+                if config.attrib.get('upper', None):
+                    constraint.SetUpperBound(float(config.attrib['upper']), u_relative)
             elif  composite_config.attrib.get('lower', None) and composite_config.attrib.get('upper', None):
                 constraint = self.linear_constraints.SetAssetRange(bid)
                 constraint.SetLowerBound(float(composite_config.attrib['lower']), get_relative('l_relative', composite_config))
@@ -692,7 +702,7 @@ class BarraOptimizerBase(object):
                     constraint.SetLowerBound(float(row['lower']), row['relative'])
 
         def get_relative(name):
-            attr = elem.attrib.get(name, elem.attrib.get('relative', config.attrib.get(name, config.attrib['relative'])))
+            attr = elem.attrib.get(name, elem.attrib.get('relative', config.attrib.get(name, config.attrib.get('relative', barraopt.eABSOLUTE))))
             return str2enum[attr]
 
         for elem in config:
@@ -707,8 +717,10 @@ class BarraOptimizerBase(object):
             constraint.SetSoft(util.parse_bool(elem.attrib.get('soft', config.attrib.get('soft', False))))
             if elem.attrib.get('reference', config.attrib.get('reference', None)):
                 constraint.SetReference(self.composite_portfolios[elem.attrib.get('reference', config.attrib['reference'])])
-            constraint.SetLowerBound(float(elem.attrib['lower']), get_relative('l_relative'))
-            constraint.SetUpperBound(float(elem.attrib['upper']), get_relative('u_relative'))
+            if elem.attrib.get('lower', None):
+                constraint.SetLowerBound(float(elem.attrib['lower']), get_relative('l_relative'))
+            if elem.attrib.get('upper', None):
+                constraint.SetUpperBound(float(elem.attrib['upper']), get_relative('u_relative'))
         self.logger.debug('... SetFactorRange ...')
 
     def setup_group_constraint(self, config, date):
@@ -740,7 +752,7 @@ class BarraOptimizerBase(object):
                     constraint.SetLowerBound(float(row['lower']), row['relative'])
 
         def get_relative(name):
-            attr = sub_config.attrib.get(name, sub_config.attrib.get('relative', elem.attrib.get(name, elem.attrib['relative'])))
+            attr = sub_config.attrib.get(name, sub_config.attrib.get('relative', elem.attrib.get(name, elem.attrib.get('relative', barraopt.eABSOLUTE))))
             return str2enum[attr]
 
         for group in self.group_names:
@@ -758,8 +770,10 @@ class BarraOptimizerBase(object):
                 constraint.SetSoft(util.parse_bool(sub_config.attrib.get('soft', elem.attrib.get('soft', False))))
                 if sub_config.attrib.get('reference', elem.attrib.get('reference', None)):
                     constraint.SetReference(self.composite_portfolios[sub_config.attrib.get('reference', elem.attrib['reference'])])
-                constraint.SetLowerBound(float(sub_config.attrib['lower']), get_relative('l_relative'))
-                constraint.SetUpperBound(float(sub_config.attrib['upper']), get_relative('u_relative'))
+                if sub_config.attrib.get('lower', None):
+                    constraint.SetLowerBound(float(sub_config.attrib['lower']), get_relative('l_relative'))
+                if sub_config.attrib.get('upper', None):
+                    constraint.SetUpperBound(float(sub_config.attrib['upper']), get_relative('u_relative'))
             attrs = self.groups_df[group].unique()
             if elem.attrib.get('lower', None) and elem.attrib.get('upper', None):
                 for attr in attrs:
