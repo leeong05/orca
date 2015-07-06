@@ -17,11 +17,23 @@ industry_fetcher = IndustryFetcher()
 from orca.mongo.components import ComponentsFetcher
 components_fetcher = ComponentsFetcher()
 
+def get_board(sid):
+    if sid[:2] == '60':
+        return 'SH'
+    elif sid[:2] == '30':
+        return 'CYB'
+    elif sid[:3] == '002':
+        return 'ZXB'
+    else:
+        return 'SZ'
+
 def generate_path(path_pattern, date):
     return Template(path_pattern).substitute(YYYYMMDD=date, YYYYMM=date[:6], YYYY=date[:4], MM=date[4:6], DD=date[6:8])
 
 def prep_group(group, name, date, output, add):
     sid_bid = barra_fetcher.fetch_idmaps(date=DATES[DATES.index(date)-1], barra_key=False)
+    if group is None:
+        group = pd.Series({sid: get_board(sid) for sid in sid_bid.keys()})
     output = generate_path(output, date)
     if add and os.path.exists(output):
         exist = pd.read_csv(output, dtype={0: str})
@@ -56,7 +68,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--start', type=str)
     parser.add_argument('-e', '--end', type=str)
     parser.add_argument('--shift', type=int, default=0)
-    parser.add_argument('--which', choices=('industry', 'components', 'other'), required=True)
+    parser.add_argument('--which', choices=('industry', 'components', 'board', 'other'), required=True)
     parser.add_argument('-a', '--add', action='store_true')
     parser.add_argument('-i', '--input', type=str)
     parser.add_argument('-o', '--output', type=str, default='group.${YYYYMMDD}')
@@ -74,6 +86,8 @@ if __name__ == '__main__':
         if args.which == 'industry':
             group = industry_fetcher.fetch_daily('level1', date)
             prep_group(group, args.which, date, args.output, args.add)
+        elif args.which == 'board':
+            prep_group(None, args.which, date, args.output, args.add)
         elif args.which == 'components':
             hs300 = components_fetcher.fetch_daily('HS300', date)
             hs300[:] = 'HS300'
