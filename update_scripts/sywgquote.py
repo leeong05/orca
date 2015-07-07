@@ -14,7 +14,7 @@ class SYWGQuoteUpdater(UpdaterBase):
     """The updater class for collection 'sywgindex_quote'."""
 
     def __init__(self, timeout=3000):
-        UpdaterBase.__init__(self, timeout)
+        UpdaterBase.__init__(self, timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
