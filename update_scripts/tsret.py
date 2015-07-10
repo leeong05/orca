@@ -16,7 +16,7 @@ class TSRetUpdater(UpdaterBase):
     """The updater class for collections 'ts_ret'."""
 
     def __init__(self, timeout=60):
-        UpdaterBase.__init__(self, timeout)
+        UpdaterBase.__init__(self, timeout=timeout)
         self.interval = IntervalFetcher('1min')
         self.quote = QuoteFetcher()
         self.indexquote = IndexQuoteFetcher()
@@ -37,7 +37,7 @@ class TSRetUpdater(UpdaterBase):
     def update(self, date):
         """Update TinySoft interval returns data(1min, 5min, 15min, 30min, 60min, 120min) for the **same** day after market close."""
         interval = self.interval.fetch_daily('close', self.times, date)
-        interval.ix['093000'] = self.quote.fetch_daily('prev_close', date).reindex(columns=interval.columns)
+        interval.ix['093000'] = self.quote.fetch_daily('prev_close', date).reindex(index=interval.columns)
         interval = interval.sort_index()
         for i in (1, 5, 15, 30, 60, 120):
             sub_interval = interval.ix[::i]
