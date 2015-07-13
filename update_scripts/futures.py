@@ -12,6 +12,8 @@ from base import UpdaterBase
 
 columns = ['dt', 'price', 'volume', 'bid1', 'ask1', 'bds1', 'aks1', 'open_interest']
 dnames = ['price', 'volume', 'open_interest', 'bid1', 'bds1', 'ask1', 'aks1']
+columns1 = ['dt', 'price', 'volume']
+dnames1 = ['price', 'volume']
 
 
 class IFUpdater(UpdaterBase):
@@ -54,7 +56,12 @@ class IFUpdater(UpdaterBase):
                 sid = 'CS500'
             fname = os.path.join(dirname, fname)
             df = pd.read_csv(fname)
-            df.columns = columns
+            if sid in ('SH50', 'HS300', 'CS500'):
+                _columns = columns1
+            else:
+                _columns = columns
+            df = df.iloc[:, :len(_columns)]
+            df.columns = _columns
             df['ms'] = (pd.to_datetime(df['dt']) - pd.to_datetime(date)).astype(int) / 1000000
 
             res = []
@@ -66,7 +73,11 @@ class IFUpdater(UpdaterBase):
             df = pd.concat(res).sort('ms')
             df.index = df.ms.astype(int).astype(str)
 
-            for dname in dnames:
+            if sid in ('SH50', 'HS300', 'CS500'):
+                _dnames = dnames1
+            else:
+                _dnames = dnames
+            for dname in _dnames:
                 key = {'date': date, 'sid': sid, 'dname': dname}
                 if dname in ['price', 'bid1', 'ask1']:
                     doc = {'dvalue': df[dname].astype(float).to_dict()}

@@ -18,13 +18,15 @@ def generate_dates(startdate, enddate, num):
     chksize = len(dates) / num + (len(dates) % num > 0)
     return [dates[i: i+chksize] for i in range(0, len(dates), chksize)]
 
-def run(script, start, end, num, offset=None):
+def run(script, start, end, num, offset=None, skip_monitor=False):
     progs = []
     for dates in generate_dates(start, end, num):
+        cmd = ['python', script, '--logoff', '-s', dates[0], '-e', dates[-1]]
         if offset is not None:
-            prog = subprocess.Popen(['python', script, '--logoff', '-s', dates[0], '-e', dates[-1], '--offset', str(offset)])
-        else:
-            prog = subprocess.Popen(['python', script, '--logoff', '-s', dates[0], '-e', dates[-1]])
+            cmd +=  ['--offset', str(offset)]
+        if skip_monitor:
+            cmd += ['--skip_monitor']
+        prog = subprocess.Popen(cmd)
         progs.append(prog)
 
     for prog in progs:
