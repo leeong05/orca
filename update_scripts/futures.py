@@ -42,20 +42,19 @@ class IFUpdater(UpdaterBase):
             self.logger.warning('No data exists for date {}', date)
             return
 
-        sids = []
         for fname in os.listdir(dirname):
-            sids.append(fname[:6])
-        sids = sorted(sids)[:2]
-
-        for fname in os.listdir(dirname):
-            sid = fname[:6]
-            if sid[:2] not in ('IC', 'IF', 'IH'):
+            sid = fname[:-9]
+            if sid[:2] not in ('IC', 'IF', 'IH', 'TF', 'SH'):
                 continue
+            if sid == 'SH000016':
+                sid = 'SH50'
+            elif sid == 'SH000300':
+                sid = 'HS300'
+            elif sid == 'SH000905':
+                sid = 'CS500'
             fname = os.path.join(dirname, fname)
             df = pd.read_csv(fname)
             df.columns = columns
-            if sid not in sids:
-                df = df.query('volume > 0')
             df['ms'] = (pd.to_datetime(df['dt']) - pd.to_datetime(date)).astype(int) / 1000000
 
             res = []
