@@ -20,7 +20,9 @@ def format(df, value=np.nan):
 
 def intersect(df, univ):
     """Intersect DataFrame with a universe."""
-    univ = univ.ix[df.index].fillna(method='bfill').fillna(method='ffill')
+    df, univ = df.copy(), univ.copy()
+    df.index, univ.index = pd.to_datetime(df.index), pd.to_datetime(univ.index)
+    univ = univ.ix[df.index].fillna(method='bfill').fillna(method='ffill').fillna(False)
     df = df.reindex(columns=univ.columns)
     return df[univ]
 
