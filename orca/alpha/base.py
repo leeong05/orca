@@ -535,3 +535,23 @@ class ProductionAlpha(AlphaBase):
             self.setup = logbook.NestedSetup([
                 logbook.NullHandler(),
                 logbook.StreamHandler(sys.stdout, level='DEBUG', bubble=True)])
+
+
+class SYWGProductionAlpha(ProductionAlpha):
+    """Base class for sywgindex production alpha.
+
+    .. note::
+
+       This is a base class and should not be used directly.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(SYWGProductionAlpha, self).__init__(*args, **kwargs)
+
+    def connect_mongo(self, host='192.168.1.183', db='stocks_dev',
+            user='stocks_dev', password='stocks_dev'):
+        client = MongoClient(host)
+        db = client[db]
+        db.authenticate(user, password)
+        self.client, self.db, self.collection = client, db, db.sywgindex_alpha
+        self.dates = sorted(db.dates.distinct('date'))
