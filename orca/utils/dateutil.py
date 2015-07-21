@@ -142,12 +142,12 @@ def generate_timestamps(starttime, endtime, step, exclude_end=True, exclude_begi
         else:
             break
 
-def generate_intervals(step, exclude_end=False, exclude_begin=True):
+def generate_intervals(step, begin='093000', end='150000', exclude_end=False, exclude_begin=True):
     """
     :param int step: Number of **seconds** as step
     """
-    before_noon = list(generate_timestamps('093000', '113000', step, exclude_begin=exclude_begin, exclude_end=exclude_end))
-    after_noon = list(generate_timestamps('130000', '150000', step, exclude_begin=exclude_begin, exclude_end=exclude_end))
+    before_noon = list(generate_timestamps(begin, '113000', step, exclude_begin=exclude_begin, exclude_end=exclude_end))
+    after_noon = list(generate_timestamps(end, '150000', step, exclude_begin=exclude_begin, exclude_end=exclude_end))
     return before_noon + after_noon
 
 def get_startfrom(l, x, n):

@@ -42,6 +42,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--end', type=str)
     parser.add_argument('-n', '--num', type=int, default=8)
     parser.add_argument('--offset', type=int, default=None)
+    parser.add_argument('--skip_monitor', action='store_true')
     args = parser.parse_args()
 
-    run(args.script, args.start, args.end, args.num, args.offset)
+    run(args.script, args.start, args.end, args.num, args.offset, args.skip_monitor)
