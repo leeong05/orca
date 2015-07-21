@@ -25,11 +25,11 @@ def perwin(ser):
 
 def IR(ser):
     """``ser`` is a daily returns Series instead of a cumulative returns Series."""
-    return ser.mean() / ser.std()
+    return ser.mean() / ser.std() if ser.std() > 0 else np.inf * ser.mean()
 
 def Sharpe(ser):
     """``ser`` is a daily returns Series instead of a cumulative returns Series."""
-    return ser.mean() / ser.std() * np.sqrt(DAYS_IN_YEAR)
+    return ser.mean() / ser.std() * np.sqrt(DAYS_IN_YEAR) if ser.std() > 0 else np.inf * ser.mean()
 
 def resample(ser, how='mean', by=None):
     """Helper function.

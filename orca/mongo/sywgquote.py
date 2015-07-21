@@ -17,7 +17,7 @@ class SYWGQuoteFetcher(KDayFetcher):
     :param boolean use_industry: Returned DataFrame use industry code as columns? Default: True
     """
 
-    dnames = ['open', 'high', 'low', 'close', 'prevclose', 'volume', 'amount', 'returns']
+    dnames = DB.sywgindex_quote.distinct('dname')
 
     def __init__(self, level=1, use_industry=True, **kwargs):
         self.collection = DB.sywgindex_quote
