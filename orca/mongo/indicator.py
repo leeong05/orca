@@ -60,3 +60,10 @@ class CAXIndicatorFetcher(IndicatorFetcher):
     def __init__(self, **kwargs):
         super(CAXIndicatorFetcher, self).__init__(**kwargs)
         self.collection = DB.cax_indicator
+
+
+class FundIndicatorFetcher(IndicatorFetcher):
+
+    def __init__(self, **kwargs):
+        super(FundIndicatorFetcher, self).__init__(**kwargs)
+        self.collection = DB.fund_indicator

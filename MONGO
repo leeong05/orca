@@ -95,6 +95,12 @@ db.zyreport_adjust.ensureIndex({report_date: 1, report_type: 1}, {background: tr
 
 db.IF.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.IF.ensureIndex({sid: 1, date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.IF_1min.ensureIndex({sid: 1, date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.IF_1min.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.IF_1min.ensureIndex({dname: 1}, {background: true})
+db.IF_5min.ensureIndex({sid: 1, date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
+db.IF_5min.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.IF_5min.ensureIndex({dname: 1}, {background: true})
 db.lof.ensureIndex({sid: 1, dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.lof.ensureIndex({sid: 1, date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
 
