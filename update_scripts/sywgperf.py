@@ -8,18 +8,19 @@ from multiprocessing import Process
 import numpy as np
 import pandas as pd
 
-from orca.perf.performance import Performance
-from orca.mongo.kday import UnivFetcher
-univ_fetcher = UnivFetcher(datetime_index=True, reindex=True)
+from orca.perf.analyser import Analyser
+from orca.operation import api
+from orca.mongo.sywgquote import SYWGQuoteFetcher
+quote = SYWGQuoteFetcher(datetime_index=True)
 
 from base import UpdaterBase
 
 
-class PerfUpdater(UpdaterBase):
-    """The updater class for collection 'performance'."""
+class SYWGPerfUpdater(UpdaterBase):
+    """The updater class for collection 'sywgindex_performance'."""
 
     def __init__(self, timeout=3*60*60):
-        super(PerfUpdater, self).__init__(timeout=timeout)
+        super(SYWGPerfUpdater, self).__init__(timeout=timeout)
 
     def pre_update(self):
         self.dates = self.db.dates.distinct('date')
@@ -62,48 +63,22 @@ class PerfUpdater(UpdaterBase):
         """Update alpha performance metrics for the **same** day after market close."""
         dnames = self.db.alpha.distinct('dname')
         si, ei = map(self.dates.index, [dates[0], dates[-1]])
-        BTOP70Q = univ_fetcher.fetch_window('BTOP70Q', self.dates[si-20: ei+1])
+        sywg_returns = quote.fetch('returns', self.dates[si-20], self.dates[ei])
         cnt = 0
         for dname in dnames:
             if self.options['alphas'] and dname not in self.options['alphas']:
                 continue
             cursor = self.db.alpha.find(
-                    {'dname': dname, 'date': {'$gte': self.dates[si-20], '$lte': dates[-1]}},
+                    {'dname': dname, 'date': {'$gte': self.dates[si-20], '$lte': self.dates[ei]}},
                     {'_id': 0, 'dvalue': 1, 'date': 1})
             alpha = pd.DataFrame({row['date']: row['dvalue'] for row in cursor}).T
             if len(alpha) == 0:
                 continue
-            perf = Performance(alpha)
-            # original
-            analyser = perf.get_longshort()
+            analyser = Analyser(api.scale(api.neutralize(alpha)), data=sywg_returns)
             for date in dates:
                 if date not in alpha.index:
                     continue
-                key = {'alpha': dname, 'mode': 'longshort', 'date': date}
-                metrics = self.get_metrics(analyser, date)
-                self.collection.update(key, {'$set': metrics}, upsert=True)
-            # quantile
-            analyser = perf.get_qtail(0.3)
-            for date in dates:
-                if date not in alpha.index:
-                    continue
-                key = {'alpha': dname, 'mode': 'quantile30', 'date': date}
-                metrics = self.get_metrics(analyser, date)
-                self.collection.update(key, {'$set': metrics}, upsert=True)
-            # universe(s)
-            analyser = perf.get_universe(BTOP70Q).get_longshort()
-            for date in dates:
-                if date not in alpha.index:
-                    continue
-                key = {'alpha': dname, 'mode': 'BTOP70Q', 'date': date}
-                metrics = self.get_metrics(analyser, date)
-                self.collection.update(key, {'$set': metrics}, upsert=True)
-            # top
-            analyser = perf.get_qtop(0.3)
-            for date in dates:
-                if date not in alpha.index:
-                    continue
-                key = {'alpha': dname, 'mode': 'top30', 'date': date}
+                key = {'alpha': dname, 'date': date}
                 metrics = self.get_metrics(analyser, date)
                 self.collection.update(key, {'$set': metrics}, upsert=True)
             cnt += 1
@@ -137,6 +112,7 @@ class PerfUpdater(UpdaterBase):
             res['returns'] = np.nan
         return res
 
+
 if __name__ == '__main__':
-    perf = PerfUpdater()
+    perf = SYWGPerfUpdater()
     perf.run()

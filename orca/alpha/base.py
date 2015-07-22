@@ -14,10 +14,7 @@ import logbook
 logbook.set_datetime_format('local')
 from pymongo import MongoClient
 
-from orca import (
-        DATES,
-        SIDS,
-        )
+from orca import DATES
 from orca.utils import dateutil
 from orca.operation.api import format
 
@@ -244,7 +241,7 @@ class BacktestingAlpha(AlphaBase):
         if self._alphas is not None:
             return self._alphas
 
-        df = format(pd.DataFrame(self.alphas).T)
+        df = format(pd.DataFrame(self.alphas).T, full_sids=False)
         self._alphas = df
         return df
 
@@ -302,7 +299,7 @@ class BacktestingIntervalAlpha(IntervalAlphaBase):
         if self._alphas is not None:
             return self._alphas
 
-        df = format(pd.DataFrame(self.alphas).T)
+        df = format(pd.DataFrame(self.alphas).T, full_sids=False)
         self._alphas = df
         return df
 
@@ -452,7 +449,7 @@ class ProductionAlpha(AlphaBase):
         if isinstance(dates, str):
             return df.ix[dates]
         df.index = pd.to_datetime(df.index)
-        return df.reindex(columns=SIDS)
+        return df
 
     def push(self, alpha, date):
         if isinstance(alpha, dict):

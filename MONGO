@@ -120,5 +120,4 @@ db.sywgindex_indicator.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups:
 
 db.sywgindex_alpha.ensureIndex({dname: 1, date: 1}, {unique: true, dropDups: true, background: true})
 db.sywgindex_alpha.ensureIndex({date: 1, dname: 1}, {unique: true, dropDups: true, background: true})
-db.sywgindex_performance.ensureIndex({alpha: 1, mode: 1, date: 1}, {unique: true, dropDups: true, background: true})
-db.sywgindex_performance.ensureIndex({mode: 1, alpha: 1, date: 1}, {unique: true, dropDups: true, background: true})
+db.sywgindex_performance.ensureIndex({alpha: 1, date: 1}, {unique: true, dropDups: true, background: true})

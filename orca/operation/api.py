@@ -7,16 +7,18 @@ import pandas as pd
 
 from orca import SIDS
 
-def format(df, value=np.nan):
+def format(df, value=np.nan, full_sids=True):
     """Format DataFrame into DatetimeIndex and full sids columns.
 
     :param value: Value to be filled for missing points
     """
-    if isinstance(df, pd.DataFrame):
-        df = df.reindex(columns=SIDS, copy=True).fillna(value)
-        df.index = pd.to_datetime(df.index)
-        return df
-    return df.reindex(SIDS)
+    if full_sids:
+        if isinstance(df, pd.DataFrame):
+            df = df.reindex(columns=SIDS, copy=True).fillna(value)
+        else:
+            df = df.reindex(index=SIDS, copy=True).fillna(value)
+    df.index = pd.to_datetime(df.index)
+    return df
 
 def intersect(df, univ):
     """Intersect DataFrame with a universe."""
