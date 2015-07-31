@@ -27,6 +27,7 @@ if __name__ == '__main__':
     parser= argparse.ArgumentParser()
     parser.add_argument('alpha', help='Alpha file', nargs='?')
     parser.add_argument('--alphas', nargs='*')
+    parser.add_argument('-l', '--level', type=int, choices=(1, 2, 3), default=1)
     parser.add_argument('--ftype', help='File type', choices=('csv', 'pickle', 'msgpack'))
     parser.add_argument('-t', '--threads', type=int, default=8)
     parser.add_argument('-f', '--freq', choices=('daily', 'weekly', 'monthly'), default='daily',
@@ -56,7 +57,7 @@ if __name__ == '__main__':
         except:
             print '[WARNING] Failed to parse file', alpha
 
-    sywg_returns = sywgquote_fetcher.fetch('returns', dates[0].strftime('%Y%m%d'), dates[-1].strftime('%Y%m%d'))
+    sywg_returns = sywgquote_fetcher.fetch('returns', dates[0].strftime('%Y%m%d'), dates[-1].strftime('%Y%m%d'), level=args.level)
     for alpha, alphadf in alphas.iteritems():
         analyser = Analyser(alphadf, data=sywg_returns)
         alphas[alpha] = analyser
