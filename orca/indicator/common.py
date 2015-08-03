@@ -43,3 +43,11 @@ class MarketIndicatorBase(IndicatorBase):
         super(MarketIndicatorBase, self).__init__(offset=offset, **kwargs)
         self.collection = self.db.market_indicator
         self.name = name
+
+
+class IntervalIndicatorBase(IndicatorBase):
+
+    def __init__(self, name, offset=0, **kwargs):
+        super(IntervalIndicatorBase, self).__init__(offset=offset, **kwargs)
+        self.collection = self.db.interval_indicator
+        self.name = name

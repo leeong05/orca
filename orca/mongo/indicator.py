@@ -19,6 +19,7 @@ class IndicatorFetcher(KDayFetcher):
 
     def __init__(self, **kwargs):
         super(IndicatorFetcher, self).__init__(**kwargs)
+        self.indicators = self.collection.distinct('indicator')
 
     def fetch_window(self, indicator, window, market=None, **kwargs):
         if market is None:
@@ -37,33 +38,40 @@ class IndicatorFetcher(KDayFetcher):
 class BarraIndicatorFetcher(IndicatorFetcher):
 
     def __init__(self, **kwargs):
-        super(BarraIndicatorFetcher, self).__init__(**kwargs)
         self.collection = DB.barra_indicator
+        super(BarraIndicatorFetcher, self).__init__(**kwargs)
 
 
 class MarketIndicatorFetcher(IndicatorFetcher):
 
     def __init__(self, **kwargs):
-        super(MarketIndicatorFetcher, self).__init__(**kwargs)
         self.collection = DB.market_indicator
+        super(MarketIndicatorFetcher, self).__init__(**kwargs)
 
 
 class AnalystIndicatorFetcher(IndicatorFetcher):
 
     def __init__(self, **kwargs):
-        super(AnalystIndicatorFetcher, self).__init__(**kwargs)
         self.collection = DB.analyst_indicator
+        super(AnalystIndicatorFetcher, self).__init__(**kwargs)
 
 
 class CAXIndicatorFetcher(IndicatorFetcher):
 
     def __init__(self, **kwargs):
-        super(CAXIndicatorFetcher, self).__init__(**kwargs)
         self.collection = DB.cax_indicator
+        super(CAXIndicatorFetcher, self).__init__(**kwargs)
 
 
 class FundIndicatorFetcher(IndicatorFetcher):
 
     def __init__(self, **kwargs):
-        super(FundIndicatorFetcher, self).__init__(**kwargs)
         self.collection = DB.fund_indicator
+        super(FundIndicatorFetcher, self).__init__(**kwargs)
+
+
+class IntervalIndicatorFetcher(IndicatorFetcher):
+
+    def __init__(self, **kwargs):
+        self.collection = DB.interval_indicator
+        super(IntervalIndicatorFetcher, self).__init__(**kwargs)
