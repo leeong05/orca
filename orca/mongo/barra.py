@@ -24,32 +24,26 @@ class BarraFetcher(KDayFetcher):
        This is a base class and should not be used directly.
     """
 
-    industry_factors = {
-            'daily': ['CNE5D_ENERGY', 'CNE5D_CHEM', 'CNE5D_CONMAT', 'CNE5D_MTLMIN',
-                      'CNE5D_MATERIAL', 'CNE5D_AERODEF', 'CNE5D_BLDPROD', 'CNE5D_CNSTENG', 'CNE5D_ELECEQP',
-                      'CNE5D_INDCONG', 'CNE5D_MACH', 'CNE5D_TRDDIST', 'CNE5D_COMSERV', 'CNE5D_AIRLINE',
-                      'CNE5D_MARINE', 'CNE5D_RDRLTRAN', 'CNE5D_AUTO', 'CNE5D_HOUSEDUR', 'CNE5D_LEISLUX',
-                      'CNE5D_CONSSERV', 'CNE5D_MEDIA', 'CNE5D_RETAIL', 'CNE5D_PERSPRD', 'CNE5D_BEV',
-                      'CNE5D_FOODPROD', 'CNE5D_HEALTH', 'CNE5D_BANKS', 'CNE5D_DVFININS', 'CNE5D_REALEST',
-                      'CNE5D_SOFTWARE', 'CNE5D_HDWRSEMI', 'CNE5D_UTILITIE',
-                      ],
-            'short': ['CNE5S_ENERGY', 'CNE5S_CHEM', 'CNE5S_CONMAT', 'CNE5S_MTLMIN',
-                      'CNE5S_MATERIAL', 'CNE5S_AERODEF', 'CNE5S_BLDPROD', 'CNE5S_CNSTENG', 'CNE5S_ELECEQP',
-                      'CNE5S_INDCONG', 'CNE5S_MACH', 'CNE5S_TRDDIST', 'CNE5S_COMSERV', 'CNE5S_AIRLINE',
-                      'CNE5S_MARINE', 'CNE5S_RDRLTRAN', 'CNE5S_AUTO', 'CNE5S_HOUSEDUR', 'CNE5S_LEISLUX',
-                      'CNE5S_CONSSERV', 'CNE5S_MEDIA', 'CNE5S_RETAIL', 'CNE5S_PERSPRD', 'CNE5S_BEV',
-                      'CNE5S_FOODPROD', 'CNE5S_HEALTH', 'CNE5S_BANKS', 'CNE5S_DVFININS', 'CNE5S_REALEST',
-                      'CNE5S_SOFTWARE', 'CNE5S_HDWRSEMI', 'CNE5S_UTILITIE',
+    _industry_factors = ['ENERGY', 'CHEM', 'CONMAT', 'MTLMIN',
+                      'MATERIAL', 'AERODEF', 'BLDPROD', 'CNSTENG', 'ELECEQP',
+                      'INDCONG', 'MACH', 'TRDDIST', 'COMSERV', 'AIRLINE',
+                      'MARINE', 'RDRLTRAN', 'AUTO', 'HOUSEDUR', 'LEISLUX',
+                      'CONSSERV', 'MEDIA', 'RETAIL', 'PERSPRD', 'BEV',
+                      'FOODPROD', 'HEALTH', 'BANKS', 'DVFININS', 'REALEST',
+                      'SOFTWARE', 'HDWRSEMI', 'UTILITIE',
                       ]
+    industry_factors = {
+            'daily': ['CNE5D_'+factor for factor in _industry_factors],
+            'short': ['CNE5S_'+factor for factor in _industry_factors],
             }
+    _style_factors = ['SIZE', 'BETA', 'MOMENTUM', 'RESVOL', 'SIZENL',
+                      'BTOP', 'LIQUIDTY', 'EARNYILD', 'GROWTH', 'LEVERAGE',
+                      ]
     style_factors = {
-            'daily': ['CNE5D_SIZE', 'CNE5D_BETA', 'CNE5D_MOMENTUM', 'CNE5D_RESVOL', 'CNE5D_SIZENL',
-                      'CNE5D_BTOP', 'CNE5D_LIQUIDTY', 'CNE5D_EARNYILD', 'CNE5D_GROWTH', 'CNE5D_LEVERAGE',
-                      ],
-            'short': ['CNE5S_SIZE', 'CNE5S_BETA', 'CNE5S_MOMENTUM', 'CNE5S_RESVOL', 'CNE5S_SIZENL',
-                      'CNE5S_BTOP', 'CNE5S_LIQUIDTY', 'CNE5S_EARNYILD', 'CNE5S_GROWTH', 'CNE5S_LEVERAGE',
-                      ],
+            'daily': ['CNE5D_'+factor for factor in _style_factors],
+            'short': ['CNE5S_'+factor for factor in _style_factors],
             }
+    _all_factors = _industry_factors+_style_factors
     all_factors = {
             'daily': industry_factors['daily'] + style_factors['daily'],
             'short': industry_factors['short'] + style_factors['short'],
@@ -231,8 +225,12 @@ class BarraFactorFetcher(BarraFetcher):
             factor = self.industry_factors[self.model]
         elif factor == 'style':
             factor = self.style_factors[self.model]
-        elif factor.find('_') == -1:
-            factor = self.prefix + '_' + factor
+        elif isinstance(factor, str):
+            factor = factor.find('_') == -1 and self.prefix+'_'+factor or factor
+            assert factor in self.all_factors[self.model]
+        else:
+            factor = [f.find('_') == -1 and self.prefix+'_'+f or f for f in factor]
+            assert all([f in self.all_factors[self.model] for f in factor])
 
         query = {'factor': {'$in': [factor] if isinstance(factor, str) else factor},
                 'date': {'$gte': window[0], '$lte': window[-1]}}
@@ -249,8 +247,9 @@ class BarraFactorFetcher(BarraFetcher):
         return self.fetch_covariance(startdate=date, enddate=date, **kwargs)[date]
 
     def fetch_covariance(self, factor=None, startdate=None, enddate=None, **kwargs):
-        if isinstance(factor, str) and factor.find('_') == -1:
-            factor = self.prefix + '_' + factor
+        if isinstance(factor, str):
+            factor = factor.find('_') == -1 and self.prefix+'_'+factor or factor
+            assert factor in self.all_factors[self.model]
         datetime_index = kwargs.get('datetime_index', self.datetime_index)
         prevra = kwargs.get('prevra', False)
         date_check = kwargs.get('date_check', self.date_check)
@@ -285,8 +284,6 @@ class BarraFactorFetcher(BarraFetcher):
         return res
 
     def fetch_variance(self, factor, *args, **kwargs):
-        if factor.find('_') == -1:
-            factor = self.prefix + '_' + factor
         return self.fetch_covariance(factor, *args, **kwargs)[factor]
 
     def fetch(self, *args, **kwargs):
