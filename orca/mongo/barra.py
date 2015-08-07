@@ -43,10 +43,10 @@ class BarraFetcher(KDayFetcher):
             'daily': ['CNE5D_'+factor for factor in _style_factors],
             'short': ['CNE5S_'+factor for factor in _style_factors],
             }
-    _all_factors = _industry_factors+_style_factors
+    _all_factors = _industry_factors+_style_factors+['COUNTRY']
     all_factors = {
-            'daily': industry_factors['daily'] + style_factors['daily'],
-            'short': industry_factors['short'] + style_factors['short'],
+            'daily': industry_factors['daily'] + style_factors['daily'] + ['CNE5D_COUNTRY'],
+            'short': industry_factors['short'] + style_factors['short'] + ['CNE5S_COUNTRY'],
             }
 
     models = ('daily', 'short')
