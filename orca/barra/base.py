@@ -351,7 +351,7 @@ class BarraOptimizerBase(object):
             for elem in config:
                 factor = self.risk_model_name + '_' + elem.attrib['value']
                 if factor in self.risk_factors:
-                    attributes.Set(factor, float(config.attrib['weight']))
+                    attributes.Set(factor, float(elem.attrib['weight']))
                     config_factors.append(factor)
                 else:
                     self.logger.warning('{} not a valid risk factor?', factor)
