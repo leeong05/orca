@@ -11,7 +11,7 @@ def read_frame(fname, ftype=None, return_ftype=False):
             ftype = m.id_filename(fname)
             if ftype[:4] == 'data':
                 ftype = 'msgpack'
-            elif ftype[:10] == 'ASCII text':
+            elif ftype.find('ASCII') != -1 or ftype.find('Image') != -1:
                 ftype = 'csv'
             elif ftype[:4] == '8086':
                 ftype = 'pickle'

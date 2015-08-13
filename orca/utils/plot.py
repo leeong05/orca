@@ -111,7 +111,7 @@ def plot_pnl(y, by='A', title='', **kwargs):
     # title
     title_summary = 'Sharpe: %.1f, AAR: %.1f%%' % (perf_util.Sharpe(y), perf_util.annualized_returns(y)*100)
     if title:
-        title = title + ' - ' + title_summary
+        title = str(title) + ' - ' + title_summary
     else:
         title = title_summary
     ax.set_title(title, color='b')
